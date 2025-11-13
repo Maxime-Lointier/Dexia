@@ -1,5 +1,12 @@
-import { View } from 'react-native';
+import { StyleSheet, Text, View } from "react-native";
 
-export default function HomeScreen() {
-  return <View className="flex-1 bg-white" />;
+const DexiaHome = () => {
+  return (
+    <View>
+        <Text>DexiaHome</Text>
+    </View>  
+  )
 }
+
+export default DexiaHome
+const styles = StyleSheet.create({})
