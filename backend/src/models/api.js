@@ -82,12 +82,12 @@ async function searchMovies(keyword) {
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('database.db');
 
-db.all('SELECT id, poster_path FROM movies LIMIT 10;', [], (err, rows) => {
+db.all('SELECT * FROM cast;', [], (err, rows) => {
     if (err) {
         console.error(err.message);
         return;
     }
-    console.log(rows); // Affiche tous les films sous forme de tableau d’objets
+    console.log(rows); // Affiche tous les acteurs
     db.close();
 });
 
