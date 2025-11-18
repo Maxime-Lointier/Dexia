@@ -4,12 +4,12 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const axios = require('axios');
 
 module.exports = {
-  getPopularMovies,
-  getTopRatedMovies,
-  getAllGenres,
-  getMoviesByGenre,
-  getMovieById,
-  searchMovies
+    getPopularMovies,
+    getTopRatedMovies,
+    getAllGenres,
+    getMoviesByGenre,
+    getMovieById,
+    searchMovies
 };
 
 async function getPopularMovies() { //retourne un tableu d'objets' 
@@ -46,13 +46,13 @@ async function getAllGenres() {
     }
 }
 
-async function getMoviesByGenre(genreId) {
-    const url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreId}&language=fr-FR&page=1`;
+async function getMoviesByGenre(genreId, page = 1) {
+    const url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreId}&language=fr-FR&page=${page}`;
     try {
         const promise = await axios.get(url);
         return promise.data.results;
     } catch (error) {
-        console.error(`Erreur lors de la récupération des films pour le genre ID ${genreId} :`, error);
+        console.error(`Erreur lors de la récupération des films pour le genre ID ${genreId}, page ${page} :`, error);
         return [];
     }
 }
@@ -79,11 +79,16 @@ async function searchMovies(keyword) {
     }
 }
 
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('database.db');
 
-// Exemple d'utilisation, a placer dans controller plus tard
-(async () => {
-  const res = await getMovieById(190205);
-  console.log(res);  
-})();
+db.all('SELECT id, poster_path FROM movies LIMIT 10;', [], (err, rows) => {
+    if (err) {
+        console.error(err.message);
+        return;
+    }
+    console.log(rows); // Affiche tous les films sous forme de tableau d’objets
+    db.close();
+});
 
 
