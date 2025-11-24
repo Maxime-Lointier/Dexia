@@ -1,16 +1,18 @@
-import { StyleSheet, Text, View} from "react-native";
-import { Link } from "expo-router";
+import { View, Text } from "react-native";
+import "./global.css";
 
-const DexiaHome = () => {
+export default function DexiaHome() {
   return (
-    <View>
-        <Text>DexiaHome</Text>
-        <Link href="/onBoarding">
-          <Text>Go to Onboarding</Text>
-        </Link>
-    </View>  
-  )
-}
+    <View className="flex-1 bg-black justify-center items-center">
+      <View className="w-40 h-40 bg-red-500 rounded-2xl justify-center items-center border-4 border-white shadow-lg shadow-red-500/50">
+                <Text className="text-white font-bold text-xl text-center">
+          test tailwind
+        </Text>
 
-export default DexiaHome
-const styles = StyleSheet.create({})
+      </View>
+
+      <Text className="text-gray-400 mt-10">test gris texte</Text>
+
+    </View>
+  );
+}
