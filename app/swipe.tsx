@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 const Onboarding = () => {
   return (
     <View>
-      <Text>Page Settings</Text>
+      <Text>Page Swipe</Text>
     </View>
   );
 };
