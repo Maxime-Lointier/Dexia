@@ -7,5 +7,5 @@ const Onboarding = () => {
     </View>
   );
 };
-
+test
 export default Onboarding;
