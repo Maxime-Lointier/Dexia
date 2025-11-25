@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 as Icon } from '@expo/vector-icons'; 
+import { router } from 'expo-router';
 
 import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
 
@@ -30,7 +31,7 @@ const GENRE_STYLES: Record<number, { icon: string; color: string; iconColor: str
 //En cas de genres non trouvés, on utilise un style par défaut
 const DEFAULT_STYLE = { icon: 'film', color: 'bg-gray-600', iconColor: 'text-gray-600' };
 
-const Onboarding = ({ navigation }: any) => {
+const Onboarding = () => {
   //States pour données
   const [genres, setGenres] = useState<Genre[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -40,7 +41,6 @@ const Onboarding = ({ navigation }: any) => {
 
   // Charger les données au montage du composant
   useEffect(() => {
-    console.log('Onboarding mounted');
     loadData();
   }, []);
 
@@ -83,17 +83,11 @@ const Onboarding = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
       
       {/* HEADER */}
-      {/* Top Bar : à faire */}
+      {/* Top Bar */}
       <View className="px-6 pt-2 pb-4">
-        <View className="flex-row items-center justify-between mb-6">
-            <View className="w-8" />
-            <View className="flex-row gap-2">
-                <View className="w-8 h-1 bg-[#6C5CE7] rounded-full" />
-                <View className="w-8 h-1 bg-gray-700 rounded-full" />
-                <View className="w-8 h-1 bg-gray-700 rounded-full" />
-            </View>
-            {/* Bouton Passer : à faire */}
-            <TouchableOpacity onPress={() => navigation?.replace('Home')}>
+        <View className="flex-row justify-end mb-6">
+            {/* Bouton Passer : On va vers la page d'accueil*/}
+            <TouchableOpacity onPress={() => router.replace('/homeScreen')}> 
                 <Text className="text-gray-400 text-sm font-medium">Passer</Text>
             </TouchableOpacity>
         </View>
@@ -162,10 +156,12 @@ const Onboarding = ({ navigation }: any) => {
         <TouchableOpacity
             disabled={!isContinueEnabled}
             onPress={() => {
-                console.log('Genres choisis:', selectedGenres); // Ici fonction à developper pour envoyer les genres sélectionnés à la BD
+                console.log('Genres choisis:', selectedGenres); 
+                router.replace('/homeScreen'); // On va vers la page d'accueil
+
             }}
             className={`w-full py-4 rounded-full items-center justify-center ${
-                isContinueEnabled ? 'bg-[#6C5CE7]' : 'bg-gray-700'
+                isContinueEnabled ? 'bg-[#6C5CE7]'  : 'bg-gray-700'
             }`}
         >
             <Text className={`font-semibold text-lg ${
