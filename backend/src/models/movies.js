@@ -8,7 +8,9 @@ module.exports = {
     getTopRatedMovies,
     getAllGenres,
     getMovieById,
-    findMoviesByKeyword
+    findMoviesByKeyword,
+    getMoviesByGenresAndKeywords,
+    getMoviesOutsideGenres
 }
 
 //dans beaucoup de ces fonctions, on utilise des callbacks pour gérer l'asynchronicité des requêtes SQL, alors on doit les uitliser diféremment dans les fichiers qui les appellent.
@@ -97,6 +99,97 @@ function findMoviesByKeyword(keyword, callback) {
 function getTopRatedMovies(limit, callback) {
     const sql = 'SELECT * FROM movies ORDER BY vote_average DESC LIMIT ?';
     db.all(sql, [limit], (err, rows) => {
+        if (err) {
+            console.error(err.message);
+            return callback([]);
+        }
+        callback(rows);
+    });
+}
+
+function getMoviesByGenresAndKeywords(genres, keywords, excludeIds, limit, callback) {
+    if (!genres || genres.length === 0) {
+        return callback([]);
+    }
+    
+    // Construire la clause WHERE pour les genres
+    const genrePlaceholders = genres.map(() => '?').join(',');
+    let sql = `SELECT DISTINCT movies.*
+               FROM movies 
+               JOIN movie_genres ON movies.id = movie_genres.movie_id 
+               WHERE movie_genres.genre_id IN (${genrePlaceholders})
+               AND movies.vote_average >= 5.0
+               AND movies.vote_average <= 8.5
+               AND movies.popularity > 5.0`; // Films décents mais pas trop obscurs
+    
+    let params = [...genres];
+    
+    // Recherche de mots-clés avec LIKE (compatible SQLite)
+    if (keywords && keywords.length > 0) {
+        const keywordConditions = keywords.map(() => '(movies.title LIKE ? OR movies.overview LIKE ?)').join(' OR ');
+        sql += ` AND (${keywordConditions})`;
+        keywords.forEach(keyword => {
+            const likePattern = `%${keyword}%`;
+            params.push(likePattern, likePattern);
+        });
+    }
+    
+    // Exclure les films déjà vus
+    if (excludeIds && excludeIds.length > 0) {
+        const excludePlaceholders = excludeIds.map(() => '?').join(',');
+        sql += ` AND movies.id NOT IN (${excludePlaceholders})`;
+        params.push(...excludeIds);
+    }
+    
+    sql += ' ORDER BY (movies.vote_average * 0.7 + LOG(movies.popularity + 1) * 0.3) DESC';
+    
+    if (limit) {
+        sql += ' LIMIT ?';
+        params.push(limit);
+    }
+    
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            console.error(err.message);
+            return callback([]);
+        }
+        callback(rows);
+    });
+}
+
+function getMoviesOutsideGenres(genres, excludeIds, limit, callback) {
+    let sql = 'SELECT DISTINCT movies.* FROM movies WHERE movies.vote_average >= 6.0 AND movies.vote_average <= 8.5 AND movies.popularity > 10.0'; // Films décents et populaires
+    let params = [];
+    
+    // Exclure les genres préférés
+    if (genres && genres.length > 0) {
+        const genrePlaceholders = genres.map(() => '?').join(',');
+        sql += ` AND movies.id NOT IN (
+                    SELECT movie_id FROM movie_genres 
+                    WHERE genre_id IN (${genrePlaceholders})
+                 )`;
+        params.push(...genres);
+    }
+    
+    // Exclure les films déjà vus
+    if (excludeIds && excludeIds.length > 0) {
+        const excludePlaceholders = excludeIds.map(() => '?').join(',');
+        if (genres && genres.length > 0) {
+            sql += ` AND movies.id NOT IN (${excludePlaceholders})`;
+        } else {
+            sql += ` WHERE movies.id NOT IN (${excludePlaceholders})`;
+        }
+        params.push(...excludeIds);
+    }
+    
+    sql += ' ORDER BY (movies.vote_average * 0.6 + LOG(movies.popularity + 1) * 0.4) DESC';
+    
+    if (limit) {
+        sql += ' LIMIT ?';
+        params.push(limit);
+    }
+    
+    db.all(sql, params, (err, rows) => {
         if (err) {
             console.error(err.message);
             return callback([]);

@@ -5,7 +5,8 @@ module.exports = {
 	addInteraction,
 	getInteractionsByUser,
 	getInteractionsByMovie,
-	getUserLastInteractions
+	getUserLastInteractions,
+	getUserSeenMovieIds
 };
 
 // Table sans rating (simplifiée)
@@ -63,6 +64,19 @@ function getInteractionsByMovie(movieId, callback) {
 		}
 		callback(rows);
 	});
+}
+
+function getUserSeenMovieIds(userId, callback) {
+    // Puisque user_interactions n'a pas de user_id dans db.sql, on retourne tous les films vus
+    // En production, il faudrait ajouter user_id à la table ou gérer différemment
+    const sql = 'SELECT DISTINCT movie_id FROM user_interactions';
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error(err.message);
+            return callback([]);
+        }
+        callback(rows.map(row => row.movie_id));
+    });
 }
 
 ensureInteractionTable();
