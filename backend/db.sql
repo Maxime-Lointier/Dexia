@@ -38,7 +38,8 @@ CREATE TABLE movie_cast (
 CREATE TABLE user_profile (
   id INTEGER PRIMARY KEY,
   preferences TEXT, -- le onboarding puis pourra changer avec like/dislike
-  onboarding_done INTEGER DEFAULT 0
+  onboarding_done INTEGER DEFAULT 0,
+  keywords TEXT -- mots-clés extraits ou préférés
 );
 
 CREATE TABLE user_interactions (
