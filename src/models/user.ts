@@ -1,5 +1,8 @@
 import { getDatabase } from './db';
 
+// ID de l'utilisateur unique de l'application (pas de système de connexion)
+export const CURRENT_USER_ID = 1;
+
 export interface UserPreferences {
   genres: number[];
   keywords: string[];
@@ -127,6 +130,36 @@ export async function createUserProfile(userId: number, preferences?: UserPrefer
   } catch (error) {
     console.error('Erreur lors de la création du profil utilisateur:', error);
     return false;
+  }
+}
+
+/**
+ * Obtient ou crée le profil utilisateur unique de l'application
+ * L'application n'a pas de système de connexion, donc il y a un seul utilisateur avec l'ID 1
+ * @returns Promise<number> - ID de l'utilisateur unique (toujours CURRENT_USER_ID = 1)
+ */
+export async function getOrCreateUser(): Promise<number> {
+  const db = await getDatabase();
+  
+  try {
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await db.getFirstAsync<{ id: number }>(
+      'SELECT id FROM user_profile WHERE id = ?',
+      [CURRENT_USER_ID]
+    );
+    
+    if (existingUser) {
+      return CURRENT_USER_ID;
+    }
+    
+    // Si l'utilisateur n'existe pas, le créer
+    await createUserProfile(CURRENT_USER_ID);
+    console.log(`Profil utilisateur créé avec l'ID: ${CURRENT_USER_ID}`);
+    return CURRENT_USER_ID;
+  } catch (error) {
+    console.error('Erreur lors de la récupération/création du profil utilisateur:', error);
+    // En cas d'erreur, retourner quand même l'ID utilisateur
+    return CURRENT_USER_ID;
   }
 }
 

@@ -6,6 +6,8 @@ import { router } from 'expo-router';
 
 import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
 
+import { updateUserPreferences, getOrCreateUser } from '../src/models/user';
+
 // Associe l'ID du genre à une couleur et une icône
 const GENRE_STYLES: Record<number, { icon: string; color: string; iconColor: string }> = {
   28:  { icon: 'bomb', color: 'bg-red-700', iconColor: 'text-red-700' }, // Action
@@ -155,10 +157,16 @@ const Onboarding = () => {
       <View className="absolute bottom-0 left-0 right-0 p-6 bg-[#0F0F1E]/95 border-t border-white/5">
         <TouchableOpacity
             disabled={!isContinueEnabled}
-            onPress={() => {
-                console.log('Genres choisis:', selectedGenres); 
-                router.replace('/homeScreen'); // On va vers la page d'accueil
-
+            onPress={async () => {
+                try {
+                    console.log('Genres choisis:', selectedGenres);
+                    // Obtenir ou créer le profil utilisateur unique de l'application
+                    const userId = await getOrCreateUser();
+                    await updateUserPreferences(userId, { genres: selectedGenres, keywords: [] });
+                    router.replace('/homeScreen'); // On va vers la page d'accueil
+                } catch (error) {
+                    console.error('Erreur lors de la sauvegarde des préférences:', error);
+                }
             }}
             className={`w-full py-4 rounded-full items-center justify-center ${
                 isContinueEnabled ? 'bg-[#6C5CE7]'  : 'bg-gray-700'
