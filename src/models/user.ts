@@ -1,6 +1,6 @@
 import { getDatabase } from './db';
 
-// ID de l'utilisateur unique de l'application (pas de système de connexion)
+// ID de l'utilisateur unique de l'application
 export const CURRENT_USER_ID = 1;
 
 export interface UserPreferences {

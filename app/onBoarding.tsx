@@ -162,7 +162,7 @@ const Onboarding = () => {
                     console.log('Genres choisis:', selectedGenres);
                     // Obtenir ou créer le profil utilisateur unique de l'application
                     const userId = await getOrCreateUser();
-                    await updateUserPreferences(userId, { genres: selectedGenres, keywords: [] });
+                    await updateUserPreferences(userId, { genres: selectedGenres});
                     router.replace('/homeScreen'); // On va vers la page d'accueil
                 } catch (error) {
                     console.error('Erreur lors de la sauvegarde des préférences:', error);
