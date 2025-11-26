@@ -31,9 +31,17 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   await ensureDatabasePresent();
 
   // Pour expo-sqlite, on utilise juste le nom de la base
-  // expo-sqlite gère automatiquement le chemin
+  // expo-sqlite cherche dans documentDirectory par défaut
   const dbName = 'database.db';
   db = await SQLite.openDatabaseAsync(dbName);
+  
+  try {
+    const genresCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM genres');
+    const moviesCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM movies');
+    console.log(`Base ouverte - Genres: ${genresCount?.count || 0}, Films: ${moviesCount?.count || 0}`);
+  } catch (e) {
+    console.error('Erreur lors de la vérification de la base:', e);
+  }
   
   // Appliquer les migrations si nécessaire
   await migrateDatabase(db);
