@@ -67,7 +67,7 @@ export async function getMovieGenreIdById(movieId: number): Promise<number[]> {
 export async function getMovieGenreById(movieId: number): Promise<Genre[]> {
   const db = await getDatabase();
   const result = await db.getAllAsync<Genre>(
-    'SELECT genres.* FROM genres JOIN movie_genres ON genres.id = movie_genres.genre_id WHERE movie_genres.movie_id = ?',
+    'SELECT DISTINCT genres.* FROM genres JOIN movie_genres ON genres.id = movie_genres.genre_id WHERE movie_genres.movie_id = ?',
     [movieId]
   );
   return result;
