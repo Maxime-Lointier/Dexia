@@ -54,12 +54,12 @@ const Onboarding = () => {
         // Importe les genres
         const genresData = await getAllGenres();
         setGenres(genresData);
-        console.log("genres loaded : ", genresData.length);
+        console.log("genres loaded : ", genresData);
 
         // Importe les films
         const moviesData = await getTopRatedMovies(20);
         setMovies(moviesData);
-        console.log("movies loaded : ", moviesData.length);
+        console.log("movies loaded : ", moviesData);
         
     } catch (error) {
         console.error("Erreur chargement:", error);
@@ -162,7 +162,7 @@ const Onboarding = () => {
                     console.log('Genres choisis:', selectedGenres);
                     // Obtenir ou créer le profil utilisateur unique de l'application
                     const userId = await getOrCreateUser();
-                    await updateUserPreferences(userId, { genres: selectedGenres});
+                    await updateUserPreferences(userId, { genres: selectedGenres, keywords: [] });
                     router.replace('/homeScreen'); // On va vers la page d'accueil
                 } catch (error) {
                     console.error('Erreur lors de la sauvegarde des préférences:', error);
