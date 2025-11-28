@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StatusBar, ActivityIndicator, Dimensions, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 as Icon } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import Animated, {
@@ -14,7 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getMovieGenreById } from '../src/models/movies';
+import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById } from '../src/models/movies';
 import { getUserPreferences, CURRENT_USER_ID } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
@@ -66,7 +67,7 @@ const SwipeScreen = () => {
       }
 
       if (moviesData.length === 0) {
-        moviesData = await getTopRatedMovies(20);
+        moviesData = await getRandomMovies(10);
       }
 
       setMovies(moviesData);
@@ -128,6 +129,23 @@ const SwipeScreen = () => {
     goToNextMovie(actionType);
   };
 
+  const handleButtonSwipe = (direction: 'left' | 'right') => {
+    const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
+    
+    translateX.value = withTiming(destinationX, { duration: 350 }, (finished) => {
+      if (finished) {
+        runOnJS(handleSwipeComplete)(direction);
+      }
+    });
+    opacity.value = withTiming(0, { duration: 350 });
+  };
+
+  const handleUndo = () => {
+    if (currentMovieIndex > 0) {
+      setCurrentMovieIndex(currentMovieIndex - 1);
+    }
+  };
+
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
       translateX.value = e.translationX;
@@ -137,7 +155,7 @@ const SwipeScreen = () => {
       opacity.value = interpolate(
         distance,
         [0, SCREEN_WIDTH],
-        [1, 0.3],
+        [1, 0.8], 
         Extrapolate.CLAMP
       );
     })
@@ -146,16 +164,27 @@ const SwipeScreen = () => {
       
       if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
         const direction = swipeDistance > 0 ? 'right' : 'left';
-        translateX.value = withSpring(
-          direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5,
-          { damping: 18, stiffness: 120 }
-        );
-        opacity.value = withSpring(0, { damping: 18, stiffness: 120 });
+        const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
+        
+        translateX.value = withSpring(destinationX, {
+          damping: 20,
+          stiffness: 90,
+          mass: 1
+        });
+        opacity.value = withTiming(0, { duration: 200 });
         runOnJS(handleSwipeComplete)(direction);
       } else {
-        translateX.value = withSpring(0, { damping: 18, stiffness: 120 });
-        translateY.value = withSpring(0, { damping: 18, stiffness: 120 });
-        opacity.value = withSpring(1, { damping: 18, stiffness: 120 });
+        translateX.value = withSpring(0, {
+          damping: 20,
+          stiffness: 90,
+          mass: 1
+        });
+        translateY.value = withSpring(0, {
+          damping: 20,
+          stiffness: 90,
+          mass: 1
+        });
+        opacity.value = withTiming(1, { duration: 200 });
       }
     });
 
@@ -229,7 +258,6 @@ const SwipeScreen = () => {
     <SafeAreaView className="flex-1 bg-[#0F0F1E]">
       <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
 
-      {/* Header */}
       <View className="flex-row justify-between items-center px-6 pt-2 pb-4">
         <TouchableOpacity 
           onPress={() => router.push('/homeScreen')}
@@ -241,11 +269,10 @@ const SwipeScreen = () => {
           <Text className="text-white text-2xl font-bold">Dexia</Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Icon name="filter" size={24} color="white" />
+          <View style={{ width: 24, height: 24 }} />
         </TouchableOpacity>
       </View>
 
-      {/* Zone de swipe */}
       <View className="flex-1 justify-center items-center px-6" style={{ paddingBottom: 100 }}>
         <GestureDetector gesture={panGesture}>
           <Animated.View
@@ -260,106 +287,86 @@ const SwipeScreen = () => {
           >
             <View
               style={{
-                backgroundColor: 'rgba(30, 30, 46, 0.95)',
-                borderWidth: 1,
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-                shadowColor: '#6C5CE7',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.3,
-                shadowRadius: 16,
-                elevation: 8,
+                backgroundColor: '#1E1E2E',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.5,
+                shadowRadius: 20,
+                elevation: 10,
                 height: '100%',
               }}
-              className="rounded-3xl flex-col"
+              className="rounded-3xl relative"
             >
-              {/* Poster - Prend 55% de la hauteur */}
-              <View style={{ height: '55%', width: '100%', position: 'relative' }}>
-                {posterSource ? (
-                  <Image 
-                    source={posterSource} 
-                    style={{ width: '100%', height: '100%' }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View className="w-full h-full bg-gray-800 items-center justify-center">
-                    <Icon name="image" size={64} color="#4B5563" />
-                    <Text className="text-gray-500 mt-2">Poster indisponible</Text>
-                  </View>
-                )}
-                
-                {/* Note */}
-                <View className="absolute top-4 right-4 bg-[#6C5CE7]/90 px-3 py-1.5 rounded-full flex-row items-center shadow-sm">
-                  <Icon name="star" size={14} color="white" />
-                  <Text className="text-white font-semibold ml-1.5">
-                    {currentMovie.vote_average.toFixed(1)}
-                  </Text>
+              {posterSource ? (
+                <Image 
+                  source={posterSource} 
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View className="w-full h-full bg-gray-800 items-center justify-center">
+                  <Icon name="image" size={64} color="#4B5563" />
+                  <Text className="text-gray-500 mt-2">Poster indisponible</Text>
                 </View>
+              )}
+
+              <LinearGradient
+                colors={['transparent', 'rgba(15, 15, 30, 0.4)', 'rgba(15, 15, 30, 0.95)']}
+                locations={[0, 0.3, 1]}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: '60%',
+                }}
+              />
+
+              <View className="absolute top-4 right-4 bg-[#6C5CE7]/90 px-3 py-1.5 rounded-full flex-row items-center shadow-sm z-10">
+                <Icon name="star" size={14} color="white" />
+                <Text className="text-white font-bold ml-1.5">
+                  {currentMovie.vote_average.toFixed(1)}
+                </Text>
               </View>
 
-              {/* Contenu - Prend 45% de la hauteur */}
-              <View style={{ height: '45%', padding: 16, flexDirection: 'column', justifyContent: 'space-between' }}>
-                
-                {/* Genres - Hauteur fixe pour éviter les sauts */}
-                <View style={{ height: 28, marginBottom: 8 }}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {currentGenres.map((genre, index) => (
-                      <View 
-                        key={index}
-                        className="bg-gray-700/80 px-3 py-1 rounded-full mr-2"
-                      >
-                        <Text className="text-white text-xs">{genre}</Text>
-                      </View>
-                    ))}
-                  </ScrollView>
+              <View className="absolute bottom-0 left-0 right-0 p-5 pb-6 flex-col">
+                <View className="flex-row flex-wrap mb-2">
+                  {currentGenres.slice(0, 3).map((genre, index) => (
+                    <View 
+                      key={index}
+                      className="bg-white/10 border border-white/10 px-2.5 py-1 rounded-md mr-2 mb-1"
+                    >
+                      <Text className="text-white/90 text-[10px] font-medium tracking-wide uppercase">{genre}</Text>
+                    </View>
+                  ))}
                 </View>
 
-                {/* Titre - Max 2 lignes */}
-                <View style={{ flex: 1, justifyContent: 'center', marginBottom: 4 }}>
-                  <Text 
-                    className="text-white text-xl font-bold" 
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                    style={{ lineHeight: 24 }}
-                  >
-                    {currentMovie.title}
-                  </Text>
-                </View>
+                <Text 
+                  className="text-white text-3xl font-bold mb-1 shadow-sm" 
+                  numberOfLines={2}
+                >
+                  {currentMovie.title}
+                </Text>
 
-                {/* Métadonnées */}
                 <View className="flex-row items-center mb-3">
-                  <View className="flex-row items-center mr-4">
-                    <Icon name="calendar" size={14} color="#9CA3AF" />
-                    <Text className="text-gray-400 ml-2 text-xs">{getYear(currentMovie.release_date)}</Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Icon name="clock" size={14} color="#9CA3AF" />
-                    <Text className="text-gray-400 ml-2 text-xs">-</Text>
-                  </View>
-                </View>
-
-                {/* Synopsis - Court */}
-                <View style={{ height: 36, marginBottom: 12 }}>
-                  <Text 
-                    className="text-gray-300 text-xs leading-4" 
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                  >
-                    {currentMovie.overview || 'Aucune description disponible.'}
+                  <Text className="text-gray-300 text-sm font-medium">
+                    {getYear(currentMovie.release_date)}
                   </Text>
                 </View>
 
-                {/* Bouton Plus d'informations */}
+                <Text 
+                  className="text-gray-300 text-sm leading-5 mb-4" 
+                  numberOfLines={2}
+                >
+                  {currentMovie.overview || 'Aucune description disponible.'}
+                </Text>
+
                 <TouchableOpacity 
                   onPress={openInfoModal}
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 1,
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                  }}
-                  className="w-full py-2.5 rounded-xl flex-row items-center justify-center"
+                  className="flex-row items-center self-start"
                 >
-                  <Icon name="info-circle" size={16} color="white" />
-                  <Text className="text-white font-medium ml-2 text-sm">Plus d'informations</Text>
+                  <Text className="text-[#6C5CE7] font-bold text-sm mr-1">En savoir plus</Text>
+                  <Icon name="chevron-right" size={12} color="#6C5CE7" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -367,15 +374,10 @@ const SwipeScreen = () => {
         </GestureDetector>
       </View>
 
-      {/* Boutons d'action */}
       <View className="absolute bottom-0 left-0 right-0 px-6 py-6 bg-[#0F0F1E]/95 border-t border-white/5">
         <View className="flex-row justify-around items-center">
           <TouchableOpacity 
-            onPress={() => {
-              translateX.value = withSpring(-SCREEN_WIDTH * 1.5, { damping: 18, stiffness: 120 });
-              opacity.value = withSpring(0, { damping: 18, stiffness: 120 });
-              handleSwipeComplete('left');
-            }}
+            onPress={() => handleButtonSwipe('left')}
             className="w-14 h-14 bg-red-600 rounded-full items-center justify-center"
           >
             <Icon name="times" size={24} color="white" />
@@ -389,22 +391,22 @@ const SwipeScreen = () => {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            onPress={() => goToNextMovie('favorite')}
+            onPress={() => router.push('/homeScreen')}
             className="w-16 h-16 bg-[#6C5CE7] rounded-full items-center justify-center"
           >
-            <Icon name="star" size={28} color="white" />
-          </TouchableOpacity>
-
-          <TouchableOpacity className="w-14 h-14 bg-[#1E1E2E] rounded-full items-center justify-center">
-            <Icon name="bookmark" size={20} color="white" />
+            <Icon name="home" size={28} color="white" />
           </TouchableOpacity>
 
           <TouchableOpacity 
-            onPress={() => {
-              translateX.value = withSpring(SCREEN_WIDTH * 1.5, { damping: 18, stiffness: 120 });
-              opacity.value = withSpring(0, { damping: 18, stiffness: 120 });
-              handleSwipeComplete('right');
-            }}
+            onPress={handleUndo}
+            className={`w-14 h-14 bg-[#1E1E2E] rounded-full items-center justify-center ${currentMovieIndex === 0 ? 'opacity-50' : ''}`}
+            disabled={currentMovieIndex === 0}
+          >
+            <Icon name="undo" size={20} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => handleButtonSwipe('right')}
             className="w-14 h-14 bg-green-600 rounded-full items-center justify-center"
           >
             <Icon name="heart" size={24} color="white" />
@@ -412,7 +414,6 @@ const SwipeScreen = () => {
         </View>
       </View>
 
-      {/* Modal Plus d'informations */}
       <Modal
         visible={showInfoModal}
         transparent={true}
@@ -423,113 +424,94 @@ const SwipeScreen = () => {
           style={[
             {
               flex: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
             },
             modalAnimatedStyle,
           ]}
         >
-          <SafeAreaView className="flex-1">
-            <View className="flex-1 justify-center px-6">
-              <View
-                style={{
-                  backgroundColor: 'rgba(30, 30, 46, 0.95)',
-                  borderWidth: 1,
-                  borderColor: 'rgba(255, 255, 255, 0.1)',
-                  shadowColor: '#6C5CE7',
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.5,
-                  shadowRadius: 24,
-                  elevation: 12,
-                  maxHeight: SCREEN_HEIGHT * 0.85,
-                }}
-                className="rounded-3xl overflow-hidden"
+          <View className="flex-1 justify-end">
+            <View 
+              className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]"
+            >
+              <View className="w-full items-center pt-3 pb-2 absolute z-20 top-0 left-0 right-0">
+                <View className="w-12 h-1.5 bg-white/20 rounded-full" />
+              </View>
+
+              <ScrollView 
+                className="flex-1" 
+                bounces={false}
+                showsVerticalScrollIndicator={false}
               >
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 20 }}
-                >
-                  {/* Header avec bouton fermer */}
-                  <View className="flex-row justify-between items-center px-6 pt-6 pb-4">
-                    <Text className="text-white text-2xl font-bold">Détails du film</Text>
-                    <TouchableOpacity
-                      onPress={closeInfoModal}
-                      className="w-10 h-10 items-center justify-center"
-                    >
-                      <Icon name="times" size={24} color="white" />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Poster */}
+                <View className="relative h-80 w-full">
                   {posterSource && (
-                    <View className="px-6 pb-4">
-                      <Image
-                        source={posterSource}
-                        style={{ width: '100%', height: SCREEN_HEIGHT * 0.35, borderRadius: 16 }}
-                        resizeMode="cover"
-                      />
-                    </View>
+                    <Image
+                      source={posterSource}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
                   )}
+                  <LinearGradient
+                    colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#151521']}
+                    locations={[0, 0.6, 1]}
+                    className="absolute bottom-0 left-0 right-0 h-48"
+                  />
+                  <TouchableOpacity 
+                    onPress={closeInfoModal}
+                    className="absolute top-6 right-6 bg-black/40 p-2.5 rounded-full backdrop-blur-sm"
+                  >
+                    <Icon name="times" size={16} color="white" />
+                  </TouchableOpacity>
+                </View>
 
-                  {/* Titre */}
-                  <View className="px-6 pb-3">
-                    <Text className="text-white text-3xl font-bold">{currentMovie.title}</Text>
-                  </View>
-
-                  {/* Note et métadonnées */}
-                  <View className="px-6 pb-4 flex-row items-center">
-                    <View className="bg-[#6C5CE7]/90 px-3 py-1.5 rounded-full flex-row items-center mr-4">
-                      <Icon name="star" size={16} color="white" />
-                      <Text className="text-white font-semibold ml-1.5">
+                <View className="px-6 -mt-12 pb-10 relative z-10">
+                  <View className="flex-row justify-between items-end mb-4">
+                    <Text 
+                      className="text-white text-3xl font-bold flex-1 mr-4 leading-tight"
+                      style={{ 
+                        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: 4
+                      }}
+                    >
+                      {currentMovie.title}
+                    </Text>
+                    <View className="bg-[#6C5CE7] px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-[#6C5CE7]/30">
+                      <Icon name="star" size={14} color="white" solid />
+                      <Text className="text-white font-bold ml-1.5 text-base">
                         {currentMovie.vote_average.toFixed(1)}
                       </Text>
                     </View>
-                    <View className="flex-row items-center">
-                      <Icon name="calendar" size={16} color="#9CA3AF" />
-                      <Text className="text-gray-400 ml-2">{getYear(currentMovie.release_date)}</Text>
-                    </View>
                   </View>
 
-                  {/* Genres */}
-                  {currentGenres.length > 0 && (
-                    <View className="px-6 pb-4">
-                      <Text className="text-gray-400 text-sm mb-2">Genres</Text>
-                      <View className="flex-row flex-wrap">
-                        {currentGenres.map((genre, index) => (
-                          <View
-                            key={index}
-                            className="bg-gray-700/80 px-3 py-1.5 rounded-full mr-2 mb-2"
-                          >
-                            <Text className="text-white text-sm">{genre}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Description complète */}
-                  <View className="px-6 pb-4">
-                    <Text className="text-gray-400 text-sm mb-2">Synopsis</Text>
-                    <Text className="text-white text-base leading-6">
-                      {currentMovie.overview || 'Aucune description disponible.'}
+                  <View className="flex-row items-center mb-6">
+                    <Text className="text-gray-400 font-medium text-base">
+                      {getYear(currentMovie.release_date)}
+                    </Text>
+                    <View className="w-1 h-1 bg-gray-600 rounded-full mx-3" />
+                    <Text className="text-gray-400 font-medium text-base">
+                      {currentMovie.release_date}
                     </Text>
                   </View>
 
-                  {/* Informations supplémentaires */}
-                  {currentMovie.release_date && (
-                    <View className="px-6 pb-6">
-                      <Text className="text-gray-400 text-sm mb-2">Informations</Text>
-                      <View>
-                        <View className="flex-row items-center mb-2">
-                          <Text className="text-gray-500 text-sm w-24">Date de sortie:</Text>
-                          <Text className="text-white text-sm">{currentMovie.release_date}</Text>
-                        </View>
+                  <View className="flex-row flex-wrap mb-8 gap-2">
+                    {currentGenres.map((genre, index) => (
+                      <View 
+                        key={index}
+                        className="bg-[#6C5CE7]/15 border border-[#6C5CE7]/30 px-4 py-1.5 rounded-full"
+                      >
+                        <Text className="text-[#9D8FFF] text-sm font-medium">{genre}</Text>
                       </View>
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
+                    ))}
+                  </View>
+
+                  <Text className="text-white text-xl font-bold mb-3">Synopsis</Text>
+                  <Text className="text-gray-400 text-base leading-7">
+                    {currentMovie.overview || 'Aucune description disponible pour ce film.'}
+                  </Text>
+                </View>
+              </ScrollView>
             </View>
-          </SafeAreaView>
+          </View>
         </Animated.View>
       </Modal>
     </SafeAreaView>

@@ -108,6 +108,18 @@ export async function findMoviesByKeyword(keyword: string): Promise<Movie[]> {
 }
 
 /**
+ * Récupère des films aléatoires
+ * @param limit - Nombre de films à retourner
+ * @returns Promise<Movie[]> - Liste de films aléatoires
+ */
+export async function getRandomMovies(limit: number): Promise<Movie[]> {
+  const db = await getDatabase();
+  const sql = 'SELECT * FROM movies ORDER BY RANDOM() LIMIT ?';
+  const result = await db.getAllAsync<Movie>(sql, [limit]);
+  return result;
+}
+
+/**
  * Récupère les films les mieux notés
  * @param limit - Nombre maximum de films à retourner
  * @returns Promise<Movie[]> - Liste des films triés par note
