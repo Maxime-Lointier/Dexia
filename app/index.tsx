@@ -7,8 +7,12 @@ const Onboarding = () => {
       <View style={styles.innerContainer}>
         <Text style={styles.title}>Page Onboarding</Text>
 
-        <Link href="homeScreen">
+        <Link href="/homeScreen">
           <Text style={styles.link}>Go to homeScreen.tsx</Text>
+        </Link>
+
+        <Link href="/welcomeScreen">
+          <Text style={styles.link}>Go to welcomeScreen.tsx</Text>
         </Link>
 
         <Link href="/onBoarding">
