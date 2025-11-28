@@ -17,6 +17,24 @@ export interface UserInteraction {
 export async function ensureInteractionTable(): Promise<boolean> {
   const db = await getDatabase();
   try {
+    const tableExists = await db.getFirstAsync('SELECT name FROM sqlite_master WHERE type="table" AND name="user_interactions"');
+    
+    if (tableExists) {
+      const tableInfo = await db.getAllAsync('PRAGMA table_info(user_interactions)');
+      const hasUserId = tableInfo.some((col: any) => col.name === 'user_id');
+      
+      if (!hasUserId) {
+        console.log('Migration: Recreation de la table user_interactions (manque user_id)');
+        try {
+          await db.execAsync('DROP TABLE user_interactions');
+        } catch (e) {
+          console.log('Erreur lors du DROP TABLE:', e);
+        }
+      } else {
+        return true;
+      }
+    }
+
     const sql = `CREATE TABLE IF NOT EXISTS user_interactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -27,7 +45,7 @@ export async function ensureInteractionTable(): Promise<boolean> {
     await db.execAsync(sql);
     return true;
   } catch (error) {
-    console.error('Erreur création table user_interactions:', error);
+    console.error('Erreur création/migration table user_interactions:', error);
     return false;
   }
 }
@@ -53,7 +71,6 @@ export async function addInteraction(
     const sql = 'INSERT INTO user_interactions (user_id, movie_id, action_type) VALUES (?, ?, ?)';
     const result = await db.runAsync(sql, [userId, movieId, actionType]);
     
-    // Récupérer l'interaction créée
     const interaction = await db.getFirstAsync<UserInteraction>(
       'SELECT * FROM user_interactions WHERE id = ?',
       [result.lastInsertRowId]
