@@ -180,7 +180,7 @@ export async function getMoviesByGenresAndKeywords(
     params.push(...excludeIds);
   }
   
-  sql += ' ORDER BY (movies.vote_average * 0.7 + LOG(movies.popularity + 1) * 0.3) DESC';
+  sql += ' ORDER BY (movies.vote_average * 0.7 + (movies.popularity / 100.0) * 0.3) DESC';
   
   if (limit) {
     sql += ' LIMIT ?';
@@ -228,7 +228,7 @@ export async function getMoviesOutsideGenres(
     params.push(...excludeIds);
   }
   
-  sql += ' ORDER BY (movies.vote_average * 0.6 + LOG(movies.popularity + 1) * 0.4) DESC';
+  sql += ' ORDER BY (movies.vote_average * 0.6 + (movies.popularity / 100.0) * 0.4) DESC';
   
   if (limit) {
     sql += ' LIMIT ?';
