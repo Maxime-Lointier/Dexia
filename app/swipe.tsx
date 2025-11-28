@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById } from '../src/models/movies';
+import { getMovieCast, Cast } from '../src/models/cast';
 import { getUserPreferences, CURRENT_USER_ID } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
@@ -27,6 +28,7 @@ const SwipeScreen = () => {
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentGenres, setCurrentGenres] = useState<string[]>([]);
+  const [currentCast, setCurrentCast] = useState<Cast[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInfoModal, setShowInfoModal] = useState(false);
 
@@ -41,7 +43,9 @@ const SwipeScreen = () => {
 
   useEffect(() => {
     if (movies.length > 0 && currentMovieIndex < movies.length) {
-      loadGenresForMovie(movies[currentMovieIndex].id);
+      const movieId = movies[currentMovieIndex].id;
+      loadGenresForMovie(movieId);
+      loadCastForMovie(movieId);
       translateX.value = 0;
       translateY.value = 0;
       opacity.value = 1;
@@ -72,7 +76,9 @@ const SwipeScreen = () => {
 
       setMovies(moviesData);
       if (moviesData.length > 0) {
-        loadGenresForMovie(moviesData[0].id);
+        const firstMovieId = moviesData[0].id;
+        loadGenresForMovie(firstMovieId);
+        loadCastForMovie(firstMovieId);
       }
     } catch (error) {
       console.error('Erreur chargement films:', error);
@@ -88,6 +94,16 @@ const SwipeScreen = () => {
     } catch (error) {
       console.error('Erreur chargement genres:', error);
       setCurrentGenres([]);
+    }
+  };
+
+  const loadCastForMovie = async (movieId: number) => {
+    try {
+      const cast = await getMovieCast(movieId);
+      setCurrentCast(cast);
+    } catch (error) {
+      console.error('Erreur chargement casting:', error);
+      setCurrentCast([]);
     }
   };
 
@@ -323,7 +339,7 @@ const SwipeScreen = () => {
               />
 
               <View className="absolute top-4 right-4 bg-[#6C5CE7]/90 px-3 py-1.5 rounded-full flex-row items-center shadow-sm z-10">
-                <Icon name="star" size={14} color="white" />
+                <Icon name="star" size={14} color="#FACC15" solid />
                 <Text className="text-white font-bold ml-1.5">
                   {currentMovie.vote_average.toFixed(1)}
                 </Text>
@@ -476,7 +492,7 @@ const SwipeScreen = () => {
                       {currentMovie.title}
                     </Text>
                     <View className="bg-[#6C5CE7] px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-[#6C5CE7]/30">
-                      <Icon name="star" size={14} color="white" solid />
+                      <Icon name="star" size={14} color="#FACC15" solid />
                       <Text className="text-white font-bold ml-1.5 text-base">
                         {currentMovie.vote_average.toFixed(1)}
                       </Text>
@@ -484,12 +500,9 @@ const SwipeScreen = () => {
                   </View>
 
                   <View className="flex-row items-center mb-6">
+                    <Icon name="calendar-alt" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
                     <Text className="text-gray-400 font-medium text-base">
-                      {getYear(currentMovie.release_date)}
-                    </Text>
-                    <View className="w-1 h-1 bg-gray-600 rounded-full mx-3" />
-                    <Text className="text-gray-400 font-medium text-base">
-                      {currentMovie.release_date}
+                      {new Date(currentMovie.release_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </Text>
                   </View>
 
@@ -502,6 +515,33 @@ const SwipeScreen = () => {
                         <Text className="text-[#9D8FFF] text-sm font-medium">{genre}</Text>
                       </View>
                     ))}
+                  </View>
+
+                  <Text className="text-white text-xl font-bold mb-3 mt-2">Casting</Text>
+                  <View className="-mx-6 mb-8">
+                    <ScrollView 
+                      horizontal 
+                      showsHorizontalScrollIndicator={false} 
+                      contentContainerStyle={{ paddingHorizontal: 24 }}
+                    >
+                      {currentCast.map((actor, index) => (
+                        <View key={index} className="mr-4 w-20 items-center">
+                          <View className="w-20 h-20 rounded-full bg-[#2A2A3A] mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
+                              <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
+                                <Text className="text-white/30 font-bold text-lg">
+                                  {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </Text>
+                              </View>
+                          </View>
+                          <Text className="text-white text-xs font-bold text-center w-full leading-tight" numberOfLines={2}>
+                            {actor.name}
+                          </Text>
+                          <Text className="text-gray-400 text-[10px] text-center w-full leading-tight mt-0.5" numberOfLines={2}>
+                            {actor.role}
+                          </Text>
+                        </View>
+                      ))}
+                    </ScrollView>
                   </View>
 
                   <Text className="text-white text-xl font-bold mb-3">Synopsis</Text>
