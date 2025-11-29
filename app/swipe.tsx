@@ -1,12 +1,13 @@
 import React, { useRef, useState, useCallback } from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, Dimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
+// @ts-ignore: Cette librairie n'a pas de définitions TypeScript officielles
 import Swiper from "react-native-deck-swiper";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
 
-// --- 1. TYPES & INTERFACES ---
+// --- 1. DÉFINITION DES TYPES ---
 type Movie = {
   id: number;
   title: string;
@@ -18,7 +19,7 @@ type Movie = {
   poster: string;
 };
 
-// --- 2. CONSTANTES & DONNÉES ---
+// --- 2. DONNÉES DE TEST (MOCK) ---
 const MOCK_MOVIES: Movie[] = [
   {
     id: 1,
@@ -74,8 +75,9 @@ const MOCK_MOVIES: Movie[] = [
 
 // --- 3. SOUS-COMPOSANTS ---
 
+// En-tête de l'application
 const Header = () => (
-  <View className="px-6 pt-14 pb-4 flex-row justify-between items-center z-10">
+  <View className="px-6 pt-14 pb-4 flex-row justify-between items-center z-10 bg-transparent">
     <TouchableOpacity
       onPress={() => router.back()}
       className="w-10 h-10 bg-gray-800 rounded-full items-center justify-center"
@@ -99,23 +101,24 @@ const Header = () => (
   </View>
 );
 
+// Carte d'un film individuel
 const MovieCard = ({ movie }: { movie: Movie }) => {
+  // Sécurité : si le film est undefined, on ne rend rien
   if (!movie) return null;
 
   return (
-    <View className="w-[88%] h-[70%] bg-gray-900 rounded-3xl overflow-hidden shadow-lg border border-white/5">
+    <View className="flex-1 bg-gray-900 rounded-3xl overflow-hidden shadow-xl border border-white/5 relative">
       <Image
         source={{ uri: movie.poster }}
         className="w-full h-full absolute"
         resizeMode="cover"
       />
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.95)"]}
-        start={{ x: 0, y: 0.4 }}
-        end={{ x: 0, y: 1 }}
-        className="absolute inset-0 justify-end p-5"
+        colors={["transparent", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.95)"]}
+        locations={[0, 0.6, 1]}
+        className="absolute inset-0 justify-end p-6"
       >
-        <View className="flex-row items-center justify-between mb-2">
+        <View className="flex-row items-center justify-between mb-3">
           <View className="flex-1 pr-2">
             <Text
               className="text-white font-bold text-3xl shadow-md"
@@ -129,7 +132,7 @@ const MovieCard = ({ movie }: { movie: Movie }) => {
           </View>
 
           <View className="items-end">
-            <View className="flex-row items-center gap-1 bg-black/30 px-2 py-1 rounded-lg">
+            <View className="flex-row items-center gap-1 bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm">
               <FontAwesome name="star" size={14} color="#FACC15" />
               <Text className="text-white font-bold text-base">
                 {movie.rating.toFixed(1)}
@@ -141,7 +144,6 @@ const MovieCard = ({ movie }: { movie: Movie }) => {
           </View>
         </View>
 
-        {/* Genres Tags */}
         <View className="flex-row flex-wrap gap-2 mt-2">
           {movie.genres.map((g) => (
             <View
@@ -159,6 +161,7 @@ const MovieCard = ({ movie }: { movie: Movie }) => {
   );
 };
 
+// Boutons d'action en bas (Rewind, Nope, Like, List)
 interface ActionButtonsProps {
   onRewind: () => void;
   onDislike: () => void;
@@ -166,8 +169,13 @@ interface ActionButtonsProps {
   onList: () => void;
 }
 
-const ActionButtons = ({ onRewind, onDislike, onLike, onList }: ActionButtonsProps) => (
-  <View className="px-10 pb-10 flex-row justify-between items-center w-full">
+const ActionButtons = ({
+  onRewind,
+  onDislike,
+  onLike,
+  onList,
+}: ActionButtonsProps) => (
+  <View className="px-10 pb-10 pt-2 flex-row justify-between items-center w-full absolute bottom-0 z-20">
     <TouchableOpacity
       onPress={onRewind}
       className="w-12 h-12 rounded-full bg-gray-800 items-center justify-center border border-gray-700 shadow-sm"
@@ -177,14 +185,14 @@ const ActionButtons = ({ onRewind, onDislike, onLike, onList }: ActionButtonsPro
 
     <TouchableOpacity
       onPress={onDislike}
-      className="w-16 h-16 rounded-full bg-red-500/10 items-center justify-center border-2 border-red-500/60 shadow-red-900/20 shadow-lg"
+      className="w-16 h-16 rounded-full bg-red-500/10 items-center justify-center border-2 border-red-500/60 shadow-lg shadow-red-900/20"
     >
       <FontAwesome5 name="times" size={24} color="#F97373" />
     </TouchableOpacity>
 
     <TouchableOpacity
       onPress={onLike}
-      className="w-16 h-16 rounded-full bg-emerald-500/10 items-center justify-center border-2 border-emerald-500/60 shadow-emerald-900/20 shadow-lg"
+      className="w-16 h-16 rounded-full bg-emerald-500/10 items-center justify-center border-2 border-emerald-500/60 shadow-lg shadow-emerald-900/20"
     >
       <FontAwesome5 name="heart" size={22} color="#34D399" />
     </TouchableOpacity>
@@ -201,10 +209,11 @@ const ActionButtons = ({ onRewind, onDislike, onLike, onList }: ActionButtonsPro
 // --- 4. COMPOSANT PRINCIPAL ---
 
 export default function SwipePage() {
-  const swiperRef = useRef<Swiper<Movie>>(null);
+  // Utilisation de 'any' pour la ref car les types de la librairie sont incomplets
+  const swiperRef = useRef<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // --- Handlers ---
+  // --- Gestionnaires d'événements ---
   const handleSwiped = useCallback((index: number) => {
     setCurrentIndex(index + 1);
   }, []);
@@ -219,13 +228,16 @@ export default function SwipePage() {
     if (movie) console.log("Like :", movie.title);
   }, []);
 
-  // --- Button Actions ---
+  // --- Actions déclenchées par les boutons ---
   const triggerSwipeLeft = () => swiperRef.current?.swipeLeft();
   const triggerSwipeRight = () => swiperRef.current?.swipeRight();
+  
   const triggerRewind = () => {
+    // swipeBack est disponible dans la librairie mais souvent non documenté en TS
     if (currentIndex > 0) {
-      swiperRef.current?.jumpToCardIndex(currentIndex - 1);
-      setCurrentIndex((prev) => prev - 1);
+      swiperRef.current?.swipeBack(() => {
+        setCurrentIndex((prev) => prev - 1);
+      });
     }
   };
 
@@ -233,39 +245,56 @@ export default function SwipePage() {
     <View className="flex-1 bg-black">
       <StatusBar style="light" />
 
+      {/* En-tête */}
       <Header />
 
+      {/* Sous-titre */}
       <View className="px-6 mb-2 z-10">
         <Text className="text-gray-400 text-center text-xs opacity-70">
           Swipez à droite pour liker, à gauche pour passer
         </Text>
       </View>
 
-      <View className="flex-1 -mt-6">
+      {/* Zone de Swipe */}
+      {/* -mt-8 permet de remonter un peu les cartes sous le header */}
+      <View className="flex-1 -mt-8 relative z-0">
         <Swiper
           ref={swiperRef}
           cards={MOCK_MOVIES}
           cardIndex={currentIndex}
           backgroundColor="transparent"
           stackSize={3}
-          stackSeparation={15}
-          cardVerticalMargin={40}
+          cardVerticalMargin={20}
+          // Important: gérer le cas où movie est null
+          renderCard={(movie: Movie) => {
+             if (!movie) return <View className="flex-1 bg-transparent" />; 
+             return <MovieCard movie={movie} />;
+          }}
+          onSwiped={handleSwiped}
+          onSwipedLeft={handleSwipedLeft}
+          onSwipedRight={handleSwipedRight}
+          onSwipedAll={() => console.log("Fin de la liste")}
+          // Configuration des labels visuels lors du swipe (LIKE / NOPE)
           overlayLabels={{
             left: {
               title: 'NOPE',
               style: {
                 label: {
-                  backgroundColor: 'red',
-                  borderColor: 'red',
-                  color: 'white',
-                  borderWidth: 1
+                  backgroundColor: 'transparent',
+                  borderColor: '#F97373',
+                  color: '#F97373',
+                  borderWidth: 4,
+                  fontSize: 24,
+                  fontWeight: '800',
+                  borderRadius: 8,
                 },
                 wrapper: {
                   flexDirection: 'column',
                   alignItems: 'flex-end',
                   justifyContent: 'flex-start',
-                  marginTop: 30,
-                  marginLeft: -30
+                  marginTop: 40,
+                  marginLeft: -40,
+                  elevation: 5,
                 }
               }
             },
@@ -273,31 +302,31 @@ export default function SwipePage() {
               title: 'LIKE',
               style: {
                 label: {
-                  backgroundColor: '#34D399',
+                  backgroundColor: 'transparent',
                   borderColor: '#34D399',
-                  color: 'white',
-                  borderWidth: 1
+                  color: '#34D399',
+                  borderWidth: 4,
+                  fontSize: 24,
+                  fontWeight: '800',
+                  borderRadius: 8,
                 },
                 wrapper: {
                   flexDirection: 'column',
                   alignItems: 'flex-start',
                   justifyContent: 'flex-start',
-                  marginTop: 30,
-                  marginLeft: 30
+                  marginTop: 40,
+                  marginLeft: 40,
+                  elevation: 5,
                 }
               }
             }
           }}
           animateCardOpacity
-          infinite={false}
-          onSwiped={handleSwiped}
-          onSwipedLeft={handleSwipedLeft}
-          onSwipedRight={handleSwipedRight}
-          onSwipedAll={() => console.log("Fin de la liste")}
-          renderCard={(movie) => <MovieCard movie={movie} />}
+          swipeBackCard
         />
       </View>
 
+      {/* Boutons de contrôle */}
       <ActionButtons
         onRewind={triggerRewind}
         onDislike={triggerSwipeLeft}
