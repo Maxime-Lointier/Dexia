@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, StatusBar, ActivityIndicator, Dimensions, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 as Icon } from '@expo/vector-icons';
@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById } from '../src/models/movies';
+import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById, getMovieGenreIdById } from '../src/models/movies';
 import { getMovieCast, Cast } from '../src/models/cast';
 import { getUserPreferences, CURRENT_USER_ID } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
@@ -31,11 +31,14 @@ const SwipeScreen = () => {
   const [currentCast, setCurrentCast] = useState<Cast[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [sessionLikedGenres, setSessionLikedGenres] = useState<number[]>([]);
+  const BATCH_SIZE = 10;
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
-  const modalOpacity = useSharedValue(0);
+  const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const swipeOverlayOpacity = useSharedValue(0);
 
   useEffect(() => {
     loadMovies();
@@ -49,15 +52,19 @@ const SwipeScreen = () => {
       translateX.value = 0;
       translateY.value = 0;
       opacity.value = 1;
+      swipeOverlayOpacity.value = 0;
     }
   }, [currentMovieIndex, movies]);
 
-  const loadMovies = async () => {
+  const loadMovies = async (refresh = false) => {
     try {
       setLoading(true);
       const userId = CURRENT_USER_ID;
       const preferences = await getUserPreferences(userId);
       const seenIds = await getUserSeenMovieIds(userId);
+      
+      const currentMovieIds = movies.map(m => m.id);
+      const excludeIds = [...new Set([...seenIds, ...currentMovieIds])];
 
       let moviesData: Movie[] = [];
 
@@ -65,17 +72,24 @@ const SwipeScreen = () => {
         moviesData = await getMoviesByGenresAndKeywords(
           preferences.genres,
           preferences.keywords,
-          seenIds,
-          20
+          excludeIds,
+          BATCH_SIZE,
+          sessionLikedGenres
         );
       }
 
       if (moviesData.length === 0) {
-        moviesData = await getRandomMovies(10);
+        moviesData = await getRandomMovies(BATCH_SIZE);
       }
 
-      setMovies(moviesData);
-      if (moviesData.length > 0) {
+      if (refresh) {
+        setMovies(moviesData);
+        setCurrentMovieIndex(0);
+      } else {
+        setMovies(prev => [...prev, ...moviesData]);
+      }
+
+      if (moviesData.length > 0 && (refresh || movies.length === 0)) {
         const firstMovieId = moviesData[0].id;
         loadGenresForMovie(firstMovieId);
         loadCastForMovie(firstMovieId);
@@ -132,11 +146,20 @@ const SwipeScreen = () => {
     const currentMovie = movies[currentMovieIndex];
     await addInteraction(CURRENT_USER_ID, currentMovie.id, actionType);
 
+    if (actionType === 'like') {
+        const genresIds = await getMovieGenreIdById(currentMovie.id);
+        setSessionLikedGenres(prev => [...new Set([...prev, ...genresIds])]);
+    }
+
     if (currentMovieIndex < movies.length - 1) {
-      setCurrentMovieIndex(currentMovieIndex + 1);
+      const nextIndex = currentMovieIndex + 1;
+      setCurrentMovieIndex(nextIndex);
+      
+      if (movies.length - nextIndex <= 2) {
+        loadMovies(false);
+      }
     } else {
-      await loadMovies();
-      setCurrentMovieIndex(0);
+      await loadMovies(true);
     }
   };
 
@@ -174,6 +197,13 @@ const SwipeScreen = () => {
         [1, 0.8], 
         Extrapolate.CLAMP
       );
+      
+      swipeOverlayOpacity.value = interpolate(
+        Math.abs(e.translationX),
+        [0, SCREEN_WIDTH * 0.25],
+        [0, 1],
+        Extrapolate.CLAMP
+      );
     })
     .onEnd((e) => {
       const swipeDistance = e.translationX;
@@ -201,6 +231,7 @@ const SwipeScreen = () => {
           mass: 1
         });
         opacity.value = withTiming(1, { duration: 200 });
+        swipeOverlayOpacity.value = withTiming(0, { duration: 200 });
       }
     });
 
@@ -229,18 +260,22 @@ const SwipeScreen = () => {
 
   const openInfoModal = () => {
     setShowInfoModal(true);
-    modalOpacity.value = withTiming(1, { duration: 200 });
+    modalTranslateY.value = withSpring(0, {
+      damping: 20,
+      stiffness: 90,
+      mass: 0.8,
+    });
   };
 
   const closeInfoModal = () => {
-    modalOpacity.value = withTiming(0, { duration: 200 }, () => {
+    modalTranslateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, () => {
       runOnJS(setShowInfoModal)(false);
     });
   };
 
   const modalAnimatedStyle = useAnimatedStyle(() => {
     return {
-      opacity: modalOpacity.value,
+      transform: [{ translateY: modalTranslateY.value }],
     };
   });
 
@@ -269,6 +304,8 @@ const SwipeScreen = () => {
 
   const currentMovie = movies[currentMovieIndex];
   const posterSource = getPosterSource(currentMovie);
+  
+  const matchPercentage = Math.min(98, Math.round((currentMovie.vote_average * 10) + 5));
 
   return (
     <SafeAreaView className="flex-1 bg-[#0F0F1E]">
@@ -342,6 +379,12 @@ const SwipeScreen = () => {
                 <Icon name="star" size={14} color="#FACC15" solid />
                 <Text className="text-white font-bold ml-1.5">
                   {currentMovie.vote_average.toFixed(1)}
+                </Text>
+              </View>
+
+              <View className="absolute top-4 left-4 bg-[#22C55E]/90 px-3 py-1.5 rounded-full shadow-sm z-10">
+                <Text className="text-white font-bold text-xs">
+                  {matchPercentage}% Match
                 </Text>
               </View>
 
@@ -433,27 +476,23 @@ const SwipeScreen = () => {
       <Modal
         visible={showInfoModal}
         transparent={true}
-        animationType="fade"
+        animationType="none"
         onRequestClose={closeInfoModal}
       >
-        <Animated.View
-          style={[
-            {
-              flex: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            },
-            modalAnimatedStyle,
-          ]}
-        >
-          <View className="flex-1 justify-end">
-            <View 
-              className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]"
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
+            <Animated.View
+              style={[
+                {
+                  flex: 1,
+                  justifyContent: 'flex-end',
+                },
+                modalAnimatedStyle,
+              ]}
             >
-              <View className="w-full items-center pt-3 pb-2 absolute z-20 top-0 left-0 right-0">
-                <View className="w-12 h-1.5 bg-white/20 rounded-full" />
-              </View>
-
-              <ScrollView 
+              <View 
+                className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]"
+              >
+                <ScrollView 
                 className="flex-1" 
                 bounces={false}
                 showsVerticalScrollIndicator={false}
@@ -471,12 +510,6 @@ const SwipeScreen = () => {
                     locations={[0, 0.6, 1]}
                     className="absolute bottom-0 left-0 right-0 h-48"
                   />
-                  <TouchableOpacity 
-                    onPress={closeInfoModal}
-                    className="absolute top-6 right-6 bg-black/40 p-2.5 rounded-full backdrop-blur-sm"
-                  >
-                    <Icon name="times" size={16} color="white" />
-                  </TouchableOpacity>
                 </View>
 
                 <View className="px-6 -mt-12 pb-10 relative z-10">
@@ -500,6 +533,11 @@ const SwipeScreen = () => {
                   </View>
 
                   <View className="flex-row items-center mb-6">
+                    <View className="bg-[#22C55E]/20 px-2.5 py-1 rounded-md mr-3 border border-[#22C55E]/30">
+                      <Text className="text-[#22C55E] font-bold text-xs">
+                        {matchPercentage}% Recommandé
+                      </Text>
+                    </View>
                     <Icon name="calendar-alt" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
                     <Text className="text-gray-400 font-medium text-base">
                       {new Date(currentMovie.release_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -545,14 +583,24 @@ const SwipeScreen = () => {
                   </View>
 
                   <Text className="text-white text-xl font-bold mb-3">Synopsis</Text>
-                  <Text className="text-gray-400 text-base leading-7">
+                  <Text className="text-gray-400 text-base leading-7 pb-32">
                     {currentMovie.overview || 'Aucune description disponible pour ce film.'}
                   </Text>
                 </View>
               </ScrollView>
-            </View>
-          </View>
-        </Animated.View>
+
+              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#151521] to-transparent">
+                <TouchableOpacity 
+                  onPress={closeInfoModal}
+                  className="bg-[#2A2A3A] w-full py-4 rounded-2xl items-center border border-white/10 shadow-lg"
+                  activeOpacity={0.8}
+                >
+                  <Text className="text-white font-bold text-lg">Fermer</Text>
+                </TouchableOpacity>
+              </View>
+              </View>
+            </Animated.View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
