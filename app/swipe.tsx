@@ -1,13 +1,12 @@
-// app/swipe.tsx
-
-import React, { useRef, useState } from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import React, { useRef, useState, useCallback } from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import Swiper from "react-native-deck-swiper";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
 
+// --- 1. TYPES & INTERFACES ---
 type Movie = {
   id: number;
   title: string;
@@ -19,7 +18,8 @@ type Movie = {
   poster: string;
 };
 
-const movies: Movie[] = [
+// --- 2. CONSTANTES & DONNÉES ---
+const MOCK_MOVIES: Movie[] = [
   {
     id: 1,
     title: "Inception",
@@ -72,197 +72,238 @@ const movies: Movie[] = [
   },
 ];
 
+// --- 3. SOUS-COMPOSANTS ---
+
+const Header = () => (
+  <View className="px-6 pt-14 pb-4 flex-row justify-between items-center z-10">
+    <TouchableOpacity
+      onPress={() => router.back()}
+      className="w-10 h-10 bg-gray-800 rounded-full items-center justify-center"
+    >
+      <FontAwesome5 name="chevron-left" size={16} color="#9CA3AF" />
+    </TouchableOpacity>
+
+    <View className="items-center">
+      <Text className="text-white text-xs uppercase tracking-[2px]">
+        Découvrir
+      </Text>
+      <Text className="text-white text-2xl font-bold mt-1">Dexia Swipe</Text>
+    </View>
+
+    <TouchableOpacity
+      onPress={() => router.push("/settings")}
+      className="w-10 h-10 bg-gray-800 rounded-full items-center justify-center"
+    >
+      <FontAwesome5 name="user" size={16} color="#9CA3AF" />
+    </TouchableOpacity>
+  </View>
+);
+
+const MovieCard = ({ movie }: { movie: Movie }) => {
+  if (!movie) return null;
+
+  return (
+    <View className="w-[88%] h-[70%] bg-gray-900 rounded-3xl overflow-hidden shadow-lg border border-white/5">
+      <Image
+        source={{ uri: movie.poster }}
+        className="w-full h-full absolute"
+        resizeMode="cover"
+      />
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.95)"]}
+        start={{ x: 0, y: 0.4 }}
+        end={{ x: 0, y: 1 }}
+        className="absolute inset-0 justify-end p-5"
+      >
+        <View className="flex-row items-center justify-between mb-2">
+          <View className="flex-1 pr-2">
+            <Text
+              className="text-white font-bold text-3xl shadow-md"
+              numberOfLines={2}
+            >
+              {movie.title}
+            </Text>
+            <Text className="text-gray-300 text-sm mt-1 font-medium">
+              {movie.year} • {movie.duration}
+            </Text>
+          </View>
+
+          <View className="items-end">
+            <View className="flex-row items-center gap-1 bg-black/30 px-2 py-1 rounded-lg">
+              <FontAwesome name="star" size={14} color="#FACC15" />
+              <Text className="text-white font-bold text-base">
+                {movie.rating.toFixed(1)}
+              </Text>
+            </View>
+            <Text className="text-emerald-400 text-xs mt-1 font-bold">
+              {movie.match}% match
+            </Text>
+          </View>
+        </View>
+
+        {/* Genres Tags */}
+        <View className="flex-row flex-wrap gap-2 mt-2">
+          {movie.genres.map((g) => (
+            <View
+              key={g}
+              className="bg-white/20 px-3 py-1.5 rounded-full border border-white/10"
+            >
+              <Text className="text-white text-[11px] font-semibold tracking-wide">
+                {g}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </LinearGradient>
+    </View>
+  );
+};
+
+interface ActionButtonsProps {
+  onRewind: () => void;
+  onDislike: () => void;
+  onLike: () => void;
+  onList: () => void;
+}
+
+const ActionButtons = ({ onRewind, onDislike, onLike, onList }: ActionButtonsProps) => (
+  <View className="px-10 pb-10 flex-row justify-between items-center w-full">
+    <TouchableOpacity
+      onPress={onRewind}
+      className="w-12 h-12 rounded-full bg-gray-800 items-center justify-center border border-gray-700 shadow-sm"
+    >
+      <FontAwesome5 name="undo" size={16} color="#9CA3AF" />
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      onPress={onDislike}
+      className="w-16 h-16 rounded-full bg-red-500/10 items-center justify-center border-2 border-red-500/60 shadow-red-900/20 shadow-lg"
+    >
+      <FontAwesome5 name="times" size={24} color="#F97373" />
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      onPress={onLike}
+      className="w-16 h-16 rounded-full bg-emerald-500/10 items-center justify-center border-2 border-emerald-500/60 shadow-emerald-900/20 shadow-lg"
+    >
+      <FontAwesome5 name="heart" size={22} color="#34D399" />
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      onPress={onList}
+      className="w-12 h-12 rounded-full bg-gray-800 items-center justify-center border border-gray-700 shadow-sm"
+    >
+      <FontAwesome5 name="th-large" size={16} color="#9CA3AF" />
+    </TouchableOpacity>
+  </View>
+);
+
+// --- 4. COMPOSANT PRINCIPAL ---
+
 export default function SwipePage() {
   const swiperRef = useRef<Swiper<Movie>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleSwiped = (index: number) => {
+  // --- Handlers ---
+  const handleSwiped = useCallback((index: number) => {
     setCurrentIndex(index + 1);
-  };
+  }, []);
 
-  const handleSwipedLeft = (cardIndex: number) => {
-    const movie = movies[cardIndex];
-    if (movie) {
-      console.log("Dislike :", movie.title);
+  const handleSwipedLeft = useCallback((cardIndex: number) => {
+    const movie = MOCK_MOVIES[cardIndex];
+    if (movie) console.log("Dislike :", movie.title);
+  }, []);
+
+  const handleSwipedRight = useCallback((cardIndex: number) => {
+    const movie = MOCK_MOVIES[cardIndex];
+    if (movie) console.log("Like :", movie.title);
+  }, []);
+
+  // --- Button Actions ---
+  const triggerSwipeLeft = () => swiperRef.current?.swipeLeft();
+  const triggerSwipeRight = () => swiperRef.current?.swipeRight();
+  const triggerRewind = () => {
+    if (currentIndex > 0) {
+      swiperRef.current?.jumpToCardIndex(currentIndex - 1);
+      setCurrentIndex((prev) => prev - 1);
     }
-  };
-
-  const handleSwipedRight = (cardIndex: number) => {
-    const movie = movies[cardIndex];
-    if (movie) {
-      console.log("Like :", movie.title);
-    }
-  };
-
-  const handlePressDislike = () => {
-    swiperRef.current?.swipeLeft();
-  };
-
-  const handlePressLike = () => {
-    swiperRef.current?.swipeRight();
-  };
-
-  const handlePressRewind = () => {
-    // Revenir à la carte précédente si dispo
-    swiperRef.current?.jumpToCardIndex(
-      currentIndex > 0 ? currentIndex - 1 : 0
-    );
   };
 
   return (
-    <View className="flex-1 bg-dark">
+    <View className="flex-1 bg-black">
       <StatusBar style="light" />
 
-      {/* HEADER */}
-      <View className="px-6 pt-14 pb-4 flex-row justify-between items-center">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 bg-darkCard rounded-full items-center justify-center"
-        >
-          <FontAwesome5 name="chevron-left" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
+      <Header />
 
-        <View className="items-center">
-          <Text className="text-white text-xs uppercase tracking-[2px]">
-            Découvrir
-          </Text>
-          <Text className="text-white text-2xl font-bold mt-1">Dexia Swipe</Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => router.push("/settings")}
-          className="w-10 h-10 bg-darkCard rounded-full items-center justify-center"
-        >
-          <FontAwesome5 name="user" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-
-      {/* SOUS-TITRE */}
-      <View className="px-6 mb-2">
-        <Text className="text-gray-400 text-sm">
-          Swipez à droite pour liker, à gauche pour passer.
+      <View className="px-6 mb-2 z-10">
+        <Text className="text-gray-400 text-center text-xs opacity-70">
+          Swipez à droite pour liker, à gauche pour passer
         </Text>
       </View>
 
-      {/* SWIPER */}
-      <View className="flex-1 items-center justify-center">
+      <View className="flex-1 -mt-6">
         <Swiper
           ref={swiperRef}
-          cards={movies}
-          cardIndex={0}
+          cards={MOCK_MOVIES}
+          cardIndex={currentIndex}
           backgroundColor="transparent"
           stackSize={3}
           stackSeparation={15}
           cardVerticalMargin={40}
+          overlayLabels={{
+            left: {
+              title: 'NOPE',
+              style: {
+                label: {
+                  backgroundColor: 'red',
+                  borderColor: 'red',
+                  color: 'white',
+                  borderWidth: 1
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  justifyContent: 'flex-start',
+                  marginTop: 30,
+                  marginLeft: -30
+                }
+              }
+            },
+            right: {
+              title: 'LIKE',
+              style: {
+                label: {
+                  backgroundColor: '#34D399',
+                  borderColor: '#34D399',
+                  color: 'white',
+                  borderWidth: 1
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-start',
+                  marginTop: 30,
+                  marginLeft: 30
+                }
+              }
+            }
+          }}
           animateCardOpacity
           infinite={false}
           onSwiped={handleSwiped}
           onSwipedLeft={handleSwipedLeft}
           onSwipedRight={handleSwipedRight}
-          onSwipedAll={() => console.log("Plus de films à swiper")}
-          renderCard={(movie) => {
-            if (!movie) return null;
-
-            return (
-              <View className="w-[88%] h-[70%] bg-darkCard rounded-3xl overflow-hidden shadow-lg border border-white/5">
-                {/* Affiche */}
-                <View className="flex-1">
-                  <Image
-                    source={{ uri: movie.poster }}
-                    className="w-full h-full"
-                    resizeMode="cover"
-                  />
-                  <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.9)"]}
-                    start={{ x: 0, y: 0.3 }}
-                    end={{ x: 0, y: 1 }}
-                    className="absolute inset-0 justify-end p-5"
-                  >
-                    <View className="flex-row items-center justify-between mb-2">
-                      <View className="flex-1 pr-2">
-                        <Text
-                          className="text-white font-bold text-2xl"
-                          numberOfLines={2}
-                        >
-                          {movie.title}
-                        </Text>
-                        <Text className="text-gray-300 text-xs mt-1">
-                          {movie.year} • {movie.duration}
-                        </Text>
-                      </View>
-
-                      <View className="items-end">
-                        <View className="flex-row items-center gap-1">
-                          <FontAwesome
-                            name="star"
-                            size={14}
-                            color="#FACC15"
-                          />
-                          <Text className="text-white font-bold text-sm">
-                            {movie.rating.toFixed(1)}
-                          </Text>
-                        </View>
-                        <Text className="text-emerald-400 text-[10px] mt-1">
-                          {movie.match}% match
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Genres */}
-                    <View className="flex-row flex-wrap gap-2 mt-2">
-                      {movie.genres.map((g) => (
-                        <View
-                          key={g}
-                          className="bg-white/10 px-2 py-1 rounded-md"
-                        >
-                          <Text className="text-white text-[10px] font-semibold">
-                            {g}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  </LinearGradient>
-                </View>
-              </View>
-            );
-          }}
+          onSwipedAll={() => console.log("Fin de la liste")}
+          renderCard={(movie) => <MovieCard movie={movie} />}
         />
       </View>
 
-      {/* BOUTONS DE CONTRÔLE (LIKE / DISLIKE) */}
-      <View className="px-10 pb-8 flex-row justify-between items-center">
-        {/* Rewind */}
-        <TouchableOpacity
-          onPress={handlePressRewind}
-          className="w-14 h-14 rounded-full bg-darkCard items-center justify-center border border-gray-700"
-        >
-          <FontAwesome5 name="undo" size={18} color="#9CA3AF" />
-        </TouchableOpacity>
-
-        {/* Dislike */}
-        <TouchableOpacity
-          onPress={handlePressDislike}
-          className="w-16 h-16 rounded-full bg-red-500/10 items-center justify-center border border-red-500/60"
-        >
-          <FontAwesome5 name="times" size={22} color="#F97373" />
-        </TouchableOpacity>
-
-        {/* Like */}
-        <TouchableOpacity
-          onPress={handlePressLike}
-          className="w-16 h-16 rounded-full bg-emerald-500/10 items-center justify-center border border-emerald-500/60"
-        >
-          <FontAwesome5 name="heart" size={22} color="#34D399" />
-        </TouchableOpacity>
-
-        {/* Liste (placeholder pour plus tard) */}
-        <TouchableOpacity
-          onPress={() => router.push("/")}
-          className="w-14 h-14 rounded-full bg-darkCard items-center justify-center border border-gray-700"
-        >
-          <FontAwesome5 name="th-large" size={18} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
+      <ActionButtons
+        onRewind={triggerRewind}
+        onDislike={triggerSwipeLeft}
+        onLike={triggerSwipeRight}
+        onList={() => router.push("/")}
+      />
     </View>
   );
 }
