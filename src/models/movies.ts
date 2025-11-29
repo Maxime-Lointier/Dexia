@@ -143,27 +143,32 @@ export async function getMoviesByGenresAndKeywords(
   genres: number[],
   keywords?: string[],
   excludeIds?: number[],
-  limit?: number
+  limit?: number,
+  likedGenreIds?: number[]
 ): Promise<Movie[]> {
-  if (!genres || genres.length === 0) {
+  if ((!genres || genres.length === 0) && (!likedGenreIds || likedGenreIds.length === 0)) {
     return [];
   }
 
   const db = await getDatabase();
   
-  // Construire la clause WHERE pour les genres
-  const genrePlaceholders = genres.map(() => '?').join(',');
-  let sql = `SELECT DISTINCT movies.*
+  let allEligibleGenres = [...genres];
+  if (likedGenreIds && likedGenreIds.length > 0) {
+    const newGenres = likedGenreIds.filter(id => !genres.includes(id));
+    allEligibleGenres = [...genres, ...newGenres];
+  }
+  
+  const genrePlaceholders = allEligibleGenres.map(() => '?').join(',');
+  
+  let sql = `SELECT DISTINCT movies.*, (movies.vote_average * 0.7 + (movies.popularity / 100.0) * 0.3) as base_score
              FROM movies 
              JOIN movie_genres ON movies.id = movie_genres.movie_id 
              WHERE movie_genres.genre_id IN (${genrePlaceholders})
              AND movies.vote_average >= 5.0
-             AND movies.vote_average <= 8.5
              AND movies.popularity > 5.0`;
   
-  let params: any[] = [...genres];
+  let params: any[] = [...allEligibleGenres];
   
-  // Recherche de mots-clés avec LIKE
   if (keywords && keywords.length > 0) {
     const keywordConditions = keywords.map(() => '(movies.title LIKE ? OR movies.overview LIKE ?)').join(' OR ');
     sql += ` AND (${keywordConditions})`;
@@ -173,14 +178,13 @@ export async function getMoviesByGenresAndKeywords(
     });
   }
   
-  // Exclure les films déjà vus
   if (excludeIds && excludeIds.length > 0) {
     const excludePlaceholders = excludeIds.map(() => '?').join(',');
     sql += ` AND movies.id NOT IN (${excludePlaceholders})`;
     params.push(...excludeIds);
   }
   
-  sql += ' ORDER BY (movies.vote_average * 0.7 + (movies.popularity / 100.0) * 0.3) DESC';
+  sql += ' ORDER BY base_score DESC';
   
   if (limit) {
     sql += ' LIMIT ?';
@@ -188,6 +192,11 @@ export async function getMoviesByGenresAndKeywords(
   }
   
   const result = await db.getAllAsync<Movie>(sql, params);
+  
+  if (likedGenreIds && likedGenreIds.length > 0) {
+     return result.sort(() => Math.random() - 0.3);
+  }
+  
   return result;
 }
 
@@ -207,7 +216,6 @@ export async function getMoviesOutsideGenres(
   let sql = 'SELECT DISTINCT movies.* FROM movies WHERE movies.vote_average >= 6.0 AND movies.vote_average <= 8.5 AND movies.popularity > 10.0';
   let params: any[] = [];
   
-  // Exclure les genres préférés
   if (genres && genres.length > 0) {
     const genrePlaceholders = genres.map(() => '?').join(',');
     sql += ` AND movies.id NOT IN (
@@ -217,7 +225,6 @@ export async function getMoviesOutsideGenres(
     params.push(...genres);
   }
   
-  // Exclure les films déjà vus
   if (excludeIds && excludeIds.length > 0) {
     const excludePlaceholders = excludeIds.map(() => '?').join(',');
     if (genres && genres.length > 0) {
