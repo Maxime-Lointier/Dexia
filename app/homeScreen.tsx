@@ -4,7 +4,21 @@ import { StatusBar } from 'expo-status-bar';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons'; 
 import { LinearGradient } from 'expo-linear-gradient';
 
+// Importation des posters locaux
+import { getPosterById } from '../src/utils/posterMap';
+
+// IDs des films pour la démo
+const INCEPTION_ID = 27205;
+const INTERSTELLAR_ID = 157336;
+const DARK_KNIGHT_ID = 155;
+const BLADE_RUNNER_ID = 335984;
+const PARASITE_ID = 496243;
+const MAD_MAX_ID = 76341;
+
 export default function MainPage() {
+  // Helpers pour récupérer les sources
+  const getPoster = (id: number) => getPosterById(id);
+
   return (
     <View className="flex-1 bg-dark">
       <StatusBar style="light" />
@@ -72,7 +86,7 @@ export default function MainPage() {
             <TouchableOpacity className="w-32">
               <View className="relative h-48 rounded-xl overflow-hidden mb-2">
                 <Image 
-                  source={{ uri: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg" }} 
+                  source={getPoster(INCEPTION_ID)} 
                   className="w-full h-full" resizeMode="cover" 
                 />
                 <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} className="absolute inset-0" />
@@ -92,7 +106,7 @@ export default function MainPage() {
             <TouchableOpacity className="w-32">
               <View className="relative h-48 rounded-xl overflow-hidden mb-2">
                 <Image 
-                  source={{ uri: "https://image.tmdb.org/t/p/w500/gEU2QniL6E8ahMcafHC7MEGcZEp.jpg" }} 
+                  source={getPoster(INTERSTELLAR_ID)} 
                   className="w-full h-full" resizeMode="cover" 
                 />
                 <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} className="absolute inset-0" />
@@ -112,7 +126,7 @@ export default function MainPage() {
             <TouchableOpacity className="w-32">
               <View className="relative h-48 rounded-xl overflow-hidden mb-2">
                 <Image 
-                  source={{ uri: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" }} 
+                  source={getPoster(DARK_KNIGHT_ID)} 
                   className="w-full h-full" resizeMode="cover" 
                 />
                 <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} className="absolute inset-0" />
@@ -139,7 +153,7 @@ export default function MainPage() {
             <View className="gap-4">
                 {/* Item 1: Blade Runner */}
                 <View className="flex-row bg-darkCard p-3 rounded-2xl">
-                    <Image source={{uri: 'https://image.tmdb.org/t/p/w500/63kGofwTzPPmsPhRaawq4fE1s3K.jpg'}} className="w-24 h-32 rounded-xl" resizeMode="cover" />
+                    <Image source={getPoster(BLADE_RUNNER_ID)} className="w-24 h-32 rounded-xl" resizeMode="cover" />
                     <View className="flex-1 ml-4 justify-between py-1">
                         <View>
                             <Text className="text-white text-lg font-bold">Blade Runner 2049</Text>
@@ -159,7 +173,7 @@ export default function MainPage() {
 
                 {/* Item 2: Parasite */}
                 <View className="flex-row bg-darkCard p-3 rounded-2xl">
-                    <Image source={{uri: 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg'}} className="w-24 h-32 rounded-xl" resizeMode="cover" />
+                    <Image source={getPoster(PARASITE_ID)} className="w-24 h-32 rounded-xl" resizeMode="cover" />
                     <View className="flex-1 ml-4 justify-between py-1">
                         <View>
                             <Text className="text-white text-lg font-bold">Parasite</Text>
@@ -179,7 +193,7 @@ export default function MainPage() {
 
                 {/* Item 3: Mad Max */}
                 <View className="flex-row bg-darkCard p-3 rounded-2xl">
-                    <Image source={{uri: 'https://image.tmdb.org/t/p/w500/8tZYtuWezp8JbcsvHYO0O46tFbo.jpg'}} className="w-24 h-32 rounded-xl" resizeMode="cover" />
+                    <Image source={getPoster(MAD_MAX_ID)} className="w-24 h-32 rounded-xl" resizeMode="cover" />
                     <View className="flex-1 ml-4 justify-between py-1">
                         <View>
                             <Text className="text-white text-lg font-bold">Mad Max: Fury Road</Text>

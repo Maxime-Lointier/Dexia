@@ -1,13 +1,12 @@
 {
   "name": "dexia-backend",
   "version": "1.0.0",
-  "main": "src/app.js",
+  "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/app.js"
+    "start": "echo 'Express supprimé: rien à démarrer'"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6"
+    "sqlite3": "^5.1.7"
   }
 }
