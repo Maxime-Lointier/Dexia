@@ -89,7 +89,7 @@ const Settings = () => {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
       
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('..')} style={styles.backButton}> // bouton retour
+        <TouchableOpacity onPress={() => router.push('..')} style={styles.backButton}>
            <Icon name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Paramètres</Text>
@@ -139,15 +139,7 @@ const Settings = () => {
                 icon="bell-outline" 
                 label="Notifications" 
                 value={notifications}
-                onValueChange={setNotifications}
-            />
-            <View style={styles.divider} />
-            <SettingSwitch 
-                icon="play-circle-outline" 
-                label="Lecture automatique" 
-                value={autoPlay}
-                onValueChange={setAutoPlay}
-            />
+                onValueChange={setNotifications}/>
         </SectionContainer>
 
         <SectionTitle title="Compte" />
