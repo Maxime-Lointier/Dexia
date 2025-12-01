@@ -17,7 +17,7 @@ import Animated, {
 
 import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById, getMovieGenreIdById } from '../src/models/movies';
 import { getMovieCast, Cast } from '../src/models/cast';
-import { getUserPreferences, CURRENT_USER_ID } from '../src/models/user';
+import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, detectFilterBubble, cleanupKeywords, extractKeywordsFromMovie } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
 
@@ -146,9 +146,48 @@ const SwipeScreen = () => {
     const currentMovie = movies[currentMovieIndex];
     await addInteraction(CURRENT_USER_ID, currentMovie.id, actionType);
 
+    // 🆕 NOUVEAU : Système de mots-clés dynamiques
     if (actionType === 'like') {
         const genresIds = await getMovieGenreIdById(currentMovie.id);
         setSessionLikedGenres(prev => [...new Set([...prev, ...genresIds])]);
+        
+        // Extraire et ajouter des mots-clés du film liké
+        try {
+          const genres = await getMovieGenreById(currentMovie.id);
+          const extractedKeywords = await extractKeywordsFromMovie(currentMovie, genres);
+          
+          if (extractedKeywords.length > 0) {
+            const success = await addDynamicKeywords(CURRENT_USER_ID, extractedKeywords);
+            if (success) {
+              console.log(`🎯 Mots-clés ajoutés: ${extractedKeywords.join(', ')}`);
+            }
+          }
+        } catch (error) {
+          console.error('Erreur ajout mots-clés:', error);
+        }
+    }
+
+    // 🆕 NOUVEAU : Détection anti-bulle tous les 5 films
+    if ((currentMovieIndex + 1) % 5 === 0) {
+      try {
+        const recentInteractions = await getUserSeenMovieIds(CURRENT_USER_ID); // Récupérer interactions récentes
+        const bubbleDetection = await detectFilterBubble(CURRENT_USER_ID, recentInteractions.slice(-20));
+        
+        if (bubbleDetection.hasBubble) {
+          console.log(`🎯 Bulle détectée: ${bubbleDetection.bubbleType} (${bubbleDetection.confidence.toFixed(2)})`);
+          
+          // Appliquer la stratégie de nettoyage
+          const cleanupSuccess = await cleanupKeywords(CURRENT_USER_ID, bubbleDetection.bubbleType);
+          if (cleanupSuccess) {
+            console.log(`🧹 Nettoyage des mots-clés appliqué pour ${bubbleDetection.bubbleType}`);
+            // Recharger les films avec les nouveaux critères
+            await loadMovies(true);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Erreur détection/nettoyage bulle:', error);
+      }
     }
 
     if (currentMovieIndex < movies.length - 1) {
