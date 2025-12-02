@@ -225,6 +225,24 @@ export async function createUserProfile(userId: number, preferences?: UserPrefer
 }
 
 /**
+ * Vérifie si le profil utilisateur existe
+ * @returns Promise<boolean> - true si le profil existe
+ */
+export async function userExists(): Promise<boolean> {
+  const db = await getDatabase();
+  try {
+    const existingUser = await db.getFirstAsync<{ id: number }>(
+      'SELECT id FROM user_profile WHERE id = ?',
+      [CURRENT_USER_ID]
+    );
+    return !!existingUser;
+  } catch (error) {
+    console.error('Erreur lors de la vérification de l\'existence de l\'utilisateur:', error);
+    return false;
+  }
+}
+
+/**
  * Obtient ou crée le profil utilisateur unique de l'application
  * L'application n'a pas de système de connexion, donc il y a un seul utilisateur avec l'ID 1
  * @returns Promise<number> - ID de l'utilisateur unique (toujours CURRENT_USER_ID = 1)

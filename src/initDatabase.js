@@ -48,6 +48,7 @@ export async function ensureDatabasePresent() {
 
 /**
  * Ajoute les colonnes manquantes pour les nouvelles fonctionnalités
+ * Cette fonction est maintenant gérée dans db.ts pour éviter les conflits
  */
 export async function updateDatabaseSchema() {
   const dbName = 'database.db';
@@ -57,22 +58,36 @@ export async function updateDatabaseSchema() {
     
     // Vérifier si la colonne genre_weights existe
     const tableInfo = await db.getAllAsync('PRAGMA table_info(user_profile)');
-    const hasGenreWeights = tableInfo.some(column => column.name === 'genre_weights');
+    const columnNames = tableInfo.map(column => column.name);
+    const hasGenreWeights = columnNames.includes('genre_weights');
     
     if (!hasGenreWeights) {
       console.log('🔧 Ajout de la colonne genre_weights...');
-      await db.runAsync('ALTER TABLE user_profile ADD COLUMN genre_weights TEXT DEFAULT "{}"');
-      console.log('✅ Colonne genre_weights ajoutée avec succès');
+      try {
+        await db.runAsync('ALTER TABLE user_profile ADD COLUMN genre_weights TEXT DEFAULT "{}"');
+        console.log('✅ Colonne genre_weights ajoutée avec succès');
+      } catch (addError) {
+        // Si la colonne existe déjà (erreur de colonne en double), on ignore
+        if (addError.message?.includes('duplicate column') || addError.code === 1) {
+          console.log('ℹ️ Colonne genre_weights déjà présente');
+        } else {
+          throw addError;
+        }
+      }
     }
     
-    // 🧹 DEV: Réinitialiser les données utilisateur à chaque lancement, a supprimer en prod
+    // DEV: Réinitialiser les données utilisateur à chaque lancement, a supprimer en prod
     console.log('🧹 DEV: Nettoyage des données utilisateur...');
     await db.runAsync('DELETE FROM user_interactions');
     await db.runAsync('DELETE FROM user_profile');
     console.log('✅ Tables utilisateur vidées pour les tests');
-    ////////////////////////////////////
     await db.closeAsync();
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du schéma:', error);
+    // Ignorer les erreurs de colonne en double
+    if (error.message?.includes('duplicate column') || error.code === 1) {
+      console.log('ℹ️ Colonne déjà présente (ignoré)');
+    } else {
+      console.error('Erreur lors de la mise à jour du schéma:', error);
+    }
   }
 }
