@@ -8,7 +8,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, run
 
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
-import { getUserPreferences, CURRENT_USER_ID } from '../src/models/user';
+import { getUserPreferences, CURRENT_USER_ID, setOnboardingDone } from '../src/models/user';
 import { getUserSeenMovieIds } from '../src/models/interaction';
 import { getMovieCast, Cast } from '../src/models/cast';
 
@@ -173,6 +173,12 @@ export default function MainPage() {
       transform: [{ translateY: modalTranslateY.value }],
     };
   });
+
+  const handleResetOnboarding = async () => {
+    console.log("🔄 Reset de l'onboarding demandé...");
+    await setOnboardingDone(CURRENT_USER_ID, false);
+    router.replace('/welcomeScreen');
+  };
 
   return (
     <View className="flex-1 bg-dark">
@@ -383,6 +389,18 @@ export default function MainPage() {
           </View>
         </View>
 
+        <View className="px-6 mb-8 mt-4 border-t border-gray-800 pt-6">
+            <Text className="text-gray-500 text-xs text-center mb-4 uppercase tracking-widest">Zone de Développement</Text>
+            
+            <TouchableOpacity 
+                onPress={handleResetOnboarding}
+                className="bg-red-500/10 border border-red-500/50 py-3 rounded-xl items-center flex-row justify-center gap-2"
+            >
+                <FontAwesome5 name="undo" size={14} color="#EF4444" />
+                <Text className="text-red-500 font-bold text-sm">Reset Onboarding (pour tester première connexion)</Text>
+            </TouchableOpacity>
+        </View>
+
       </ScrollView>
 
       {/* BOTTOM NAV FIXE */}
@@ -395,11 +413,6 @@ export default function MainPage() {
         <TouchableOpacity onPress={() => router.push('/swipe')} className="items-center gap-1">
           <FontAwesome5 name="layer-group" size={20} color="#9CA3AF" />
           <Text className="text-[10px] font-medium text-gray-400">Découvrir</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity className="items-center gap-1">
-          <FontAwesome5 name="heart" size={20} color="#9CA3AF" />
-          <Text className="text-[10px] font-medium text-gray-400">Favoris</Text>
         </TouchableOpacity>
         
         <TouchableOpacity onPress={() => router.push('/settings')} className="items-center gap-1">
@@ -473,7 +486,7 @@ export default function MainPage() {
                             {selectedMovieMatch}% Recommandé
                           </Text>
                         </View>
-                        <FontAwesome name="calendar-alt" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
+                        <FontAwesome name="calendar" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
                         <Text className="text-gray-400 font-medium text-base">
                           {new Date(selectedMovie.release_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </Text>

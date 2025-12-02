@@ -1,60 +1,54 @@
-import { Link } from 'expo-router';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, ActivityIndicator, Text } from 'react-native';
+import { Redirect } from 'expo-router';
+import { userExists, isOnboardingDone, setOnboardingDone, CURRENT_USER_ID } from '../src/models/user'; 
 
-const Onboarding = () => {
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.innerContainer}>
-        <Text style={styles.title}>Page Onboarding</Text>
+export default function Index() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [shouldGoToHome, setShouldGoToHome] = useState(false);
 
-        <Link href="/homeScreen">
-          <Text style={styles.link}>Go to homeScreen.tsx</Text>
-        </Link>
+  useEffect(() => {
+    checkUserStatus();
+  }, []);
 
-        <Link href="/welcomeScreen">
-          <Text style={styles.link}>Go to welcomeScreen.tsx</Text>
-        </Link>
+  const checkUserStatus = async () => {
+    try {
+      console.log("🔍 Vérification du statut utilisateur...");
+      
+      // --- LIGNE MAGIQUE POUR TESTER (EN FORCANT) ---
+      // Force l'onboarding à "non fait" à chaque lancement pour tes tests
+      //console.log("🛠️ DEBUG: Réinitialisation de l'onboarding pour test");
+      //await setOnboardingDone(CURRENT_USER_ID, false); 
+      // -------------------------------------------------------
 
-        <Link href="/onBoarding">
-          <Text style={styles.link}>Go to onBoarding.tsx</Text>
-        </Link>
+      const exists = await userExists();
+      const onboardingFinished = await isOnboardingDone(CURRENT_USER_ID);
 
-        <Link href="/settings">
-          <Text style={styles.link}>Go to settings.tsx</Text>
-        </Link>
+      console.log(`👤 Utilisateur existe ? ${exists}`);
+      console.log(`✅ Onboarding fini ? ${onboardingFinished}`);
 
-        <Link href="/swipe">
-          <Text style={styles.link}>Go to swipe.tsx</Text>
-        </Link>
+      if (exists && onboardingFinished) {
+        setShouldGoToHome(true);
+      } else {
+        setShouldGoToHome(false);
+      }
+    } catch (error) {
+      console.error("❌ Erreur checkUserStatus:", error);
+      setShouldGoToHome(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F0F1E' }}>
+        <ActivityIndicator size="large" color="#6C5CE7" />
+        <Text style={{color:'white', marginTop: 10}}>Chargement...</Text>
       </View>
-    </ScrollView>
-  );
-};
+    );
+  }
 
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5', 
-  },
-  innerContainer: {
-    width: '100%',
-    maxWidth: 400, 
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center', 
-  },
-  link: {
-    fontSize: 18,
-    color: '#007BFF', 
-    marginBottom: 12, 
-    textAlign: 'center', 
-  },
-});
-
-export default Onboarding;
+  // Redirection
+  return shouldGoToHome ? <Redirect href="/homeScreen" /> : <Redirect href="/welcomeScreen" />;
+}

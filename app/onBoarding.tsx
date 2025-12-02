@@ -54,12 +54,12 @@ const Onboarding = () => {
         // Importe les genres
         const genresData = await getAllGenres();
         setGenres(genresData);
-        console.log("genres loaded : ", genresData);
+        console.log("genres loaded : ", genresData.length);
 
         // Importe les films
         const moviesData = await getTopRatedMovies(20);
         setMovies(moviesData);
-        console.log("movies loaded : ", moviesData);
+        console.log("movies loaded : ", moviesData.length);
         
     } catch (error) {
         console.error("Erreur chargement:", error);
@@ -87,12 +87,6 @@ const Onboarding = () => {
       {/* HEADER */}
       {/* Top Bar */}
       <View className="px-6 pt-2 pb-4">
-        <View className="flex-row justify-end mb-6">
-            {/* Bouton Passer : On va vers la page d'accueil*/}
-            <TouchableOpacity onPress={() => router.replace('/homeScreen')}> 
-                <Text className="text-gray-400 text-sm font-medium">Passer</Text>
-            </TouchableOpacity>
-        </View>
 
         {/* Titres */}
         <View className="items-center mb-4">
