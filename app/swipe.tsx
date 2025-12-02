@@ -17,12 +17,15 @@ import Animated, {
 
 import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById, getMovieGenreIdById } from '../src/models/movies';
 import { getMovieCast, Cast } from '../src/models/cast';
-import { getUserPreferences, CURRENT_USER_ID } from '../src/models/user';
+import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, addDynamicGenres, manageDynamicGenres, detectFilterBubble, cleanupKeywords, extractKeywordsFromMovie } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
+
+// --- MODIFICATION : Réglages de sensibilité ---
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25; // Distance réduite à 25% de l'écran (au lieu de 35%)
+const SWIPE_VELOCITY_THRESHOLD = 800; // Vitesse requise pour un "flick" (coup rapide)
 
 const SwipeScreen = () => {
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
@@ -68,7 +71,9 @@ const SwipeScreen = () => {
 
       let moviesData: Movie[] = [];
 
+      // 🎯 UTILISER LES GENRES DYNAMIQUES ! 
       if (preferences.genres && preferences.genres.length > 0) {
+        console.log(`🎯 Recommandations avec ${preferences.genres.length} genres préférés: ${preferences.genres.join(', ')}`);
         moviesData = await getMoviesByGenresAndKeywords(
           preferences.genres,
           preferences.keywords,
@@ -76,6 +81,8 @@ const SwipeScreen = () => {
           BATCH_SIZE,
           sessionLikedGenres
         );
+      } else {
+        console.log('🎯 Aucun genre préféré, films aléatoires');
       }
 
       if (moviesData.length === 0) {
@@ -146,9 +153,61 @@ const SwipeScreen = () => {
     const currentMovie = movies[currentMovieIndex];
     await addInteraction(CURRENT_USER_ID, currentMovie.id, actionType);
 
+    // 🆕 NOUVEAU : Système dynamique (genres + mots-clés) avec LIKE/DISLIKE
+    const genresIds = await getMovieGenreIdById(currentMovie.id);
+    
     if (actionType === 'like') {
-        const genresIds = await getMovieGenreIdById(currentMovie.id);
         setSessionLikedGenres(prev => [...new Set([...prev, ...genresIds])]);
+        
+        // 🎯 AJOUTER LES MOTS-CLÉS DYNAMIQUEMENT (seulement pour les likes)
+        try {
+          const genres = await getMovieGenreById(currentMovie.id);
+          const extractedKeywords = await extractKeywordsFromMovie(currentMovie, genres);
+          
+          if (extractedKeywords.length > 0) {
+            const success = await addDynamicKeywords(CURRENT_USER_ID, extractedKeywords);
+            if (success) {
+              console.log(`🎯 Mots-clés ajoutés: ${extractedKeywords.join(', ')}`);
+            }
+          }
+        } catch (error) {
+          console.error('Erreur ajout mots-clés:', error);
+        }
+    }
+    
+    // 🎯 GÉRER LES GENRES AVEC POIDS (LIKE ET DISLIKE seulement)
+    if (actionType === 'like' || actionType === 'dislike') {
+      try {
+        const success = await manageDynamicGenres(CURRENT_USER_ID, genresIds, actionType);
+        if (success) {
+          console.log(`🎯 Genres ${actionType}: ${genresIds.join(', ')}`);
+        }
+      } catch (error) {
+        console.error(`Erreur gestion genres ${actionType}:`, error);
+      }
+    }
+
+    // 🆕 NOUVEAU : Détection anti-bulle tous les 5 films
+    if ((currentMovieIndex + 1) % 5 === 0) {
+      try {
+        const recentInteractions = await getUserSeenMovieIds(CURRENT_USER_ID); // Récupérer interactions récentes
+        const bubbleDetection = await detectFilterBubble(CURRENT_USER_ID, recentInteractions.slice(-20));
+        
+        if (bubbleDetection.hasBubble) {
+          console.log(`🎯 Bulle détectée: ${bubbleDetection.bubbleType} (${bubbleDetection.confidence.toFixed(2)})`);
+          
+          // Appliquer la stratégie de nettoyage
+          const cleanupSuccess = await cleanupKeywords(CURRENT_USER_ID, bubbleDetection.bubbleType);
+          if (cleanupSuccess) {
+            console.log(`🧹 Nettoyage des mots-clés appliqué pour ${bubbleDetection.bubbleType}`);
+            // Recharger les films avec les nouveaux critères
+            await loadMovies(true);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Erreur détection/nettoyage bulle:', error);
+      }
     }
 
     if (currentMovieIndex < movies.length - 1) {
@@ -207,15 +266,26 @@ const SwipeScreen = () => {
     })
     .onEnd((e) => {
       const swipeDistance = e.translationX;
+      const swipeVelocity = e.velocityX;
       
-      if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
+      // On valide le swipe si :
+      // 1. La distance est suffisante (> 25% de l'écran)
+      // OU
+      // 2. Le geste est rapide (Flick > 800px/s) ET dans la même direction que le mouvement
+      const isSwipedByDistance = Math.abs(swipeDistance) > SWIPE_THRESHOLD;
+      const isSwipedByVelocity = Math.abs(swipeVelocity) > SWIPE_VELOCITY_THRESHOLD;
+      const isConsistentDirection = Math.sign(swipeVelocity) === Math.sign(swipeDistance);
+
+      if (isSwipedByDistance || (isSwipedByVelocity && isConsistentDirection)) {
         const direction = swipeDistance > 0 ? 'right' : 'left';
         const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
         
+        // On utilise la velocity réelle pour donner une impulsion naturelle
         translateX.value = withSpring(destinationX, {
           damping: 20,
           stiffness: 90,
-          mass: 1
+          mass: 1,
+          velocity: swipeVelocity 
         });
         opacity.value = withTiming(0, { duration: 200 });
         runOnJS(handleSwipeComplete)(direction);
