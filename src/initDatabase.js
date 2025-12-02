@@ -65,6 +65,12 @@ export async function updateDatabaseSchema() {
       console.log('✅ Colonne genre_weights ajoutée avec succès');
     }
     
+    // 🧹 DEV: Réinitialiser les données utilisateur à chaque lancement, a supprimer en prod
+    console.log('🧹 DEV: Nettoyage des données utilisateur...');
+    await db.runAsync('DELETE FROM user_interactions');
+    await db.runAsync('DELETE FROM user_profile');
+    console.log('✅ Tables utilisateur vidées pour les tests');
+    ////////////////////////////////////
     await db.closeAsync();
   } catch (error) {
     console.error('Erreur lors de la mise à jour du schéma:', error);
