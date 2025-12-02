@@ -130,6 +130,40 @@ export async function updateUserPreferences(userId: number, preferences: UserPre
 }
 
 /**
+ * Ajoute des genres aux préférences utilisateur de manière dynamique
+ * @param userId - ID de l'utilisateur 
+ * @param genreIds - IDs des genres à ajouter
+ * @returns Promise<boolean> - true si l'ajout a réussi
+ */
+export async function addDynamicGenres(userId: number, genreIds: number[]): Promise<boolean> {
+  if (!genreIds || genreIds.length === 0) return true;
+  
+  const db = await getDatabase();
+  try {
+    // Récupérer les genres actuels
+    const currentPrefs = await getUserPreferences(userId);
+    const currentGenres = currentPrefs.genres || [];
+    
+    // Fusionner avec les nouveaux genres (pas de doublons)
+    const updatedGenres = [...new Set([...currentGenres, ...genreIds])];
+    
+    console.log(`🎯 Genres ajoutés: ${genreIds.join(', ')} (total: ${updatedGenres.length})`);
+    
+    // Sauvegarder
+    const preferencesJson = JSON.stringify(updatedGenres);
+    await db.runAsync(
+      'UPDATE user_profile SET preferences = ? WHERE id = ?',
+      [preferencesJson, userId]
+    );
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur ajout genres dynamiques:', error);
+    return false;
+  }
+}
+
+/**
  * Crée un nouveau profil utilisateur
  * @param userId - ID de l'utilisateur
  * @param preferences - Préférences initiales (optionnel)
