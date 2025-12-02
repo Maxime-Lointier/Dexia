@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { ensureDatabasePresent } from '../initDatabase';
+import { ensureDatabasePresent, updateDatabaseSchema } from '../initDatabase';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -29,6 +29,9 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   // S'assurer que la base de données est présente
   await ensureDatabasePresent();
+
+  // Mettre à jour le schéma de la base si nécessaire
+  await updateDatabaseSchema();
 
   // Pour expo-sqlite, on utilise juste le nom de la base
   // expo-sqlite cherche dans documentDirectory par défaut
