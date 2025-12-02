@@ -1,60 +1,45 @@
-import { Link } from 'expo-router';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import { router } from 'expo-router';
+import { userExists } from '../src/models/user';
 
-const Onboarding = () => {
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.innerContainer}>
-        <Text style={styles.title}>Page Onboarding</Text>
+export default function Index() {
+  const [loading, setLoading] = useState(true);
 
-        <Link href="/homeScreen">
-          <Text style={styles.link}>Go to homeScreen.tsx</Text>
-        </Link>
+  useEffect(() => {
+    checkUserAndRedirect();
+  }, []);
 
-        <Link href="/welcomeScreen">
-          <Text style={styles.link}>Go to welcomeScreen.tsx</Text>
-        </Link>
+  const checkUserAndRedirect = async () => {
+    try {
+      // Vérifier si le profil utilisateur existe
+      const exists = await userExists();
 
-        <Link href="/onBoarding">
-          <Text style={styles.link}>Go to onBoarding.tsx</Text>
-        </Link>
+      if (exists) {
+        // L'utilisateur existe, rediriger vers homeScreen
+        router.replace('/homeScreen');
+      } else {
+        // L'utilisateur n'existe pas, rediriger vers welcomeScreen
+        router.replace('/welcomeScreen');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification de l\'utilisateur:', error);
+      // En cas d'erreur, rediriger vers welcomeScreen par défaut
+      router.replace('/welcomeScreen');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <Link href="/settings">
-          <Text style={styles.link}>Go to settings.tsx</Text>
-        </Link>
-
-        <Link href="/swipe">
-          <Text style={styles.link}>Go to swipe.tsx</Text>
-        </Link>
+  // Afficher un loader pendant la vérification
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F0F1E' }}>
+        <ActivityIndicator size="large" color="#6C5CE7" />
       </View>
-    </ScrollView>
-  );
-};
+    );
+  }
 
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5', 
-  },
-  innerContainer: {
-    width: '100%',
-    maxWidth: 400, 
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center', 
-  },
-  link: {
-    fontSize: 18,
-    color: '#007BFF', 
-    marginBottom: 12, 
-    textAlign: 'center', 
-  },
-});
-
-export default Onboarding;
+  // Ce return ne devrait jamais être atteint car la redirection se fait dans useEffect
+  return null;
+}
