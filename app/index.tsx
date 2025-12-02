@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator, Text } from 'react-native'; // J'ai ajouté Text pour le debug
+import { View, ActivityIndicator, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { userExists, isOnboardingDone, setOnboardingDone, CURRENT_USER_ID } from '../src/models/user'; 
 
@@ -15,10 +15,10 @@ export default function Index() {
     try {
       console.log("🔍 Vérification du statut utilisateur...");
       
-      // --- LIGNE MAGIQUE POUR TESTER (A supprimer plus tard) ---
+      // --- LIGNE MAGIQUE POUR TESTER (EN FORCANT) ---
       // Force l'onboarding à "non fait" à chaque lancement pour tes tests
-      console.log("🛠️ DEBUG: Réinitialisation de l'onboarding pour test");
-      await setOnboardingDone(CURRENT_USER_ID, false); 
+      //console.log("🛠️ DEBUG: Réinitialisation de l'onboarding pour test");
+      //await setOnboardingDone(CURRENT_USER_ID, false); 
       // -------------------------------------------------------
 
       const exists = await userExists();

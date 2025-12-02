@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons'; 
 import { LinearGradient } from 'expo-linear-gradient';
+import { setOnboardingDone, CURRENT_USER_ID } from '../src/models/user';
 
 // Importation des posters locaux
 import { getPosterById } from '../src/utils/posterMap';
@@ -18,6 +19,12 @@ const MAD_MAX_ID = 76341;
 export default function MainPage() {
   // Helpers pour récupérer les sources
   const getPoster = (id: number) => getPosterById(id);
+
+  const handleResetOnboarding = async () => {
+    console.log("🔄 Reset de l'onboarding demandé...");
+    await setOnboardingDone(CURRENT_USER_ID, false); // On remet à zéro dans la DB
+    router.replace('/welcomeScreen'); // On redirige vers l'écran de bienvenue
+  };
 
   return (
     <View className="flex-1 bg-dark">
@@ -237,6 +244,18 @@ export default function MainPage() {
           </View>
         </View>
 
+        <View className="px-6 mb-8 mt-4 border-t border-gray-800 pt-6">
+            <Text className="text-gray-500 text-xs text-center mb-4 uppercase tracking-widest">Zone de Développement</Text>
+            
+            <TouchableOpacity 
+                onPress={handleResetOnboarding}
+                className="bg-red-500/10 border border-red-500/50 py-3 rounded-xl items-center flex-row justify-center gap-2"
+            >
+                <FontAwesome5 name="undo" size={14} color="#EF4444" />
+                <Text className="text-red-500 font-bold text-sm">Reset Onboarding (pour tester première connexion)</Text>
+            </TouchableOpacity>
+        </View>
+
       </ScrollView>
 
       {/* BOTTOM NAV FIXE */}
@@ -262,5 +281,7 @@ export default function MainPage() {
         </TouchableOpacity>
       </View>
     </View>
+
+
   );
 }
