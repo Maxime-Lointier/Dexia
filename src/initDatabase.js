@@ -45,3 +45,28 @@ export async function ensureDatabasePresent() {
   
   console.log('Base de données copiée avec succès vers:', dbLocation);
 }
+
+/**
+ * Ajoute les colonnes manquantes pour les nouvelles fonctionnalités
+ */
+export async function updateDatabaseSchema() {
+  const dbName = 'database.db';
+  
+  try {
+    const db = await SQLite.openDatabaseAsync(dbName);
+    
+    // Vérifier si la colonne genre_weights existe
+    const tableInfo = await db.getAllAsync('PRAGMA table_info(user_profile)');
+    const hasGenreWeights = tableInfo.some(column => column.name === 'genre_weights');
+    
+    if (!hasGenreWeights) {
+      console.log('🔧 Ajout de la colonne genre_weights...');
+      await db.runAsync('ALTER TABLE user_profile ADD COLUMN genre_weights TEXT DEFAULT "{}"');
+      console.log('✅ Colonne genre_weights ajoutée avec succès');
+    }
+    
+    await db.closeAsync();
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du schéma:', error);
+  }
+}

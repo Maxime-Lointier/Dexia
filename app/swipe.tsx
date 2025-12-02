@@ -17,7 +17,7 @@ import Animated, {
 
 import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById, getMovieGenreIdById } from '../src/models/movies';
 import { getMovieCast, Cast } from '../src/models/cast';
-import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, addDynamicGenres, detectFilterBubble, cleanupKeywords, extractKeywordsFromMovie } from '../src/models/user';
+import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, addDynamicGenres, manageDynamicGenres, detectFilterBubble, cleanupKeywords, extractKeywordsFromMovie } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
 
@@ -150,22 +150,13 @@ const SwipeScreen = () => {
     const currentMovie = movies[currentMovieIndex];
     await addInteraction(CURRENT_USER_ID, currentMovie.id, actionType);
 
-    // 🆕 NOUVEAU : Système dynamique (genres + mots-clés)
+    // 🆕 NOUVEAU : Système dynamique (genres + mots-clés) avec LIKE/DISLIKE
+    const genresIds = await getMovieGenreIdById(currentMovie.id);
+    
     if (actionType === 'like') {
-        const genresIds = await getMovieGenreIdById(currentMovie.id);
         setSessionLikedGenres(prev => [...new Set([...prev, ...genresIds])]);
         
-        // 🎯 AJOUTER LES GENRES DYNAMIQUEMENT
-        try {
-          const success = await addDynamicGenres(CURRENT_USER_ID, genresIds);
-          if (success) {
-            console.log(`🎯 Genres ajoutés dynamiquement: ${genresIds.join(', ')}`);
-          }
-        } catch (error) {
-          console.error('Erreur ajout genres dynamiques:', error);
-        }
-        
-        // 🎯 AJOUTER LES MOTS-CLÉS DYNAMIQUEMENT
+        // 🎯 AJOUTER LES MOTS-CLÉS DYNAMIQUEMENT (seulement pour les likes)
         try {
           const genres = await getMovieGenreById(currentMovie.id);
           const extractedKeywords = await extractKeywordsFromMovie(currentMovie, genres);
@@ -179,6 +170,18 @@ const SwipeScreen = () => {
         } catch (error) {
           console.error('Erreur ajout mots-clés:', error);
         }
+    }
+    
+    // 🎯 GÉRER LES GENRES AVEC POIDS (LIKE ET DISLIKE seulement)
+    if (actionType === 'like' || actionType === 'dislike') {
+      try {
+        const success = await manageDynamicGenres(CURRENT_USER_ID, genresIds, actionType);
+        if (success) {
+          console.log(`🎯 Genres ${actionType}: ${genresIds.join(', ')}`);
+        }
+      } catch (error) {
+        console.error(`Erreur gestion genres ${actionType}:`, error);
+      }
     }
 
     // 🆕 NOUVEAU : Détection anti-bulle tous les 5 films

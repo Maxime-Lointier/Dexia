@@ -130,37 +130,75 @@ export async function updateUserPreferences(userId: number, preferences: UserPre
 }
 
 /**
- * Ajoute des genres aux préférences utilisateur de manière dynamique
+ * Système de genres dynamiques avec poids (likes vs dislikes)
+ * @param userId - ID de l'utilisateur 
+ * @param genreIds - IDs des genres à traiter
+ * @param action - 'like' ou 'dislike'
+ * @returns Promise<boolean> - true si la mise à jour a réussi
+ */
+export async function manageDynamicGenres(userId: number, genreIds: number[], action: 'like' | 'dislike'): Promise<boolean> {
+  if (!genreIds || genreIds.length === 0) return true;
+  
+  const db = await getDatabase();
+  try {
+    // Récupérer les préférences actuelles avec gestion des poids
+    let genreWeights: { [key: number]: number } = {};
+    
+    const row = await db.getFirstAsync<{ preferences: string | null, genre_weights: string | null }>(
+      'SELECT preferences, genre_weights FROM user_profile WHERE id = ?', [userId]
+    );
+    
+    if (row?.genre_weights) {
+      try {
+        genreWeights = JSON.parse(row.genre_weights);
+      } catch {
+        genreWeights = {};
+      }
+    }
+    
+    // Mettre à jour les poids selon l'action
+    for (const genreId of genreIds) {
+      const currentWeight = genreWeights[genreId] || 0;
+      
+      if (action === 'like') {
+        genreWeights[genreId] = Math.min(currentWeight + 1, 10); // Max 10 points
+      } else { // dislike
+        genreWeights[genreId] = Math.max(currentWeight - 0.5, -5); // Min -5 points
+      }
+    }
+    
+    // Extraire les genres avec poids positif (>= 1) pour les préférences
+    const preferredGenres = Object.keys(genreWeights)
+      .map(id => parseInt(id))
+      .filter(id => genreWeights[id] >= 1);
+    
+    console.log(`🎯 Genres ${action}: ${genreIds.join(', ')}`);  
+    console.log(`🎯 Genres préférés actifs: ${preferredGenres.length} (${preferredGenres.join(', ')})`);
+    
+    // Sauvegarder préférences ET poids
+    const preferencesJson = JSON.stringify(preferredGenres);
+    const weightsJson = JSON.stringify(genreWeights);
+    
+    await db.runAsync(
+      'UPDATE user_profile SET preferences = ?, genre_weights = ? WHERE id = ?',
+      [preferencesJson, weightsJson, userId]
+    );
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur gestion genres dynamiques:', error);
+    return false;
+  }
+}
+
+/**
+ * Ajoute des genres aux préférences utilisateur de manière dynamique (compatibilité)
  * @param userId - ID de l'utilisateur 
  * @param genreIds - IDs des genres à ajouter
  * @returns Promise<boolean> - true si l'ajout a réussi
  */
 export async function addDynamicGenres(userId: number, genreIds: number[]): Promise<boolean> {
-  if (!genreIds || genreIds.length === 0) return true;
-  
-  const db = await getDatabase();
-  try {
-    // Récupérer les genres actuels
-    const currentPrefs = await getUserPreferences(userId);
-    const currentGenres = currentPrefs.genres || [];
-    
-    // Fusionner avec les nouveaux genres (pas de doublons)
-    const updatedGenres = [...new Set([...currentGenres, ...genreIds])];
-    
-    console.log(`🎯 Genres ajoutés: ${genreIds.join(', ')} (total: ${updatedGenres.length})`);
-    
-    // Sauvegarder
-    const preferencesJson = JSON.stringify(updatedGenres);
-    await db.runAsync(
-      'UPDATE user_profile SET preferences = ? WHERE id = ?',
-      [preferencesJson, userId]
-    );
-    
-    return true;
-  } catch (error) {
-    console.error('Erreur ajout genres dynamiques:', error);
-    return false;
-  }
+  return manageDynamicGenres(userId, genreIds, 'like');
 }
 
 /**
