@@ -22,7 +22,10 @@ import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/i
 import { getPosterById } from '../src/utils/posterMap';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
+
+// --- MODIFICATION : Réglages de sensibilité ---
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25; // Distance réduite à 25% de l'écran (au lieu de 35%)
+const SWIPE_VELOCITY_THRESHOLD = 800; // Vitesse requise pour un "flick" (coup rapide)
 
 const SwipeScreen = () => {
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
@@ -185,6 +188,7 @@ const SwipeScreen = () => {
     }
   };
 
+  // --- MODIFICATION : Logique du geste mise à jour ---
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
       translateX.value = e.translationX;
@@ -198,28 +202,41 @@ const SwipeScreen = () => {
         Extrapolate.CLAMP
       );
       
+      // Ajustement de l'opacité de l'overlay pour correspondre au nouveau seuil (0.25)
       swipeOverlayOpacity.value = interpolate(
         Math.abs(e.translationX),
-        [0, SCREEN_WIDTH * 0.25],
+        [0, SCREEN_WIDTH * 0.25], 
         [0, 1],
         Extrapolate.CLAMP
       );
     })
     .onEnd((e) => {
       const swipeDistance = e.translationX;
+      const swipeVelocity = e.velocityX;
       
-      if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
+      // On valide le swipe si :
+      // 1. La distance est suffisante (> 25% de l'écran)
+      // OU
+      // 2. Le geste est rapide (Flick > 800px/s) ET dans la même direction que le mouvement
+      const isSwipedByDistance = Math.abs(swipeDistance) > SWIPE_THRESHOLD;
+      const isSwipedByVelocity = Math.abs(swipeVelocity) > SWIPE_VELOCITY_THRESHOLD;
+      const isConsistentDirection = Math.sign(swipeVelocity) === Math.sign(swipeDistance);
+
+      if (isSwipedByDistance || (isSwipedByVelocity && isConsistentDirection)) {
         const direction = swipeDistance > 0 ? 'right' : 'left';
         const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
         
+        // On utilise la velocity réelle pour donner une impulsion naturelle
         translateX.value = withSpring(destinationX, {
           damping: 20,
           stiffness: 90,
-          mass: 1
+          mass: 1,
+          velocity: swipeVelocity 
         });
         opacity.value = withTiming(0, { duration: 200 });
         runOnJS(handleSwipeComplete)(direction);
       } else {
+        // Retour au centre si le swipe n'est pas validé
         translateX.value = withSpring(0, {
           damping: 20,
           stiffness: 90,
