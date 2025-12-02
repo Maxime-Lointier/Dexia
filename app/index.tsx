@@ -1,45 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
-import { userExists } from '../src/models/user';
+import { useEffect, useState } from 'react';
+import { View, ActivityIndicator, Text } from 'react-native'; // J'ai ajouté Text pour le debug
+import { Redirect } from 'expo-router';
+import { userExists, isOnboardingDone, setOnboardingDone, CURRENT_USER_ID } from '../src/models/user'; 
 
 export default function Index() {
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [shouldGoToHome, setShouldGoToHome] = useState(false);
 
   useEffect(() => {
-    checkUserAndRedirect();
+    checkUserStatus();
   }, []);
 
-  const checkUserAndRedirect = async () => {
+  const checkUserStatus = async () => {
     try {
-      // Vérifier si le profil utilisateur existe
-      const exists = await userExists();
+      console.log("🔍 Vérification du statut utilisateur...");
+      
+      // --- LIGNE MAGIQUE POUR TESTER (A supprimer plus tard) ---
+      // Force l'onboarding à "non fait" à chaque lancement pour tes tests
+      console.log("🛠️ DEBUG: Réinitialisation de l'onboarding pour test");
+      await setOnboardingDone(CURRENT_USER_ID, false); 
+      // -------------------------------------------------------
 
-      if (exists) {
-        // L'utilisateur existe, rediriger vers homeScreen
-        router.replace('/homeScreen');
+      const exists = await userExists();
+      const onboardingFinished = await isOnboardingDone(CURRENT_USER_ID);
+
+      console.log(`👤 Utilisateur existe ? ${exists}`);
+      console.log(`✅ Onboarding fini ? ${onboardingFinished}`);
+
+      if (exists && onboardingFinished) {
+        setShouldGoToHome(true);
       } else {
-        // L'utilisateur n'existe pas, rediriger vers welcomeScreen
-        router.replace('/welcomeScreen');
+        setShouldGoToHome(false);
       }
     } catch (error) {
-      console.error('Erreur lors de la vérification de l\'utilisateur:', error);
-      // En cas d'erreur, rediriger vers welcomeScreen par défaut
-      router.replace('/welcomeScreen');
+      console.error("❌ Erreur checkUserStatus:", error);
+      setShouldGoToHome(false);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Afficher un loader pendant la vérification
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F0F1E' }}>
         <ActivityIndicator size="large" color="#6C5CE7" />
+        <Text style={{color:'white', marginTop: 10}}>Chargement...</Text>
       </View>
     );
   }
 
-  // Ce return ne devrait jamais être atteint car la redirection se fait dans useEffect
-  return null;
+  // Redirection
+  return shouldGoToHome ? <Redirect href="/homeScreen" /> : <Redirect href="/welcomeScreen" />;
 }
