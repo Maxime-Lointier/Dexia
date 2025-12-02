@@ -17,15 +17,12 @@ import Animated, {
 
 import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById, getMovieGenreIdById } from '../src/models/movies';
 import { getMovieCast, Cast } from '../src/models/cast';
-import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, addDynamicGenres, manageDynamicGenres, detectFilterBubble, cleanupKeywords, extractKeywordsFromMovie } from '../src/models/user';
+import { getUserPreferences, CURRENT_USER_ID } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// --- MODIFICATION : Réglages de sensibilité ---
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25; // Distance réduite à 25% de l'écran (au lieu de 35%)
-const SWIPE_VELOCITY_THRESHOLD = 800; // Vitesse requise pour un "flick" (coup rapide)
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
 
 const SwipeScreen = () => {
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
@@ -35,6 +32,8 @@ const SwipeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [sessionLikedGenres, setSessionLikedGenres] = useState<number[]>([]);
+  const [userPreferences, setUserPreferences] = useState<{ genres: number[], keywords: string[] } | null>(null);
+  const [matchPercentage, setMatchPercentage] = useState<number>(0);
   const BATCH_SIZE = 10;
 
   const translateX = useSharedValue(0);
@@ -64,6 +63,7 @@ const SwipeScreen = () => {
       setLoading(true);
       const userId = CURRENT_USER_ID;
       const preferences = await getUserPreferences(userId);
+      setUserPreferences(preferences);
       const seenIds = await getUserSeenMovieIds(userId);
       
       const currentMovieIds = movies.map(m => m.id);
@@ -71,9 +71,7 @@ const SwipeScreen = () => {
 
       let moviesData: Movie[] = [];
 
-      // 🎯 UTILISER LES GENRES DYNAMIQUES ! 
       if (preferences.genres && preferences.genres.length > 0) {
-        console.log(`🎯 Recommandations avec ${preferences.genres.length} genres préférés: ${preferences.genres.join(', ')}`);
         moviesData = await getMoviesByGenresAndKeywords(
           preferences.genres,
           preferences.keywords,
@@ -81,8 +79,6 @@ const SwipeScreen = () => {
           BATCH_SIZE,
           sessionLikedGenres
         );
-      } else {
-        console.log('🎯 Aucun genre préféré, films aléatoires');
       }
 
       if (moviesData.length === 0) {
@@ -90,7 +86,7 @@ const SwipeScreen = () => {
       }
 
       if (refresh) {
-        setMovies(moviesData);
+      setMovies(moviesData);
         setCurrentMovieIndex(0);
       } else {
         setMovies(prev => [...prev, ...moviesData]);
@@ -112,6 +108,13 @@ const SwipeScreen = () => {
     try {
       const genres = await getMovieGenreById(movieId);
       setCurrentGenres(genres.map(g => g.name));
+      
+      const movie = movies.find(m => m.id === movieId) || movies[currentMovieIndex];
+      if (movie) {
+        const genreIds = await getMovieGenreIdById(movieId);
+        const match = await calculateMatchPercentage(movie, genreIds);
+        setMatchPercentage(match);
+      }
     } catch (error) {
       console.error('Erreur chargement genres:', error);
       setCurrentGenres([]);
@@ -153,61 +156,9 @@ const SwipeScreen = () => {
     const currentMovie = movies[currentMovieIndex];
     await addInteraction(CURRENT_USER_ID, currentMovie.id, actionType);
 
-    // 🆕 NOUVEAU : Système dynamique (genres + mots-clés) avec LIKE/DISLIKE
-    const genresIds = await getMovieGenreIdById(currentMovie.id);
-    
     if (actionType === 'like') {
+        const genresIds = await getMovieGenreIdById(currentMovie.id);
         setSessionLikedGenres(prev => [...new Set([...prev, ...genresIds])]);
-        
-        // 🎯 AJOUTER LES MOTS-CLÉS DYNAMIQUEMENT (seulement pour les likes)
-        try {
-          const genres = await getMovieGenreById(currentMovie.id);
-          const extractedKeywords = await extractKeywordsFromMovie(currentMovie, genres);
-          
-          if (extractedKeywords.length > 0) {
-            const success = await addDynamicKeywords(CURRENT_USER_ID, extractedKeywords);
-            if (success) {
-              console.log(`🎯 Mots-clés ajoutés: ${extractedKeywords.join(', ')}`);
-            }
-          }
-        } catch (error) {
-          console.error('Erreur ajout mots-clés:', error);
-        }
-    }
-    
-    // 🎯 GÉRER LES GENRES AVEC POIDS (LIKE ET DISLIKE seulement)
-    if (actionType === 'like' || actionType === 'dislike') {
-      try {
-        const success = await manageDynamicGenres(CURRENT_USER_ID, genresIds, actionType);
-        if (success) {
-          console.log(`🎯 Genres ${actionType}: ${genresIds.join(', ')}`);
-        }
-      } catch (error) {
-        console.error(`Erreur gestion genres ${actionType}:`, error);
-      }
-    }
-
-    // 🆕 NOUVEAU : Détection anti-bulle tous les 5 films
-    if ((currentMovieIndex + 1) % 5 === 0) {
-      try {
-        const recentInteractions = await getUserSeenMovieIds(CURRENT_USER_ID); // Récupérer interactions récentes
-        const bubbleDetection = await detectFilterBubble(CURRENT_USER_ID, recentInteractions.slice(-20));
-        
-        if (bubbleDetection.hasBubble) {
-          console.log(`🎯 Bulle détectée: ${bubbleDetection.bubbleType} (${bubbleDetection.confidence.toFixed(2)})`);
-          
-          // Appliquer la stratégie de nettoyage
-          const cleanupSuccess = await cleanupKeywords(CURRENT_USER_ID, bubbleDetection.bubbleType);
-          if (cleanupSuccess) {
-            console.log(`🧹 Nettoyage des mots-clés appliqué pour ${bubbleDetection.bubbleType}`);
-            // Recharger les films avec les nouveaux critères
-            await loadMovies(true);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Erreur détection/nettoyage bulle:', error);
-      }
     }
 
     if (currentMovieIndex < movies.length - 1) {
@@ -266,26 +217,15 @@ const SwipeScreen = () => {
     })
     .onEnd((e) => {
       const swipeDistance = e.translationX;
-      const swipeVelocity = e.velocityX;
       
-      // On valide le swipe si :
-      // 1. La distance est suffisante (> 25% de l'écran)
-      // OU
-      // 2. Le geste est rapide (Flick > 800px/s) ET dans la même direction que le mouvement
-      const isSwipedByDistance = Math.abs(swipeDistance) > SWIPE_THRESHOLD;
-      const isSwipedByVelocity = Math.abs(swipeVelocity) > SWIPE_VELOCITY_THRESHOLD;
-      const isConsistentDirection = Math.sign(swipeVelocity) === Math.sign(swipeDistance);
-
-      if (isSwipedByDistance || (isSwipedByVelocity && isConsistentDirection)) {
+      if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
         const direction = swipeDistance > 0 ? 'right' : 'left';
         const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
         
-        // On utilise la velocity réelle pour donner une impulsion naturelle
         translateX.value = withSpring(destinationX, {
           damping: 20,
           stiffness: 90,
-          mass: 1,
-          velocity: swipeVelocity 
+          mass: 1
         });
         opacity.value = withTiming(0, { duration: 200 });
         runOnJS(handleSwipeComplete)(direction);
@@ -322,6 +262,35 @@ const SwipeScreen = () => {
       opacity: opacity.value,
     };
   });
+
+  const calculateMatchPercentage = async (movie: Movie, movieGenreIds: number[]): Promise<number> => {
+    if (!userPreferences || userPreferences.genres.length === 0) {
+      return 50;
+    }
+    
+    const allPreferredGenres = [...userPreferences.genres, ...sessionLikedGenres];
+    const matchingGenres = movieGenreIds.filter(id => allPreferredGenres.includes(id));
+    
+    if (matchingGenres.length === 0) {
+      return 20;
+    }
+    
+    const genreMatchRatio = matchingGenres.length / Math.max(allPreferredGenres.length, movieGenreIds.length);
+    
+    let keywordMatch = 0;
+    if (userPreferences.keywords && userPreferences.keywords.length > 0 && movie.overview) {
+      const overviewLower = movie.overview.toLowerCase();
+      const titleLower = movie.title.toLowerCase();
+      const matchingKeywords = userPreferences.keywords.filter(keyword => 
+        overviewLower.includes(keyword.toLowerCase()) || titleLower.includes(keyword.toLowerCase())
+      );
+      keywordMatch = matchingKeywords.length / userPreferences.keywords.length;
+    }
+    
+    const finalScore = (genreMatchRatio * 0.8) + (keywordMatch * 0.2);
+    
+    return Math.min(98, Math.max(20, Math.round(finalScore * 100)));
+  };
 
   const getYear = (dateString: string): string => {
     if (!dateString) return '';
@@ -374,8 +343,6 @@ const SwipeScreen = () => {
 
   const currentMovie = movies[currentMovieIndex];
   const posterSource = getPosterSource(currentMovie);
-  
-  const matchPercentage = Math.min(98, Math.round((currentMovie.vote_average * 10) + 5));
 
   return (
     <SafeAreaView className="flex-1 bg-[#0F0F1E]">
@@ -550,19 +517,19 @@ const SwipeScreen = () => {
         onRequestClose={closeInfoModal}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
-            <Animated.View
-              style={[
-                {
-                  flex: 1,
+        <Animated.View
+          style={[
+            {
+              flex: 1,
                   justifyContent: 'flex-end',
-                },
-                modalAnimatedStyle,
-              ]}
+            },
+            modalAnimatedStyle,
+          ]}
+        >
+            <View 
+              className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]"
             >
-              <View 
-                className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]"
-              >
-                <ScrollView 
+              <ScrollView 
                 className="flex-1" 
                 bounces={false}
                 showsVerticalScrollIndicator={false}
@@ -606,7 +573,7 @@ const SwipeScreen = () => {
                     <View className="bg-[#22C55E]/20 px-2.5 py-1 rounded-md mr-3 border border-[#22C55E]/30">
                       <Text className="text-[#22C55E] font-bold text-xs">
                         {matchPercentage}% Recommandé
-                      </Text>
+                    </Text>
                     </View>
                     <Icon name="calendar-alt" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
                     <Text className="text-gray-400 font-medium text-base">
@@ -667,9 +634,9 @@ const SwipeScreen = () => {
                 >
                   <Text className="text-white font-bold text-lg">Fermer</Text>
                 </TouchableOpacity>
-              </View>
-              </View>
-            </Animated.View>
+            </View>
+          </View>
+        </Animated.View>
         </View>
       </Modal>
     </SafeAreaView>
