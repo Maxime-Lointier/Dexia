@@ -4,15 +4,15 @@ Application mobile de recommandation de films développée avec React Native et 
 
 ## 📋 Table des matières
 
-- [Présentation](#présentation)
-- [Technologies utilisées](#technologies-utilisées)
-- [Architecture de l'application](#architecture-de-lapplication)
-- [Base de données](#base-de-données)
-- [Système de recommandation](#système-de-recommandation)
-- [Algorithme de matching](#algorithme-de-matching)
-- [Installation](#installation)
-- [Utilisation](#utilisation)
-- [Tests et développement](#tests-et-développement)
+- [Présentation](#-présentation)
+- [Technologies utilisées](#-technologies-utilisées)
+- [Architecture de l'application](#-architecture-de-lapplication)
+- [Base de données](#-base-de-données)
+- [Système de recommandation](#-système-de-recommandation)
+- [Algorithme de matching](#-algorithme-de-matching)
+- [Installation](#-installation)
+- [Utilisation](#-utilisation)
+- [Tests et développement](#-tests-et-développement)
 
 ## 🎬 Présentation
 
