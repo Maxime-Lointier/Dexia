@@ -1,5 +1,5 @@
-# Dexia Backend
 
+# Backend
 Ce dossier contient les modèles de données et services pour la base de films SQLite utilisée par l'application mobile.
 
 
