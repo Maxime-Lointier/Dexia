@@ -1,6 +1,23 @@
 import { getDatabase } from './db';
 
-export type ActionType = 'view' | 'like' | 'dislike' | 'favorite';
+export type ActionType = 'view' | 'like' | 'dislike' | 'favorite' | 'watchlist';
+
+// Cache simple pour la watchlist
+interface WatchlistCache {
+  [userId: number]: {
+    movieIds: number[];
+    movies: any[];
+    lastUpdate: number;
+  };
+}
+
+const watchlistCache: WatchlistCache = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Fonction pour invalider le cache d'un utilisateur
+function invalidateWatchlistCache(userId: number) {
+  delete watchlistCache[userId];
+}
 
 export interface UserInteraction {
   id: number;
@@ -174,6 +191,155 @@ export async function deleteInteraction(interactionId: number): Promise<boolean>
     return true;
   } catch (error) {
     console.error('Erreur lors de la suppression de l\'interaction:', error);
+    return false;
+  }
+}
+
+/**
+ * Ajoute ou retire un film de la watchlist de l'utilisateur
+ * @param userId - ID de l'utilisateur
+ * @param movieId - ID du film
+ * @returns Promise<boolean> - true si l'action a réussi
+ */
+export async function toggleWatchlist(userId: number, movieId: number): Promise<boolean> {
+  const db = await getDatabase();
+  
+  try {
+    // Vérifier si le film est déjà dans la watchlist
+    const exists = await hasUserInteractedWithMovie(userId, movieId, 'watchlist');
+    
+    if (exists) {
+      // Supprimer de la watchlist
+      const sql = 'DELETE FROM user_interactions WHERE user_id = ? AND movie_id = ? AND action_type = ?';
+      await db.runAsync(sql, [userId, movieId, 'watchlist']);
+    } else {
+      // Ajouter à la watchlist
+      const result = await addInteraction(userId, movieId, 'watchlist');
+      if (!result) return false;
+    }
+    
+    // Invalider le cache après modification
+    invalidateWatchlistCache(userId);
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur lors du toggle watchlist:', error);
+    return false;
+  }
+}
+
+/**
+ * Vérifie si un film est dans la watchlist de l'utilisateur
+ * @param userId - ID de l'utilisateur
+ * @param movieId - ID du film
+ * @returns Promise<boolean> - true si le film est dans la watchlist
+ */
+export async function isInWatchlist(userId: number, movieId: number): Promise<boolean> {
+  return hasUserInteractedWithMovie(userId, movieId, 'watchlist');
+}
+
+/**
+ * Récupère les IDs des films dans la watchlist de l'utilisateur (avec cache)
+ * @param userId - ID de l'utilisateur
+ * @returns Promise<number[]> - Liste des IDs de films dans la watchlist
+ */
+export async function getWatchlistMovieIds(userId: number): Promise<number[]> {
+  // Vérifier le cache d'abord
+  const cached = watchlistCache[userId];
+  if (cached && Date.now() - cached.lastUpdate < CACHE_DURATION) {
+    return cached.movieIds;
+  }
+
+  const db = await getDatabase();
+  try {
+    const sql = 'SELECT movie_id FROM user_interactions WHERE user_id = ? AND action_type = ? ORDER BY created_at DESC';
+    const result = await db.getAllAsync<{ movie_id: number }>(sql, [userId, 'watchlist']);
+    const movieIds = result.map(row => row.movie_id);
+    
+    // Mettre en cache les IDs (sans les films complets pour l'instant)
+    watchlistCache[userId] = {
+      movieIds,
+      movies: [], // Sera rempli par getWatchlistMovies
+      lastUpdate: Date.now()
+    };
+    
+    return movieIds;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des IDs watchlist:', error);
+    return [];
+  }
+}
+
+/**
+ * Compte le nombre de films dans la watchlist de l'utilisateur
+ * @param userId - ID de l'utilisateur
+ * @returns Promise<number> - Nombre de films dans la watchlist
+ */
+export async function getWatchlistCount(userId: number): Promise<number> {
+  const db = await getDatabase();
+  try {
+    const sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND action_type = ?';
+    const result = await db.getFirstAsync<{ count: number }>(sql, [userId, 'watchlist']);
+    return result ? result.count : 0;
+  } catch (error) {
+    console.error('Erreur lors du comptage watchlist:', error);
+    return 0;
+  }
+}
+
+/**
+ * Récupère les films complets de la watchlist de l'utilisateur (avec cache)
+ * @param userId - ID de l'utilisateur
+ * @returns Promise<Movie[]> - Liste des films de la watchlist avec détails complets
+ */
+export async function getWatchlistMovies(userId: number): Promise<any[]> {
+  try {
+    // Vérifier le cache complet (avec films)
+    const cached = watchlistCache[userId];
+    if (cached && cached.movies.length > 0 && Date.now() - cached.lastUpdate < CACHE_DURATION) {
+      return cached.movies;
+    }
+
+    const movieIds = await getWatchlistMovieIds(userId);
+    if (movieIds.length === 0) {
+      return [];
+    }
+
+    // Import dynamique pour éviter les dépendances circulaires
+    const { getMoviesByIds } = await import('./movies');
+    const movies = await getMoviesByIds(movieIds);
+    
+    // Mettre à jour le cache avec les films complets
+    if (watchlistCache[userId]) {
+      watchlistCache[userId].movies = movies;
+      watchlistCache[userId].lastUpdate = Date.now();
+    }
+    
+    return movies;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des films watchlist:', error);
+    return [];
+  }
+}
+
+/**
+ * Retire un film de la watchlist de l'utilisateur
+ * @param userId - ID de l'utilisateur
+ * @param movieId - ID du film
+ * @returns Promise<boolean> - true si la suppression a réussi
+ */
+export async function removeFromWatchlist(userId: number, movieId: number): Promise<boolean> {
+  const db = await getDatabase();
+  try {
+    const sql = 'DELETE FROM user_interactions WHERE user_id = ? AND movie_id = ? AND action_type = ?';
+    await db.runAsync(sql, [userId, movieId, 'watchlist']);
+    
+    // Invalider le cache après suppression
+    invalidateWatchlistCache(userId);
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la watchlist:', error);
     return false;
   }
 }

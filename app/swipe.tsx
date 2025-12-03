@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, StatusBar, ActivityIndicator, Dimensions, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome5 as Icon } from '@expo/vector-icons';
+import { FontAwesome5 as Icon, FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
@@ -18,7 +18,7 @@ import Animated, {
 import { Movie, getMoviesByGenresAndKeywords, getTopRatedMovies, getRandomMovies, getMovieGenreById, getMovieGenreIdById } from '../src/models/movies';
 import { getMovieCast, Cast } from '../src/models/cast';
 import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, addDynamicGenres, manageDynamicGenres, detectFilterBubble, cleanupKeywords, extractKeywordsFromMovie } from '../src/models/user';
-import { getUserSeenMovieIds, addInteraction, ActionType } from '../src/models/interaction';
+import { getUserSeenMovieIds, addInteraction, ActionType, toggleWatchlist, isInWatchlist } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -34,6 +34,7 @@ const SwipeScreen = () => {
   const [sessionLikedGenres, setSessionLikedGenres] = useState<number[]>([]);
   const [userPreferences, setUserPreferences] = useState<{ genres: number[], keywords: string[] } | null>(null);
   const [matchPercentage, setMatchPercentage] = useState<number>(0);
+  const [isCurrentMovieInWatchlist, setIsCurrentMovieInWatchlist] = useState(false);
   const BATCH_SIZE = 10;
 
   const translateX = useSharedValue(0);
@@ -116,9 +117,14 @@ const SwipeScreen = () => {
         const match = await calculateMatchPercentage(movie, genreIds);
         setMatchPercentage(match);
       }
+
+      // Vérifier si le film est dans la watchlist
+      const inWatchlist = await isInWatchlist(CURRENT_USER_ID, movieId);
+      setIsCurrentMovieInWatchlist(inWatchlist);
     } catch (error) {
       console.error('Erreur chargement genres:', error);
       setCurrentGenres([]);
+      setIsCurrentMovieInWatchlist(false);
     }
   };
 
@@ -367,6 +373,20 @@ const SwipeScreen = () => {
     });
   };
 
+  const handleWatchlistToggle = async () => {
+    if (movies.length === 0) return;
+    
+    const currentMovie = movies[currentMovieIndex];
+    try {
+      const success = await toggleWatchlist(CURRENT_USER_ID, currentMovie.id);
+      if (success) {
+        setIsCurrentMovieInWatchlist(!isCurrentMovieInWatchlist);
+      }
+    } catch (error) {
+      console.error('Erreur toggle watchlist:', error);
+    }
+  };
+
   const modalAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: modalTranslateY.value }],
@@ -535,10 +555,17 @@ const SwipeScreen = () => {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            onPress={openInfoModal}
-            className="w-14 h-14 bg-[#1E1E2E] rounded-full items-center justify-center"
+            onPress={handleWatchlistToggle}
+            className={`w-14 h-14 rounded-full items-center justify-center ${
+              isCurrentMovieInWatchlist ? 'bg-[#F59E0B]' : 'bg-[#F59E0B]/20 border-2 border-[#F59E0B]'
+            }`}
           >
-            <Icon name="info-circle" size={20} color="white" />
+            <FontAwesome 
+              name="bookmark" 
+              size={20} 
+              color={isCurrentMovieInWatchlist ? "white" : "#F59E0B"}
+              solid={isCurrentMovieInWatchlist}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity 
