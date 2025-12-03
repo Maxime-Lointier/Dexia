@@ -9,7 +9,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, run
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
 import { getUserPreferences, CURRENT_USER_ID, setOnboardingDone } from '../src/models/user';
-import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded } from '../src/models/interaction';
+import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, getLikeCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded } from '../src/models/interaction';
 import { getMovieCast, Cast } from '../src/models/cast';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -28,6 +28,7 @@ export default function MainPage() {
   const [selectedMovieMatch, setSelectedMovieMatch] = useState<number>(0);
   const [watchlistMovies, setWatchlistMovies] = useState<Movie[]>([]);
   const [watchlistCount, setWatchlistCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(0);
   const [isSelectedMovieInWatchlist, setIsSelectedMovieInWatchlist] = useState(false);
   const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
 
@@ -64,13 +65,59 @@ export default function MainPage() {
     try {
       console.log('📋 HomeScreen: Chargement watchlist...');
       const userId = CURRENT_USER_ID;
-      const movies = await getWatchlistMovies(userId);
-      const count = await getWatchlistCount(userId);
-      console.log(`📋 HomeScreen: ${movies.length} films, count=${count}`);
-      setWatchlistMovies(movies.slice(0, 6)); // Limite à 6 pour l'affichage horizontal
-      setWatchlistCount(count);
+      
+      // Retry mécanisme pour éviter les erreurs de DB
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          const movies = await getWatchlistMovies(userId);
+          const count = await getWatchlistCount(userId);
+          console.log(`📋 HomeScreen: ${movies.length} films, count=${count}`);
+          setWatchlistMovies(movies.slice(0, 6)); // Limite à 6 pour l'affichage horizontal
+          setWatchlistCount(count);
+          break; // Succès, sortir de la boucle
+        } catch (error: any) {
+          retries--;
+          if (retries > 0 && error.message?.includes('NullPointerException')) {
+            console.log(`⚠️ Retry chargement watchlist (${3 - retries}/3)...`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } else {
+            throw error;
+          }
+        }
+      }
     } catch (error) {
       console.error('Erreur chargement watchlist:', error);
+      setWatchlistMovies([]); // Valeurs par défaut en cas d'erreur
+      setWatchlistCount(0);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const userId = CURRENT_USER_ID;
+      
+      // Retry mécanisme pour éviter les erreurs de DB
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          const likes = await getLikeCount(userId);
+          console.log(`❤️ HomeScreen: ${likes} films likés`);
+          setLikeCount(likes);
+          break; // Succès, sortir de la boucle
+        } catch (error: any) {
+          retries--;
+          if (retries > 0 && error.message?.includes('NullPointerException')) {
+            console.log(`⚠️ Retry chargement stats (${3 - retries}/3)...`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } else {
+            throw error; // Relancer l'erreur si plus de retries ou erreur différente
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erreur chargement statistiques:', error);
+      setLikeCount(0); // Valeur par défaut en cas d'erreur
     }
   };
 
@@ -113,10 +160,18 @@ export default function MainPage() {
 
       setRecommendations(sortedMovies);
       
-      // Charger également la watchlist
-      await loadWatchlist();
+      // Charger également la watchlist et les statistiques (de manière indépendante)
+      Promise.all([
+        loadWatchlist().catch(err => console.warn('⚠️ Erreur watchlist non bloquante:', err)),
+        loadStats().catch(err => console.warn('⚠️ Erreur stats non bloquante:', err))
+      ]);
     } catch (error) {
       console.error("Erreur chargement recommandations home:", error);
+      // Même en cas d'erreur, essayer de charger watchlist et stats
+      Promise.all([
+        loadWatchlist().catch(() => {}),
+        loadStats().catch(() => {})
+      ]);
     } finally {
       setLoading(false);
     }
@@ -125,8 +180,9 @@ export default function MainPage() {
   useFocusEffect(
     useCallback(() => {
       loadRecommendations();
-      // Recharger aussi la watchlist quand on revient sur cet écran
+      // Recharger aussi la watchlist et les stats quand on revient sur cet écran
       loadWatchlist();
+      loadStats();
     }, [])
   );
 
@@ -212,8 +268,9 @@ export default function MainPage() {
       const success = await toggleWatchlist(CURRENT_USER_ID, selectedMovie.id);
       if (success) {
         setIsSelectedMovieInWatchlist(!isSelectedMovieInWatchlist);
-        // Recharger la watchlist pour mettre à jour l'affichage immédiatement
+        // Recharger la watchlist et les stats pour mettre à jour l'affichage immédiatement
         await loadWatchlist();
+        await loadStats();
       }
     } catch (error) {
       console.error('Erreur toggle watchlist:', error);
@@ -226,6 +283,7 @@ export default function MainPage() {
     // Vider immédiatement l'état local
     setWatchlistMovies([]);
     setWatchlistCount(0);
+    setLikeCount(0);
     
     await setOnboardingDone(CURRENT_USER_ID, false);
     router.replace('/welcomeScreen');
@@ -259,7 +317,7 @@ export default function MainPage() {
               <View className="w-10 h-10 bg-[#6C5CE7]/20 rounded-full items-center justify-center mb-2">
                 <FontAwesome name="heart" size={18} color="#6C5CE7" />
               </View>
-              <Text className="text-white text-2xl font-bold">127</Text>
+              <Text className="text-white text-2xl font-bold">{likeCount}</Text>
               <Text className="text-gray-400 text-[10px] uppercase font-medium mt-1">Films aimés</Text>
             </View>
             

@@ -316,6 +316,33 @@ export async function getWatchlistCount(userId: number): Promise<number> {
 }
 
 /**
+ * Compte le nombre de films likés par l'utilisateur
+ * @param userId - ID de l'utilisateur
+ * @returns Promise<number> - Nombre de films likés
+ */
+export async function getLikeCount(userId: number): Promise<number> {
+  try {
+    const db = await getDatabase();
+    
+    // Vérifier que la base de données est bien initialisée
+    if (!db) {
+      console.warn('⚠️ Base de données non initialisée pour getLikeCount');
+      return 0;
+    }
+
+    const sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND action_type = ?';
+    const result = await db.getFirstAsync<{ count: number }>(sql, [userId, 'like']);
+    const count = result ? result.count : 0;
+    console.log(`❤️ Count likes DB: ${count} pour user ${userId}`);
+    return count;
+  } catch (error: any) {
+    console.error('Erreur lors du comptage des likes:', error);
+    // En cas d'erreur de DB, retourner 0 au lieu de faire planter l'app
+    return 0;
+  }
+}
+
+/**
  * Récupère les films complets de la watchlist de l'utilisateur (avec cache)
  * @param userId - ID de l'utilisateur
  * @returns Promise<Movie[]> - Liste des films de la watchlist avec détails complets
