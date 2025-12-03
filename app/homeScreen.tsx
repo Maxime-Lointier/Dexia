@@ -9,7 +9,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, run
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
 import { getUserPreferences, CURRENT_USER_ID, setOnboardingDone } from '../src/models/user';
-import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, isInWatchlist, toggleWatchlist } from '../src/models/interaction';
+import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded } from '../src/models/interaction';
 import { getMovieCast, Cast } from '../src/models/cast';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -62,9 +62,11 @@ export default function MainPage() {
 
   const loadWatchlist = async () => {
     try {
+      console.log('📋 HomeScreen: Chargement watchlist...');
       const userId = CURRENT_USER_ID;
       const movies = await getWatchlistMovies(userId);
       const count = await getWatchlistCount(userId);
+      console.log(`📋 HomeScreen: ${movies.length} films, count=${count}`);
       setWatchlistMovies(movies.slice(0, 6)); // Limite à 6 pour l'affichage horizontal
       setWatchlistCount(count);
     } catch (error) {
@@ -76,6 +78,10 @@ export default function MainPage() {
     setLoading(true);
     try {
       const userId = CURRENT_USER_ID;
+      
+      // Nettoyage automatique si nécessaire
+      await cleanupInteractionsIfNeeded(userId);
+      
       const preferences = await getUserPreferences(userId);
       const seenIds = await getUserSeenMovieIds(userId);
       
@@ -119,6 +125,8 @@ export default function MainPage() {
   useFocusEffect(
     useCallback(() => {
       loadRecommendations();
+      // Recharger aussi la watchlist quand on revient sur cet écran
+      loadWatchlist();
     }, [])
   );
 
@@ -204,7 +212,7 @@ export default function MainPage() {
       const success = await toggleWatchlist(CURRENT_USER_ID, selectedMovie.id);
       if (success) {
         setIsSelectedMovieInWatchlist(!isSelectedMovieInWatchlist);
-        // Recharger la watchlist pour mettre à jour l'affichage
+        // Recharger la watchlist pour mettre à jour l'affichage immédiatement
         await loadWatchlist();
       }
     } catch (error) {
@@ -214,6 +222,11 @@ export default function MainPage() {
 
   const handleResetOnboarding = async () => {
     console.log("🔄 Reset de l'onboarding demandé...");
+    
+    // Vider immédiatement l'état local
+    setWatchlistMovies([]);
+    setWatchlistCount(0);
+    
     await setOnboardingDone(CURRENT_USER_ID, false);
     router.replace('/welcomeScreen');
   };

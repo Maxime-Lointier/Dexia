@@ -377,13 +377,30 @@ const SwipeScreen = () => {
     if (movies.length === 0) return;
     
     const currentMovie = movies[currentMovieIndex];
+    console.log(`📋 Swipe: Ajout film ${currentMovie.id} (${currentMovie.title}) à la watchlist`);
+    
+    // Animation de swipe vers le bas
+    translateY.value = withTiming(SCREEN_HEIGHT, { duration: 350 });
+    opacity.value = withTiming(0, { duration: 350 });
+    
     try {
+      // Ajouter à la watchlist avec invalidation du cache
       const success = await toggleWatchlist(CURRENT_USER_ID, currentMovie.id);
-      if (success) {
-        setIsCurrentMovieInWatchlist(!isCurrentMovieInWatchlist);
+      console.log(`📋 Swipe: Résultat toggle watchlist: ${success}`);
+      
+      // Passer au film suivant sans affecter les préférences
+      if (currentMovieIndex < movies.length - 1) {
+        const nextIndex = currentMovieIndex + 1;
+        setCurrentMovieIndex(nextIndex);
+        
+        if (movies.length - nextIndex <= 2) {
+          loadMovies(false);
+        }
+      } else {
+        await loadMovies(true);
       }
     } catch (error) {
-      console.error('Erreur toggle watchlist:', error);
+      console.error('Erreur ajout watchlist:', error);
     }
   };
 

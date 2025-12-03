@@ -19,6 +19,14 @@ function invalidateWatchlistCache(userId: number) {
   delete watchlistCache[userId];
 }
 
+// Export pour permettre l'invalidation depuis d'autres modules
+export function clearWatchlistCache(userId: number) {
+  console.log(`📋 Invalidation du cache pour user ${userId}`);
+  // Supprimer complètement le cache - pas de cache vide persistant
+  delete watchlistCache[userId];
+  console.log(`📋 Cache watchlist complètement supprimé pour user ${userId}`);
+}
+
 export interface UserInteraction {
   id: number;
   user_id: number;
@@ -218,8 +226,9 @@ export async function toggleWatchlist(userId: number, movieId: number): Promise<
       if (!result) return false;
     }
     
-    // Invalider le cache après modification
-    invalidateWatchlistCache(userId);
+    // Invalider complètement le cache après modification
+    delete watchlistCache[userId];
+    console.log(`📋 Cache watchlist invalidé après toggle pour user ${userId}`);
     
     return true;
   } catch (error) {
@@ -244,19 +253,28 @@ export async function isInWatchlist(userId: number, movieId: number): Promise<bo
  * @returns Promise<number[]> - Liste des IDs de films dans la watchlist
  */
 export async function getWatchlistMovieIds(userId: number): Promise<number[]> {
-  // Vérifier le cache d'abord
+  // Vérifier le cache d'abord (seulement s'il existe et est valide)
   const cached = watchlistCache[userId];
   if (cached && Date.now() - cached.lastUpdate < CACHE_DURATION) {
+    console.log(`📋 Cache watchlist utilisé: ${cached.movieIds.length} films`);
     return cached.movieIds;
+  }
+
+  console.log(`📋 Pas de cache valide, requête DB (cache exists: ${!!cached})`);
+  if (cached) {
+    console.log(`📋 Cache age: ${Date.now() - cached.lastUpdate}ms (max: ${CACHE_DURATION}ms)`);
   }
 
   const db = await getDatabase();
   try {
     const sql = 'SELECT movie_id FROM user_interactions WHERE user_id = ? AND action_type = ? ORDER BY created_at DESC';
+    console.log(`📋 Requête DB watchlist pour user ${userId}`);
     const result = await db.getAllAsync<{ movie_id: number }>(sql, [userId, 'watchlist']);
+    console.log(`📋 Résultat DB: ${result.length} entrées`);
     const movieIds = result.map(row => row.movie_id);
+    console.log(`📋 IDs films watchlist: [${movieIds.join(', ')}]`);
     
-    // Mettre en cache les IDs (sans les films complets pour l'instant)
+    // Mettre en cache les nouveaux IDs
     watchlistCache[userId] = {
       movieIds,
       movies: [], // Sera rempli par getWatchlistMovies
@@ -276,11 +294,21 @@ export async function getWatchlistMovieIds(userId: number): Promise<number[]> {
  * @returns Promise<number> - Nombre de films dans la watchlist
  */
 export async function getWatchlistCount(userId: number): Promise<number> {
+  // Si le cache existe, utiliser la longueur des IDs mis en cache
+  const cached = watchlistCache[userId];
+  if (cached && Date.now() - cached.lastUpdate < CACHE_DURATION) {
+    console.log(`📋 Count depuis cache: ${cached.movieIds.length}`);
+    return cached.movieIds.length;
+  }
+
   const db = await getDatabase();
   try {
     const sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND action_type = ?';
+    console.log(`📋 Count depuis DB pour user ${userId}`);
     const result = await db.getFirstAsync<{ count: number }>(sql, [userId, 'watchlist']);
-    return result ? result.count : 0;
+    const count = result ? result.count : 0;
+    console.log(`📋 Count DB résultat: ${count}`);
+    return count;
   } catch (error) {
     console.error('Erreur lors du comptage watchlist:', error);
     return 0;
@@ -294,20 +322,32 @@ export async function getWatchlistCount(userId: number): Promise<number> {
  */
 export async function getWatchlistMovies(userId: number): Promise<any[]> {
   try {
-    // Vérifier le cache complet (avec films)
-    const cached = watchlistCache[userId];
-    if (cached && cached.movies.length > 0 && Date.now() - cached.lastUpdate < CACHE_DURATION) {
-      return cached.movies;
-    }
-
+    console.log(`📋 getWatchlistMovies appelé pour user ${userId}`);
+    
     const movieIds = await getWatchlistMovieIds(userId);
+    console.log(`📋 IDs récupérés: [${movieIds.join(', ')}]`);
+    
     if (movieIds.length === 0) {
+      console.log(`📋 Aucun film dans la watchlist`);
+      // Vider le cache s'il n'y a pas de films
+      if (watchlistCache[userId]) {
+        watchlistCache[userId].movies = [];
+      }
       return [];
     }
 
-    // Import dynamique pour éviter les dépendances circulaires
+    // Vérifier le cache films seulement si les IDs correspondent
+    const cached = watchlistCache[userId];
+    if (cached && cached.movies.length === movieIds.length && cached.movies.length > 0) {
+      console.log(`📋 Cache films utilisé: ${cached.movies.length} films`);
+      return cached.movies;
+    }
+
+    // Recharger les films depuis la DB
+    console.log(`📋 Rechargement films depuis DB`);
     const { getMoviesByIds } = await import('./movies');
     const movies = await getMoviesByIds(movieIds);
+    console.log(`📋 Films récupérés: ${movies.length} films trouvés`);
     
     // Mettre à jour le cache avec les films complets
     if (watchlistCache[userId]) {
@@ -341,6 +381,34 @@ export async function removeFromWatchlist(userId: number, movieId: number): Prom
   } catch (error) {
     console.error('Erreur lors de la suppression de la watchlist:', error);
     return false;
+  }
+}
+
+/**
+ * Nettoie les interactions d'un utilisateur si l'onboarding n'est pas terminé
+ * @param userId - ID de l'utilisateur
+ */
+export async function cleanupInteractionsIfNeeded(userId: number): Promise<void> {
+  try {
+    const db = await getDatabase();
+    
+    // Vérifier le statut onboarding directement en base
+    const result = await db.getFirstAsync<{ onboarding_done: number }>(
+      'SELECT onboarding_done FROM user_profile WHERE id = ?', 
+      [userId]
+    );
+    
+    // Si l'onboarding n'est pas terminé, nettoyer les interactions
+    if (!result?.onboarding_done) {
+      console.log('🧹 Nettoyage automatique des interactions (onboarding non terminé)');
+      await db.runAsync('DELETE FROM user_interactions WHERE user_id = ?', [userId]);
+      
+      // Vider le cache aussi
+      clearWatchlistCache(userId);
+      console.log('✅ Interactions nettoyées au démarrage');
+    }
+  } catch (error) {
+    console.log('⚠️ Erreur nettoyage automatique, pas grave');
   }
 }
 

@@ -76,9 +76,40 @@ export async function isOnboardingDone(userId: number): Promise<boolean> {
  * @returns Promise<boolean> - true si la mise à jour a réussi
  */
 export async function setOnboardingDone(userId: number, done: boolean): Promise<boolean> {
-  const db = await getDatabase();
   try {
-    await db.runAsync('UPDATE user_profile SET onboarding_done = ? WHERE id = ?', [done ? 1 : 0, userId]);
+    // Si on reset l'onboarding (done = false), vider le cache immédiatement
+    if (!done) {
+      console.log('🧹 Reset: Nettoyage cache et marquage pour suppression DB...');
+      
+      // Invalider le cache immédiatement
+      try {
+        const { clearWatchlistCache } = await import('./interaction');
+        clearWatchlistCache(userId);
+        console.log('📋 Cache watchlist nettoyé immédiatement');
+      } catch (e) {
+        console.log('Cache invalidation skipped');
+      }
+    }
+    
+    // Essayer l'update de l'onboarding, mais ne pas bloquer si ça échoue
+    const db = await getDatabase();
+    try {
+      await db.runAsync('UPDATE user_profile SET onboarding_done = ? WHERE id = ?', [done ? 1 : 0, userId]);
+      console.log('✅ Onboarding status mis à jour');
+      
+      // Si l'update fonctionne ET qu'on fait un reset, essayer de nettoyer la DB
+      if (!done) {
+        try {
+          await db.runAsync('DELETE FROM user_interactions WHERE user_id = ?', [userId]);
+          console.log('🗑️ Interactions supprimées de la DB');
+        } catch (dbError) {
+          console.log('⚠️ DB locked, interactions seront nettoyées plus tard');
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ Update onboarding échoué, mais on continue avec le reset');
+    }
+    
     return true;
   } catch (error) {
     console.error('Erreur lors de la mise à jour de l\'onboarding:', error);
@@ -114,19 +145,37 @@ export async function getUserKeywords(userId: number, limit?: number): Promise<s
  */
 export async function updateUserPreferences(userId: number, preferences: UserPreferences): Promise<boolean> {
   const db = await getDatabase();
-  try {
-    const preferencesJson = JSON.stringify(preferences.genres);
-    const keywordsJson = JSON.stringify(preferences.keywords);
-    
-    await db.runAsync(
-      'UPDATE user_profile SET preferences = ?, keywords = ? WHERE id = ?',
-      [preferencesJson, keywordsJson, userId]
-    );
-    return true;
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour des préférences:', error);
-    return false;
+  
+  const preferencesJson = JSON.stringify(preferences.genres);
+  const keywordsJson = JSON.stringify(preferences.keywords);
+  
+  // Retry mechanism pour éviter le database locked
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 50 * (4 - retries))); // Délai croissant
+      
+      await db.runAsync(
+        'UPDATE user_profile SET preferences = ?, keywords = ? WHERE id = ?',
+        [preferencesJson, keywordsJson, userId]
+      );
+      
+      console.log('✅ Préférences mises à jour avec succès');
+      return true;
+    } catch (error: any) {
+      retries--;
+      if (error.message?.includes('database is locked') && retries > 0) {
+        console.log(`⏳ DB locked sur préférences, retry ${4 - retries}/3...`);
+        await new Promise(resolve => setTimeout(resolve, 200)); // Attendre avant retry
+      } else {
+        console.error('Erreur lors de la mise à jour des préférences:', error);
+        return false;
+      }
+    }
   }
+  
+  console.error('❌ Échec mise à jour préférences après 3 tentatives');
+  return false;
 }
 
 /**

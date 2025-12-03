@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 
 import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
 
-import { updateUserPreferences, getOrCreateUser } from '../src/models/user';
+import { updateUserPreferences, getOrCreateUser, setOnboardingDone } from '../src/models/user';
 
 // Associe l'ID du genre à une couleur et une icône
 const GENRE_STYLES: Record<number, { icon: string; color: string; iconColor: string }> = {
@@ -157,6 +157,11 @@ const Onboarding = () => {
                     // Obtenir ou créer le profil utilisateur unique de l'application
                     const userId = await getOrCreateUser();
                     await updateUserPreferences(userId, { genres: selectedGenres, keywords: [] });
+                    
+                    // 🎯 MARQUER L'ONBOARDING COMME TERMINÉ
+                    await setOnboardingDone(userId, true);
+                    console.log('✅ Onboarding marqué comme terminé');
+                    
                     router.replace('/homeScreen'); // On va vers la page d'accueil
                 } catch (error) {
                     console.error('Erreur lors de la sauvegarde des préférences:', error);
