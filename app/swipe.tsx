@@ -416,7 +416,7 @@ const SwipeScreen = () => {
       <SafeAreaView className="flex-1 bg-dark">
         <StatusBar barStyle="light-content" backgroundColor="#140E0C" />
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#6C5CE7" />
+          <ActivityIndicator size="large" color="#8A3AFF" />
           <Text className="text-gray-400 mt-4">Chargement...</Text>
         </View>
       </SafeAreaView>
@@ -552,8 +552,8 @@ const SwipeScreen = () => {
                   onPress={openInfoModal}
                   className="flex-row items-center self-start"
                 >
-                  <Text className="text-[#6C5CE7] font-bold text-sm mr-1">En savoir plus</Text>
-                  <Icon name="chevron-right" size={12} color="#6C5CE7" />
+                  <Text className="text-[#8A3AFF] font-bold text-sm mr-1">En savoir plus</Text>
+                  <Icon name="chevron-right" size={12} color="#8A3AFF" />
                 </TouchableOpacity>
               </View>
             </View>

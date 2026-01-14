@@ -8,7 +8,7 @@ const welcomeScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-dark justify-between">
-      <StatusBar barStyle="light-content" backgroundColor="#140E0C" />
+      <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
 
       {/* PARTIE HAUTE : IMAGE / LOGO */}
       <View className="flex-1 items-center justify-center p-6">

@@ -8,8 +8,8 @@ module.exports = {
         primary: "#8A3AFF",
         secondary: "#FF4FFD",
         tertiary: "#F7F0FF",
-        dark: "#140E0C",
-        darkCard: "#1E1A18",
+        dark: "#0F0F1E",
+        darkCard: "#1A1A2E",
         offWhite: "#F7F0FF",
       }
     },
