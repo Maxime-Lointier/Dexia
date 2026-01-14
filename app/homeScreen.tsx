@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useCallback } from 'react';
-import { Logo } from '../src/components/Logo';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
 
 import { getPosterById } from '../src/utils/posterMap';
@@ -297,19 +296,16 @@ export default function MainPage() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
         {/* HEADER */}
-        <View className="px-6 pt-14 pb-6 flex-row justify-between items-center">
-          <View className="flex-row items-center">
-            <Logo width={50} height={50} color="white" />
-            <View className="ml-3">
-              <Text className="text-[#F7F0FF] text-2xl font-bold">Dexia</Text>
-              <Text className="text-[#FF4FFD] text-xs italic">The Right Swipe</Text>
-            </View>
+        <View className="px-6 pt-14 pb-6 flex-row justify-between items-start">
+          <View>
+            <Text className="text-white text-3xl font-bold">Dexia</Text>
+            <Text className="text-gray-400 text-sm mt-1">Découvrez vos prochains films</Text>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/settings')}
             className="w-10 h-10 bg-darkCard rounded-full items-center justify-center"
           >
-            <FontAwesome5 name="user" size={16} color="#8A3AFF" />
+            <FontAwesome5 name="user" size={16} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
