@@ -90,7 +90,7 @@ const Onboarding = () => {
 
         {/* Titres */}
         <View className="items-center mb-4">
-          <Text className="text-white text-3xl font-bold mb-3 text-center">Vos genres préférés</Text>
+          <Text className="text-white text-3xl font-bold mb-3 text-center font-hanken">Vos genres préférés</Text>
           <Text className="text-gray-400 text-base text-center">
             Sélectionnez au moins 3 genres ({selectedGenres.length}/3)
           </Text>

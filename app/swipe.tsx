@@ -447,7 +447,7 @@ const SwipeScreen = () => {
           className="flex-row items-center"
         >
           <Logo width={40} height={40} color="white" />
-          <Text className="text-[#F7F0FF] text-xl font-bold ml-3">Dexia</Text>
+          <Text className="text-[#F7F0FF] text-xl font-bold ml-3 font-hanken">Dexia</Text>
         </TouchableOpacity>
         <TouchableOpacity>
           <View style={{ width: 24, height: 24 }} />

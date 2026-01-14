@@ -301,8 +301,8 @@ export default function MainPage() {
           <View className="flex-row items-center">
             <Logo width={50} height={50} color="white" />
             <View className="ml-3">
-              <Text className="text-[#F7F0FF] text-2xl font-bold">Dexia</Text>
-              <Text className="text-[#FF4FFD] text-xs italic">The Right Swipe</Text>
+              <Text className="text-[#F7F0FF] text-2xl font-bold font-hanken">Dexia</Text>
+              <Text className="text-[#FF4FFD] text-xs italic font-hanken-italic">The Right Swipe</Text>
             </View>
           </View>
           <TouchableOpacity

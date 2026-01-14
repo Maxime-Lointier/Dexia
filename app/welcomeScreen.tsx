@@ -17,15 +17,15 @@ const welcomeScreen = () => {
           <Logo width={220} height={220} color="white" />
         </View>
 
-        <Text className="text-[#F7F0FF] text-5xl font-bold text-center mb-2 tracking-tight">
+        <Text className="text-[#F7F0FF] text-4xl font-bold text-center mb-4 font-hanken tracking-tight">
           Dexia
         </Text>
 
-        <Text className="text-[#FF4FFD] text-xl font-medium text-center mb-6 italic">
+        <Text className="text-[#FF4FFD] text-lg italic text-center mb-6 font-hanken-italic">
           The Right Swipe
         </Text>
 
-        <Text className="text-gray-400 text-lg text-center leading-7 px-4 font-medium">
+        <Text className="text-gray-400 text-lg text-center leading-7 px-4 font-medium font-hanken">
           Découvre des films qui te correspondent vraiment en quelques swipes.
         </Text>
       </View>
