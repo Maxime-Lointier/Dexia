@@ -13,8 +13,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const COLORS = {
-  background: '#140E0C',
-  card: '#1E1A18',
+  background: '#0F0F1E',
+  card: '#1A1A2E',
   textPrimary: '#F7F0FF',
   textSecondary: '#a1a1aa',
   accent: '#8A3AFF',

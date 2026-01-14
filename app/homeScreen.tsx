@@ -554,7 +554,7 @@ export default function MainPage() {
                         />
                       )}
                       <LinearGradient
-                        colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#1E1A18']}
+                        colors={['transparent', 'rgba(26, 26, 46, 0.8)', '#1A1A2E']}
                         locations={[0, 0.6, 1]}
                         className="absolute bottom-0 left-0 right-0 h-48"
                       />
@@ -639,7 +639,7 @@ export default function MainPage() {
                 )}
               </ScrollView>
 
-              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#1E1A18] to-transparent">
+              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#1A1A2E] to-transparent">
                 <View className="flex-row gap-3">
                   <TouchableOpacity
                     onPress={handleToggleWatchlist}

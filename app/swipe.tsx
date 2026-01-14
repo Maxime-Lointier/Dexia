@@ -414,7 +414,7 @@ const SwipeScreen = () => {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-dark">
-        <StatusBar barStyle="light-content" backgroundColor="#140E0C" />
+        <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#8A3AFF" />
           <Text className="text-gray-400 mt-4">Chargement...</Text>
@@ -426,7 +426,7 @@ const SwipeScreen = () => {
   if (movies.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-dark">
-        <StatusBar barStyle="light-content" backgroundColor="#140E0C" />
+        <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
         <View className="flex-1 justify-center items-center px-6">
           <Text className="text-white text-xl text-center">Aucun film disponible</Text>
         </View>
@@ -439,7 +439,7 @@ const SwipeScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-dark">
-      <StatusBar barStyle="light-content" backgroundColor="#140E0C" />
+      <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
 
       <View className="flex-row justify-between items-center px-6 pt-2 pb-4">
         <TouchableOpacity
@@ -640,7 +640,7 @@ const SwipeScreen = () => {
                     />
                   )}
                   <LinearGradient
-                    colors={['transparent', 'rgba(30, 26, 24, 0.8)', '#1E1A18']}
+                    colors={['transparent', 'rgba(15, 15, 30, 0.8)', '#1A1A2E']}
                     locations={[0, 0.6, 1]}
                     className="absolute bottom-0 left-0 right-0 h-48"
                   />

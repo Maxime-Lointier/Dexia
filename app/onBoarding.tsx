@@ -82,7 +82,7 @@ const Onboarding = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-dark">
-      <StatusBar barStyle="light-content" backgroundColor="#140E0C" />
+      <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
 
       {/* HEADER */}
       {/* Top Bar */}
