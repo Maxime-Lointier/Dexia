@@ -11,6 +11,11 @@ module.exports = {
         dark: "#0F0F1E",
         darkCard: "#1A1A2E",
         offWhite: "#F7F0FF",
+      },
+      fontFamily: {
+        sans: ['HankenGrotesk', 'system-ui', 'sans-serif'],
+        'hanken': ['HankenGrotesk'],
+        'hanken-italic': ['HankenGrotesk-Italic'],
       }
     },
   },
