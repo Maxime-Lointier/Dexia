@@ -13,12 +13,12 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const COLORS = {
-  background: '#0e0f19', 
-  card: '#181926',
-  textPrimary: '#FFFFFF',
+  background: '#0F0F1E',
+  card: '#1A1A2E',
+  textPrimary: '#F7F0FF',
   textSecondary: '#a1a1aa',
-  accent: '#4f46e5',
-  iconBg: '#232433', 
+  accent: '#8A3AFF',
+  iconBg: '#232433',
 };
 
 
@@ -73,7 +73,7 @@ const SettingRadio = ({ icon, label, selected, onPress }: any) => (
       <Text style={styles.rowLabel}>{label}</Text>
     </View>
     <View style={[styles.radioOuter, selected && { borderColor: COLORS.accent }]}>
-        {selected && <View style={styles.radioInner} />}
+      {selected && <View style={styles.radioInner} />}
     </View>
   </TouchableOpacity>
 );
@@ -87,85 +87,85 @@ const Settings = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-      
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('..')} style={styles.backButton}>
-           <Icon name="arrow-left" size={24} color="#fff" />
+          <Icon name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Paramètres</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+
         <SectionTitle title="Langue" />
         <SectionContainer>
-          <SettingItem 
-            icon="translate" 
-            label="Langue de l'application" 
+          <SettingItem
+            icon="translate"
+            label="Langue de l'application"
             subLabel="Français"
           />
         </SectionContainer>
 
         <SectionTitle title="Thème" />
         <SectionContainer>
-          <SettingRadio 
-            icon="weather-night" 
-            label="Mode sombre" 
-            selected={theme === 'sombre'} 
+          <SettingRadio
+            icon="weather-night"
+            label="Mode sombre"
+            selected={theme === 'sombre'}
             onPress={() => setTheme('sombre')}
           />
           <View style={styles.divider} />
-          <SettingRadio 
-            icon="white-balance-sunny" 
-            label="Mode clair" 
-            selected={theme === 'clair'} 
+          <SettingRadio
+            icon="white-balance-sunny"
+            label="Mode clair"
+            selected={theme === 'clair'}
             onPress={() => setTheme('clair')}
           />
-           <View style={styles.divider} />
-          <SettingRadio 
-            icon="theme-light-dark" 
-            label="Automatique" 
-            selected={theme === 'auto'} 
+          <View style={styles.divider} />
+          <SettingRadio
+            icon="theme-light-dark"
+            label="Automatique"
+            selected={theme === 'auto'}
             onPress={() => setTheme('auto')}
           />
         </SectionContainer>
 
         <SectionTitle title="Préférences" />
         <SectionContainer>
-            <SettingItem icon="view-grid-outline" label="Genres préférés" />
-            <View style={styles.divider} />
-            <SettingSwitch 
-                icon="bell-outline" 
-                label="Notifications" 
-                value={notifications}
-                onValueChange={setNotifications}/>
+          <SettingItem icon="view-grid-outline" label="Genres préférés" />
+          <View style={styles.divider} />
+          <SettingSwitch
+            icon="bell-outline"
+            label="Notifications"
+            value={notifications}
+            onValueChange={setNotifications} />
         </SectionContainer>
 
         <SectionTitle title="Compte" />
         <SectionContainer>
-            <SettingItem icon="account" label="Profil" />
-            <View style={styles.divider} />
-            <SettingItem icon="lock" label="Confidentialité" />
-            <View style={styles.divider} />
-            <SettingItem icon="shield-check" label="Sécurité" />
+          <SettingItem icon="account" label="Profil" />
+          <View style={styles.divider} />
+          <SettingItem icon="lock" label="Confidentialité" />
+          <View style={styles.divider} />
+          <SettingItem icon="shield-check" label="Sécurité" />
         </SectionContainer>
 
         <SectionTitle title="À propos" />
         <SectionContainer>
-            <SettingItem icon="help-circle-outline" label="Aide & Support" />
-            <View style={styles.divider} />
-            <SettingItem icon="file-document-outline" label="Conditions d'utilisation" />
-            <View style={styles.divider} />
-            <SettingItem 
-                icon="information-outline" 
-                label="Version" 
-                subLabel="2.1.4" 
-                showChevron={false} 
-            />
+          <SettingItem icon="help-circle-outline" label="Aide & Support" />
+          <View style={styles.divider} />
+          <SettingItem icon="file-document-outline" label="Conditions d'utilisation" />
+          <View style={styles.divider} />
+          <SettingItem
+            icon="information-outline"
+            label="Version"
+            subLabel="2.1.4"
+            showChevron={false}
+          />
         </SectionContainer>
-        
-        <View style={{ height: 40 }} /> 
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );

@@ -20,6 +20,8 @@ import { getMovieCast, Cast } from '../src/models/cast';
 import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, addDynamicGenres, manageDynamicGenres, detectFilterBubble, cleanupKeywords, extractKeywordsFromMovie } from '../src/models/user';
 import { getUserSeenMovieIds, addInteraction, ActionType, toggleWatchlist, isInWatchlist } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
+import { Logo } from '../src/components/Logo';
+import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -66,7 +68,7 @@ const SwipeScreen = () => {
       const preferences = await getUserPreferences(userId);
       setUserPreferences(preferences);
       const seenIds = await getUserSeenMovieIds(userId);
-      
+
       const currentMovieIds = movies.map(m => m.id);
       const excludeIds = [...new Set([...seenIds, ...currentMovieIds])];
 
@@ -88,7 +90,7 @@ const SwipeScreen = () => {
       }
 
       if (refresh) {
-      setMovies(moviesData);
+        setMovies(moviesData);
         setCurrentMovieIndex(0);
       } else {
         setMovies(prev => [...prev, ...moviesData]);
@@ -110,7 +112,7 @@ const SwipeScreen = () => {
     try {
       const genres = await getMovieGenreById(movieId);
       setCurrentGenres(genres.map(g => g.name));
-      
+
       const movie = movies.find(m => m.id === movieId) || movies[currentMovieIndex];
       if (movie) {
         const genreIds = await getMovieGenreIdById(movieId);
@@ -166,25 +168,25 @@ const SwipeScreen = () => {
     const genresIds = await getMovieGenreIdById(currentMovie.id);
 
     if (actionType === 'like') {
-        const genresIds = await getMovieGenreIdById(currentMovie.id);
-        setSessionLikedGenres(prev => [...new Set([...prev, ...genresIds])]);
+      const genresIds = await getMovieGenreIdById(currentMovie.id);
+      setSessionLikedGenres(prev => [...new Set([...prev, ...genresIds])]);
 
-         // 🎯 AJOUTER LES MOTS-CLÉS DYNAMIQUEMENT (seulement pour les likes)
-        try {
-          const genres = await getMovieGenreById(currentMovie.id);
-          const extractedKeywords = await extractKeywordsFromMovie(currentMovie, genres);
-          
-          if (extractedKeywords.length > 0) {
-            const success = await addDynamicKeywords(CURRENT_USER_ID, extractedKeywords);
-            if (success) {
-              console.log(`🎯 Mots-clés ajoutés: ${extractedKeywords.join(', ')}`);
-            }
+      // 🎯 AJOUTER LES MOTS-CLÉS DYNAMIQUEMENT (seulement pour les likes)
+      try {
+        const genres = await getMovieGenreById(currentMovie.id);
+        const extractedKeywords = await extractKeywordsFromMovie(currentMovie, genres);
+
+        if (extractedKeywords.length > 0) {
+          const success = await addDynamicKeywords(CURRENT_USER_ID, extractedKeywords);
+          if (success) {
+            console.log(`🎯 Mots-clés ajoutés: ${extractedKeywords.join(', ')}`);
           }
-        } catch (error) {
-          console.error('Erreur ajout mots-clés:', error);
         }
+      } catch (error) {
+        console.error('Erreur ajout mots-clés:', error);
+      }
     }
-    
+
     // 🎯 GÉRER LES GENRES AVEC POIDS (LIKE ET DISLIKE seulement)
     if (actionType === 'like' || actionType === 'dislike') {
       try {
@@ -202,10 +204,10 @@ const SwipeScreen = () => {
       try {
         const recentInteractions = await getUserSeenMovieIds(CURRENT_USER_ID); // Récupérer interactions récentes
         const bubbleDetection = await detectFilterBubble(CURRENT_USER_ID, recentInteractions.slice(-20));
-        
+
         if (bubbleDetection.hasBubble) {
           console.log(`🎯 Bulle détectée: ${bubbleDetection.bubbleType} (${bubbleDetection.confidence.toFixed(2)})`);
-          
+
           // Appliquer la stratégie de nettoyage
           const cleanupSuccess = await cleanupKeywords(CURRENT_USER_ID, bubbleDetection.bubbleType);
           if (cleanupSuccess) {
@@ -220,12 +222,12 @@ const SwipeScreen = () => {
       }
     }
 
-    
+
 
     if (currentMovieIndex < movies.length - 1) {
       const nextIndex = currentMovieIndex + 1;
       setCurrentMovieIndex(nextIndex);
-      
+
       if (movies.length - nextIndex <= 2) {
         loadMovies(false);
       }
@@ -235,13 +237,14 @@ const SwipeScreen = () => {
   };
 
   const handleSwipeComplete = (direction: 'left' | 'right') => {
+    Haptics.impactAsync(direction === 'right' ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
     const actionType = direction === 'right' ? 'like' : 'dislike';
     goToNextMovie(actionType);
   };
 
   const handleButtonSwipe = (direction: 'left' | 'right') => {
     const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
-    
+
     translateX.value = withTiming(destinationX, { duration: 350 }, (finished) => {
       if (finished) {
         runOnJS(handleSwipeComplete)(direction);
@@ -260,15 +263,15 @@ const SwipeScreen = () => {
     .onUpdate((e) => {
       translateX.value = e.translationX;
       translateY.value = e.translationY * 0.1;
-      
+
       const distance = Math.abs(e.translationX);
       opacity.value = interpolate(
         distance,
         [0, SCREEN_WIDTH],
-        [1, 0.8], 
+        [1, 0.8],
         Extrapolate.CLAMP
       );
-      
+
       swipeOverlayOpacity.value = interpolate(
         Math.abs(e.translationX),
         [0, SCREEN_WIDTH * 0.25],
@@ -278,28 +281,29 @@ const SwipeScreen = () => {
     })
     .onEnd((e) => {
       const swipeDistance = e.translationX;
-      
+
       if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
         const direction = swipeDistance > 0 ? 'right' : 'left';
         const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
-        
+
         translateX.value = withSpring(destinationX, {
-          damping: 20,
-          stiffness: 90,
-          mass: 1
+          damping: 15,
+          stiffness: 100,
+          mass: 0.8,
+          overshootClamping: false,
         });
         opacity.value = withTiming(0, { duration: 200 });
         runOnJS(handleSwipeComplete)(direction);
       } else {
         translateX.value = withSpring(0, {
-          damping: 20,
-          stiffness: 90,
-          mass: 1
+          damping: 12,
+          stiffness: 120,
+          mass: 0.6,
         });
         translateY.value = withSpring(0, {
-          damping: 20,
-          stiffness: 90,
-          mass: 1
+          damping: 12,
+          stiffness: 120,
+          mass: 0.6,
         });
         opacity.value = withTiming(1, { duration: 200 });
         swipeOverlayOpacity.value = withTiming(0, { duration: 200 });
@@ -328,28 +332,28 @@ const SwipeScreen = () => {
     if (!userPreferences || userPreferences.genres.length === 0) {
       return 50;
     }
-    
+
     const allPreferredGenres = [...userPreferences.genres, ...sessionLikedGenres];
     const matchingGenres = movieGenreIds.filter(id => allPreferredGenres.includes(id));
-    
+
     if (matchingGenres.length === 0) {
       return 20;
     }
-    
+
     const genreMatchRatio = matchingGenres.length / Math.max(allPreferredGenres.length, movieGenreIds.length);
-    
+
     let keywordMatch = 0;
     if (userPreferences.keywords && userPreferences.keywords.length > 0 && movie.overview) {
       const overviewLower = movie.overview.toLowerCase();
       const titleLower = movie.title.toLowerCase();
-      const matchingKeywords = userPreferences.keywords.filter(keyword => 
+      const matchingKeywords = userPreferences.keywords.filter(keyword =>
         overviewLower.includes(keyword.toLowerCase()) || titleLower.includes(keyword.toLowerCase())
       );
       keywordMatch = matchingKeywords.length / userPreferences.keywords.length;
     }
-    
+
     const finalScore = (genreMatchRatio * 0.8) + (keywordMatch * 0.2);
-    
+
     return Math.min(98, Math.max(20, Math.round(finalScore * 100)));
   };
 
@@ -375,24 +379,24 @@ const SwipeScreen = () => {
 
   const handleWatchlistToggle = async () => {
     if (movies.length === 0) return;
-    
+
     const currentMovie = movies[currentMovieIndex];
     console.log(`📋 Swipe: Ajout film ${currentMovie.id} (${currentMovie.title}) à la watchlist`);
-    
+
     // Animation de swipe vers le bas
     translateY.value = withTiming(SCREEN_HEIGHT, { duration: 350 });
     opacity.value = withTiming(0, { duration: 350 });
-    
+
     try {
       // Ajouter à la watchlist avec invalidation du cache
       const success = await toggleWatchlist(CURRENT_USER_ID, currentMovie.id);
       console.log(`📋 Swipe: Résultat toggle watchlist: ${success}`);
-      
+
       // Passer au film suivant sans affecter les préférences
       if (currentMovieIndex < movies.length - 1) {
         const nextIndex = currentMovieIndex + 1;
         setCurrentMovieIndex(nextIndex);
-        
+
         if (movies.length - nextIndex <= 2) {
           loadMovies(false);
         }
@@ -412,10 +416,10 @@ const SwipeScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-[#0F0F1E]">
+      <SafeAreaView className="flex-1 bg-dark">
         <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#6C5CE7" />
+          <ActivityIndicator size="large" color="#8A3AFF" />
           <Text className="text-gray-400 mt-4">Chargement...</Text>
         </View>
       </SafeAreaView>
@@ -424,7 +428,7 @@ const SwipeScreen = () => {
 
   if (movies.length === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-[#0F0F1E]">
+      <SafeAreaView className="flex-1 bg-dark">
         <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
         <View className="flex-1 justify-center items-center px-6">
           <Text className="text-white text-xl text-center">Aucun film disponible</Text>
@@ -437,18 +441,16 @@ const SwipeScreen = () => {
   const posterSource = getPosterSource(currentMovie);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0F0F1E]">
+    <SafeAreaView className="flex-1 bg-dark">
       <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
 
       <View className="flex-row justify-between items-center px-6 pt-2 pb-4">
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => router.push('/homeScreen')}
           className="flex-row items-center"
         >
-          <View className="w-10 h-10 bg-[#6C5CE7] rounded-full items-center justify-center mr-3">
-            <Icon name="film" size={20} color="white" />
-          </View>
-          <Text className="text-white text-2xl font-bold">Dexia</Text>
+          <Logo width={40} height={40} color="white" />
+          <Text className="text-[#F7F0FF] text-xl font-bold ml-3 font-hanken">Dexia</Text>
         </TouchableOpacity>
         <TouchableOpacity>
           <View style={{ width: 24, height: 24 }} />
@@ -469,19 +471,19 @@ const SwipeScreen = () => {
           >
             <View
               style={{
-                backgroundColor: '#1E1E2E',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.5,
-                shadowRadius: 20,
+                backgroundColor: '#1A1A2E',
+                shadowColor: '#8A3AFF',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.4,
+                shadowRadius: 16,
                 elevation: 10,
                 height: '100%',
               }}
               className="rounded-3xl relative"
             >
               {posterSource ? (
-                <Image 
-                  source={posterSource} 
+                <Image
+                  source={posterSource}
                   style={{ width: '100%', height: '100%' }}
                   resizeMode="cover"
                 />
@@ -504,7 +506,7 @@ const SwipeScreen = () => {
                 }}
               />
 
-              <View className="absolute top-4 right-4 bg-[#6C5CE7]/90 px-3 py-1.5 rounded-full flex-row items-center shadow-sm z-10">
+              <View className="absolute top-4 right-4 bg-primary/90 px-3 py-1.5 rounded-full flex-row items-center shadow-sm z-10">
                 <Icon name="star" size={14} color="#FACC15" solid />
                 <Text className="text-white font-bold ml-1.5">
                   {currentMovie.vote_average.toFixed(1)}
@@ -520,7 +522,7 @@ const SwipeScreen = () => {
               <View className="absolute bottom-0 left-0 right-0 p-5 pb-6 flex-col">
                 <View className="flex-row flex-wrap mb-2">
                   {currentGenres.slice(0, 3).map((genre, index) => (
-                    <View 
+                    <View
                       key={index}
                       className="bg-white/10 border border-white/10 px-2.5 py-1 rounded-md mr-2 mb-1"
                     >
@@ -529,8 +531,8 @@ const SwipeScreen = () => {
                   ))}
                 </View>
 
-                <Text 
-                  className="text-white text-3xl font-bold mb-1 shadow-sm" 
+                <Text
+                  className="text-white text-3xl font-bold mb-1 shadow-sm"
                   numberOfLines={2}
                 >
                   {currentMovie.title}
@@ -542,19 +544,19 @@ const SwipeScreen = () => {
                   </Text>
                 </View>
 
-                <Text 
-                  className="text-gray-300 text-sm leading-5 mb-4" 
+                <Text
+                  className="text-gray-300 text-sm leading-5 mb-4"
                   numberOfLines={2}
                 >
                   {currentMovie.overview || 'Aucune description disponible.'}
                 </Text>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={openInfoModal}
                   className="flex-row items-center self-start"
                 >
-                  <Text className="text-[#6C5CE7] font-bold text-sm mr-1">En savoir plus</Text>
-                  <Icon name="chevron-right" size={12} color="#6C5CE7" />
+                  <Text className="text-[#8A3AFF] font-bold text-sm mr-1">En savoir plus</Text>
+                  <Icon name="chevron-right" size={12} color="#8A3AFF" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -562,37 +564,36 @@ const SwipeScreen = () => {
         </GestureDetector>
       </View>
 
-      <View className="absolute bottom-0 left-0 right-0 px-6 py-6 bg-[#0F0F1E]/95 border-t border-white/5">
+      <View className="absolute bottom-0 left-0 right-0 px-6 py-6 bg-dark/95 border-t border-white/5">
         <View className="flex-row justify-around items-center">
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => handleButtonSwipe('left')}
             className="w-14 h-14 bg-red-600 rounded-full items-center justify-center"
           >
             <Icon name="times" size={24} color="white" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleWatchlistToggle}
-            className={`w-14 h-14 rounded-full items-center justify-center ${
-              isCurrentMovieInWatchlist ? 'bg-[#F59E0B]' : 'bg-[#F59E0B]/20 border-2 border-[#F59E0B]'
-            }`}
+            className={`w-14 h-14 rounded-full items-center justify-center ${isCurrentMovieInWatchlist ? 'bg-[#F59E0B]' : 'bg-[#F59E0B]/20 border-2 border-[#F59E0B]'
+              }`}
           >
-            <FontAwesome 
-              name="bookmark" 
-              size={20} 
+            <FontAwesome
+              name="bookmark"
+              size={20}
               color={isCurrentMovieInWatchlist ? "white" : "#F59E0B"}
               solid={isCurrentMovieInWatchlist}
             />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.push('/homeScreen')}
-            className="w-16 h-16 bg-[#6C5CE7] rounded-full items-center justify-center"
+            className="w-16 h-16 bg-primary rounded-full items-center justify-center"
           >
             <Icon name="home" size={28} color="white" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleUndo}
             className={`w-14 h-14 bg-[#1E1E2E] rounded-full items-center justify-center ${currentMovieIndex === 0 ? 'opacity-50' : ''}`}
             disabled={currentMovieIndex === 0}
@@ -600,7 +601,7 @@ const SwipeScreen = () => {
             <Icon name="undo" size={20} color="white" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => handleButtonSwipe('right')}
             className="w-14 h-14 bg-green-600 rounded-full items-center justify-center"
           >
@@ -616,20 +617,20 @@ const SwipeScreen = () => {
         onRequestClose={closeInfoModal}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
-        <Animated.View
-          style={[
-            {
-              flex: 1,
-                  justifyContent: 'flex-end',
-            },
-            modalAnimatedStyle,
-          ]}
-        >
-            <View 
-              className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]"
+          <Animated.View
+            style={[
+              {
+                flex: 1,
+                justifyContent: 'flex-end',
+              },
+              modalAnimatedStyle,
+            ]}
+          >
+            <View
+              className="bg-darkCard rounded-t-[32px] overflow-hidden h-[85%]"
             >
-              <ScrollView 
-                className="flex-1" 
+              <ScrollView
+                className="flex-1"
                 bounces={false}
                 showsVerticalScrollIndicator={false}
               >
@@ -642,7 +643,7 @@ const SwipeScreen = () => {
                     />
                   )}
                   <LinearGradient
-                    colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#151521']}
+                    colors={['transparent', 'rgba(15, 15, 30, 0.8)', '#1A1A2E']}
                     locations={[0, 0.6, 1]}
                     className="absolute bottom-0 left-0 right-0 h-48"
                   />
@@ -650,9 +651,9 @@ const SwipeScreen = () => {
 
                 <View className="px-6 -mt-12 pb-10 relative z-10">
                   <View className="flex-row justify-between items-end mb-4">
-                    <Text 
+                    <Text
                       className="text-white text-3xl font-bold flex-1 mr-4 leading-tight"
-                      style={{ 
+                      style={{
                         textShadowColor: 'rgba(0, 0, 0, 0.75)',
                         textShadowOffset: { width: 0, height: 1 },
                         textShadowRadius: 4
@@ -660,7 +661,7 @@ const SwipeScreen = () => {
                     >
                       {currentMovie.title}
                     </Text>
-                    <View className="bg-[#6C5CE7] px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-[#6C5CE7]/30">
+                    <View className="bg-primary px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-primary/30">
                       <Icon name="star" size={14} color="#FACC15" solid />
                       <Text className="text-white font-bold ml-1.5 text-base">
                         {currentMovie.vote_average.toFixed(1)}
@@ -672,7 +673,7 @@ const SwipeScreen = () => {
                     <View className="bg-[#22C55E]/20 px-2.5 py-1 rounded-md mr-3 border border-[#22C55E]/30">
                       <Text className="text-[#22C55E] font-bold text-xs">
                         {matchPercentage}% Recommandé
-                    </Text>
+                      </Text>
                     </View>
                     <Icon name="calendar-alt" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
                     <Text className="text-gray-400 font-medium text-base">
@@ -682,9 +683,9 @@ const SwipeScreen = () => {
 
                   <View className="flex-row flex-wrap mb-8 gap-2">
                     {currentGenres.map((genre, index) => (
-                      <View 
+                      <View
                         key={index}
-                        className="bg-[#6C5CE7]/15 border border-[#6C5CE7]/30 px-4 py-1.5 rounded-full"
+                        className="bg-primary/15 border border-primary/30 px-4 py-1.5 rounded-full"
                       >
                         <Text className="text-[#9D8FFF] text-sm font-medium">{genre}</Text>
                       </View>
@@ -693,19 +694,19 @@ const SwipeScreen = () => {
 
                   <Text className="text-white text-xl font-bold mb-3 mt-2">Casting</Text>
                   <View className="-mx-6 mb-8">
-                    <ScrollView 
-                      horizontal 
-                      showsHorizontalScrollIndicator={false} 
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
                       contentContainerStyle={{ paddingHorizontal: 24 }}
                     >
                       {currentCast.map((actor, index) => (
                         <View key={index} className="mr-4 w-20 items-center">
-                          <View className="w-20 h-20 rounded-full bg-[#2A2A3A] mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
-                              <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
-                                <Text className="text-white/30 font-bold text-lg">
-                                  {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                </Text>
-                              </View>
+                          <View className="w-20 h-20 rounded-full bg-darkCard mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
+                            <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
+                              <Text className="text-white/30 font-bold text-lg">
+                                {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </Text>
+                            </View>
                           </View>
                           <Text className="text-white text-xs font-bold text-center w-full leading-tight" numberOfLines={2}>
                             {actor.name}
@@ -725,17 +726,17 @@ const SwipeScreen = () => {
                 </View>
               </ScrollView>
 
-              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#151521] to-transparent">
-                <TouchableOpacity 
+              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-darkCard to-transparent">
+                <TouchableOpacity
                   onPress={closeInfoModal}
-                  className="bg-[#2A2A3A] w-full py-4 rounded-2xl items-center border border-white/10 shadow-lg"
+                  className="bg-darkCard w-full py-4 rounded-2xl items-center border border-white/10 shadow-lg"
                   activeOpacity={0.8}
                 >
                   <Text className="text-white font-bold text-lg">Fermer</Text>
                 </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </Animated.View>
+          </Animated.View>
         </View>
       </Modal>
     </SafeAreaView>
