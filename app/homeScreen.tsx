@@ -533,7 +533,7 @@ export default function MainPage() {
               modalAnimatedStyle,
             ]}
           >
-            <View className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]">
+            <View className="bg-darkCard rounded-t-[32px] overflow-hidden h-[85%]">
               <ScrollView
                 className="flex-1"
                 bounces={false}
@@ -608,7 +608,7 @@ export default function MainPage() {
                         >
                           {selectedMovieCast.map((actor, index) => (
                             <View key={index} className="mr-4 w-20 items-center">
-                              <View className="w-20 h-20 rounded-full bg-[#2A2A3A] mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
+                              <View className="w-20 h-20 rounded-full bg-darkCard mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
                                 <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
                                   <Text className="text-white/30 font-bold text-lg">
                                     {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -640,8 +640,8 @@ export default function MainPage() {
                   <TouchableOpacity
                     onPress={handleToggleWatchlist}
                     className={`flex-1 py-4 rounded-2xl items-center ${isSelectedMovieInWatchlist
-                        ? 'bg-orange-500'
-                        : 'bg-orange-500/20 border border-orange-500'
+                      ? 'bg-orange-500'
+                      : 'bg-orange-500/20 border border-orange-500'
                       }`}
                     activeOpacity={0.8}
                   >

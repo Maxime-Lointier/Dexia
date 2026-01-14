@@ -624,7 +624,7 @@ const SwipeScreen = () => {
             ]}
           >
             <View
-              className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]"
+              className="bg-darkCard rounded-t-[32px] overflow-hidden h-[85%]"
             >
               <ScrollView
                 className="flex-1"
@@ -640,7 +640,7 @@ const SwipeScreen = () => {
                     />
                   )}
                   <LinearGradient
-                    colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#151521']}
+                    colors={['transparent', 'rgba(30, 26, 24, 0.8)', '#1E1A18']}
                     locations={[0, 0.6, 1]}
                     className="absolute bottom-0 left-0 right-0 h-48"
                   />
@@ -698,7 +698,7 @@ const SwipeScreen = () => {
                     >
                       {currentCast.map((actor, index) => (
                         <View key={index} className="mr-4 w-20 items-center">
-                          <View className="w-20 h-20 rounded-full bg-[#2A2A3A] mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
+                          <View className="w-20 h-20 rounded-full bg-darkCard mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
                             <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
                               <Text className="text-white/30 font-bold text-lg">
                                 {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -723,10 +723,10 @@ const SwipeScreen = () => {
                 </View>
               </ScrollView>
 
-              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#151521] to-transparent">
+              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-darkCard to-transparent">
                 <TouchableOpacity
                   onPress={closeInfoModal}
-                  className="bg-[#2A2A3A] w-full py-4 rounded-2xl items-center border border-white/10 shadow-lg"
+                  className="bg-darkCard w-full py-4 rounded-2xl items-center border border-white/10 shadow-lg"
                   activeOpacity={0.8}
                 >
                   <Text className="text-white font-bold text-lg">Fermer</Text>
