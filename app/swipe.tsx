@@ -21,6 +21,7 @@ import { getUserPreferences, CURRENT_USER_ID, addDynamicKeywords, addDynamicGenr
 import { getUserSeenMovieIds, addInteraction, ActionType, toggleWatchlist, isInWatchlist } from '../src/models/interaction';
 import { getPosterById } from '../src/utils/posterMap';
 import { Logo } from '../src/components/Logo';
+import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -236,6 +237,7 @@ const SwipeScreen = () => {
   };
 
   const handleSwipeComplete = (direction: 'left' | 'right') => {
+    Haptics.impactAsync(direction === 'right' ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
     const actionType = direction === 'right' ? 'like' : 'dislike';
     goToNextMovie(actionType);
   };
@@ -285,22 +287,23 @@ const SwipeScreen = () => {
         const destinationX = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
 
         translateX.value = withSpring(destinationX, {
-          damping: 20,
-          stiffness: 90,
-          mass: 1
+          damping: 15,
+          stiffness: 100,
+          mass: 0.8,
+          overshootClamping: false,
         });
         opacity.value = withTiming(0, { duration: 200 });
         runOnJS(handleSwipeComplete)(direction);
       } else {
         translateX.value = withSpring(0, {
-          damping: 20,
-          stiffness: 90,
-          mass: 1
+          damping: 12,
+          stiffness: 120,
+          mass: 0.6,
         });
         translateY.value = withSpring(0, {
-          damping: 20,
-          stiffness: 90,
-          mass: 1
+          damping: 12,
+          stiffness: 120,
+          mass: 0.6,
         });
         opacity.value = withTiming(1, { duration: 200 });
         swipeOverlayOpacity.value = withTiming(0, { duration: 200 });
@@ -468,11 +471,11 @@ const SwipeScreen = () => {
           >
             <View
               style={{
-                backgroundColor: '#1E1E2E',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.5,
-                shadowRadius: 20,
+                backgroundColor: '#1A1A2E',
+                shadowColor: '#8A3AFF',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.4,
+                shadowRadius: 16,
                 elevation: 10,
                 height: '100%',
               }}
