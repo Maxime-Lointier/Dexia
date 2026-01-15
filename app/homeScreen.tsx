@@ -500,7 +500,7 @@ export default function MainPage() {
         <View className="px-6 mb-8">
           <View className="rounded-3xl overflow-hidden">
             <LinearGradient
-              colors={['#F7F0FF', '#FF4FFD', '#8A3AFF']}
+              colors={['#FF4FFD', '#8A3AFF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{ padding: 32 }}
