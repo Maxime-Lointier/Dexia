@@ -26,8 +26,7 @@ function shuffle<T>(array: T[]): T[] {
 async function getTargetedMovies(
   genres: number[],
   keywords: string[],
-  actors: number[], // ← NOUVEAU
-  directors: number[], // ← NOUVEAU
+  actors: number[], 
   excludeIds: number[],
   limit: number
 ): Promise<Movie[]> {
@@ -66,12 +65,7 @@ async function getTargetedMovies(
     params.push(...actors);
   }
 
-  let directorBonus = '';
-  if (directors && directors.length > 0) {
-    const directorPlaceholders = directors.map(() => '?').join(',');
-    directorBonus = `, CASE WHEN md.director_id IN (${directorPlaceholders}) THEN 0.25 ELSE 0 END AS director_bonus`;
-    params.push(...directors);
-  }
+  
 
   // SCORING AMÉLIORÉ :
   // 40% qualité + 20% popularité + 30% acteurs + 15% mots-clés + 25% réalisateurs
@@ -80,7 +74,6 @@ async function getTargetedMovies(
     (movies.vote_average * 0.4) +
     (movies.popularity * 0.01 * 0.2)
     ${actorBonus ? ' + actor_bonus' : ''}
-    ${directorBonus ? ' + director_bonus' : ''}
     ${keywordBonus ? ' + keyword_bonus' : ''}
   ) DESC`;
 
@@ -152,8 +145,7 @@ export async function getTinderRecommendations(userId: number): Promise<Movie[]>
     console.log('Préférences utilisateur:', {
       genres: preferences.genres?.length || 0,
       keywords: preferences.keywords?.length || 0,
-      actors: preferences.actors?.length || 0, // ← NOUVEAU
-      directors: preferences.directors?.length || 0 // ← NOUVEAU
+      actors: preferences.actors?.length || 0 
     });
 
     // 2. Récupérer films déjà vus
@@ -164,8 +156,7 @@ export async function getTinderRecommendations(userId: number): Promise<Movie[]>
     const targetedMovies = await getTargetedMovies(
       preferences.genres || [],
       preferences.keywords || [],
-      preferences.actors || [], // ← NOUVEAU
-      preferences.directors || [], // ← NOUVEAU
+      preferences.actors || [], 
       seenIds,
       7
     );
