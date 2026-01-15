@@ -674,16 +674,27 @@ export async function getPreferredActors(userId: number): Promise<number[]> {
   try {
     // Récupérer les acteurs des films likés, triés par fréquence
     const sql = `
-      SELECT mc.cast_id, COUNT(*) as frequency
+      SELECT mc.cast_id, c.name, COUNT(*) as frequency
       FROM user_interactions ui
       JOIN movie_cast mc ON ui.movie_id = mc.movie_id
+      JOIN cast c ON mc.cast_id = c.id
       WHERE ui.user_id = ? AND ui.action_type IN ('like', 'favorite')
       GROUP BY mc.cast_id
       ORDER BY frequency DESC
       LIMIT 15
     `;
     
-    const actors = await db.getAllAsync<{cast_id: number, frequency: number}>(sql, [userId]);
+    const actors = await db.getAllAsync<{cast_id: number, name: string, frequency: number}>(sql, [userId]);
+    console.log(`🎭 ${actors.length} acteurs préférés extraits`);
+    
+    // ⭐ NOUVEAU : Afficher les noms avec fréquences
+    if (actors.length > 0) {
+      console.log('🎭 Top acteurs:');
+      actors.forEach((actor, i) => {
+        console.log(`   ${i+1}. ${actor.name} (${actor.frequency} films)`);
+      });
+    }
+    
     return actors.map(a => a.cast_id);
   } catch (error) {
     console.error('Erreur extraction acteurs préférés:', error);
