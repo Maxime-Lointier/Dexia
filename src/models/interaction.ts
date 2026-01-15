@@ -411,6 +411,24 @@ export async function removeFromWatchlist(userId: number, movieId: number): Prom
   }
 }
 
+export async function getLikedMovieIds(userId: number): Promise<number[]> {
+  const db = await getDatabase();
+  const result = await db.getAllAsync<{ movie_id: number }>(
+    'SELECT movie_id FROM user_interactions WHERE user_id = ? AND action_type = ? ORDER BY created_at DESC',
+    [userId, 'like']
+  );
+  return result.map(r => r.movie_id);
+}
+
+export async function getLikedMovies(userId: number): Promise<any[]> {
+  const movieIds = await getLikedMovieIds(userId);
+  if (movieIds.length === 0) return [];
+
+  const { getMoviesByIds } = await import('./movies');
+  return getMoviesByIds(movieIds);
+}
+
+
 /**
  * Nettoie les interactions d'un utilisateur si l'onboarding n'est pas terminé
  * @param userId - ID de l'utilisateur
