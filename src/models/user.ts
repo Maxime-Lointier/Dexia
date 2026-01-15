@@ -6,6 +6,7 @@ export const CURRENT_USER_ID = 1;
 export interface UserPreferences {
   genres: number[];
   keywords: string[];
+  actors: number[];
 }
 
 export interface DynamicKeyword {
@@ -45,13 +46,19 @@ export async function getUserPreferences(userId: number): Promise<UserPreference
   const row = await db.getFirstAsync<{ preferences: string | null; keywords: string | null }>(sql, [userId]);
   
   if (!row) {
-    return { genres: [], keywords: [] };
+    return { genres: [], keywords: [], actors: [] };
   }
   
   const genres = row.preferences ? JSON.parse(row.preferences) : [];
   const keywordsArray = await exportUserKeywordsToArray(userId);
   
-  return { genres, keywords: keywordsArray };
+  const actors = await getPreferredActors(userId);
+  
+  return { 
+    genres, 
+    keywords: keywordsArray,
+    actors      
+  };
 }
 
 /**
@@ -655,4 +662,34 @@ export async function exportUserKeywordsToArray(userId: number): Promise<string[
     return [];
   }
 }
+
+/**
+ * Extrait les acteurs préférés basés sur les films likés
+ * @param userId - ID de l'utilisateur
+ * @returns Promise<number[]> - Liste des IDs d'acteurs préférés
+ */
+export async function getPreferredActors(userId: number): Promise<number[]> {
+  const db = await getDatabase();
+  
+  try {
+    // Récupérer les acteurs des films likés, triés par fréquence
+    const sql = `
+      SELECT mc.cast_id, COUNT(*) as frequency
+      FROM user_interactions ui
+      JOIN movie_cast mc ON ui.movie_id = mc.movie_id
+      WHERE ui.user_id = ? AND ui.action_type IN ('like', 'favorite')
+      GROUP BY mc.cast_id
+      ORDER BY frequency DESC
+      LIMIT 15
+    `;
+    
+    const actors = await db.getAllAsync<{cast_id: number, frequency: number}>(sql, [userId]);
+    return actors.map(a => a.cast_id);
+  } catch (error) {
+    console.error('Erreur extraction acteurs préférés:', error);
+    return [];
+  }
+}
+
+
 
