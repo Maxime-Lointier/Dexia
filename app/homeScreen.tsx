@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useCallback } from 'react';
+import { Logo } from '../src/components/Logo';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
 
 import { getPosterById } from '../src/utils/posterMap';
@@ -327,10 +328,13 @@ export default function MainPage() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
         {/* HEADER */}
-        <View className="px-6 pt-14 pb-6 flex-row justify-between items-start">
-          <View>
-            <Text className="text-white text-3xl font-bold">Dexia</Text>
-            <Text className="text-gray-400 text-sm mt-1">Découvrez vos prochains films</Text>
+        <View className="px-6 pt-14 pb-6 flex-row justify-between items-center">
+          <View className="flex-row items-center">
+            <Logo width={50} height={50} color="white" />
+            <View className="ml-3">
+              <Text className="text-[#F7F0FF] text-2xl font-bold font-hanken">Dexia</Text>
+              <Text className="text-[#FF4FFD] text-xs italic font-hanken-italic">The Right Swipe</Text>
+            </View>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/settings')}
@@ -349,8 +353,8 @@ export default function MainPage() {
               activeOpacity={0.7}
               onPress={() => { }}
             >
-              <View className="w-10 h-10 bg-[#6C5CE7]/20 rounded-full items-center justify-center mb-2">
-                <FontAwesome name="heart" size={18} color="#6C5CE7" />
+              <View className="w-10 h-10 bg-[#8A3AFF]/20 rounded-full items-center justify-center mb-2">
+                <FontAwesome name="heart" size={18} color="#8A3AFF" />
               </View>
               <Text className="text-white text-2xl font-bold">{likeCount}</Text>
               <Text className="text-gray-400 text-[10px] uppercase font-medium mt-1">Films aimés</Text>
@@ -445,7 +449,7 @@ export default function MainPage() {
 
           {loading ? (
             <View className="items-center py-10">
-              <ActivityIndicator size="large" color="#6C5CE7" />
+              <ActivityIndicator size="large" color="#8A3AFF" />
             </View>
           ) : (
             <View className="gap-4">
@@ -469,7 +473,7 @@ export default function MainPage() {
                         </Text>
                         <View className="flex-row gap-2 mt-2 flex-wrap">
                           {movie.genres.map((genre, idx) => (
-                            <View key={idx} className="bg-[#6C5CE7]/20 px-2 py-1 rounded-md">
+                            <View key={idx} className="bg-[#8A3AFF]/20 px-2 py-1 rounded-md">
                               <Text className="text-[#9D8FFF] text-[10px] font-bold">{genre}</Text>
                             </View>
                           ))}
@@ -496,9 +500,9 @@ export default function MainPage() {
         <View className="px-6 mb-8">
           <View className="rounded-3xl overflow-hidden">
             <LinearGradient
-              colors={['#6C5CE7', '#A29BFE']}
+              colors={['#FF4FFD', '#8A3AFF']}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+              end={{ x: 1, y: 1 }}
               style={{ padding: 32 }}
             >
               <View className="items-center">
@@ -517,7 +521,7 @@ export default function MainPage() {
                   className="bg-white w-full py-4 rounded-full items-center justify-center shadow-lg"
                   activeOpacity={0.9}
                 >
-                  <Text className="text-[#6C5CE7] font-bold text-base">Commencer</Text>
+                  <Text className="text-[#8A3AFF] font-bold text-base">Commencer</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -541,7 +545,7 @@ export default function MainPage() {
       {/* BOTTOM NAV FIXE */}
       <View className="absolute bottom-0 left-0 right-0 bg-dark border-t border-gray-900 px-6 py-4 flex-row justify-around pb-6">
         <TouchableOpacity className="items-center gap-1">
-          <FontAwesome5 name="home" size={20} color="#6C5CE7" />
+          <FontAwesome5 name="home" size={20} color="#8A3AFF" />
           <Text className="text-[10px] font-medium text-primary">Accueil</Text>
         </TouchableOpacity>
 
@@ -572,7 +576,7 @@ export default function MainPage() {
               modalAnimatedStyle,
             ]}
           >
-            <View className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]">
+            <View className="bg-[#1A1A2E] rounded-t-[32px] overflow-hidden h-[85%]">
               <ScrollView
                 className="flex-1"
                 bounces={false}
@@ -589,7 +593,7 @@ export default function MainPage() {
                         />
                       )}
                       <LinearGradient
-                        colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#151521']}
+                        colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#1A1A2E']}
                         locations={[0, 0.6, 1]}
                         className="absolute bottom-0 left-0 right-0 h-48"
                       />
@@ -607,7 +611,7 @@ export default function MainPage() {
                         >
                           {selectedMovie.title}
                         </Text>
-                        <View className="bg-[#6C5CE7] px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-[#6C5CE7]/30">
+                        <View className="bg-[#8A3AFF] px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-[#8A3AFF]/30">
                           <FontAwesome name="star" size={14} color="#FACC15" solid />
                           <Text className="text-white font-bold ml-1.5 text-base">
                             {selectedMovie.vote_average.toFixed(1)}
@@ -631,7 +635,7 @@ export default function MainPage() {
                         {selectedMovieGenres.map((genre, index) => (
                           <View
                             key={index}
-                            className="bg-[#6C5CE7]/15 border border-[#6C5CE7]/30 px-4 py-1.5 rounded-full"
+                            className="bg-[#8A3AFF]/15 border border-[#8A3AFF]/30 px-4 py-1.5 rounded-full"
                           >
                             <Text className="text-[#9D8FFF] text-sm font-medium">{genre}</Text>
                           </View>
@@ -674,7 +678,7 @@ export default function MainPage() {
                 )}
               </ScrollView>
 
-              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#151521] to-transparent">
+              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#1A1A2E] to-transparent">
                 <View className="flex-row gap-3">
                   <TouchableOpacity
                     onPress={handleToggleWatchlist}
@@ -728,7 +732,7 @@ export default function MainPage() {
               watchlistModalAnimatedStyle,
             ]}
           >
-            <View className="bg-[#151521] rounded-t-[32px] overflow-hidden h-[85%]">
+            <View className="bg-[#1A1A2E] rounded-t-[32px] overflow-hidden h-[85%]">
               {/* Header */}
               <View className="px-6 pt-6 pb-4 border-b border-gray-800">
                 <View className="flex-row justify-between items-center">
