@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { Redirect } from 'expo-router';
-import { userExists, isOnboardingDone, setOnboardingDone, CURRENT_USER_ID } from '../src/models/user'; 
+import { userExists, isOnboardingDone, setOnboardingDone, CURRENT_USER_ID } from '../src/models/user';
 
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
@@ -14,7 +14,7 @@ export default function Index() {
   const checkUserStatus = async () => {
     try {
       console.log("🔍 Vérification du statut utilisateur...");
-      
+
       // --- LIGNE MAGIQUE POUR TESTER (EN FORCANT) ---
       // Force l'onboarding à "non fait" à chaque lancement pour tes tests
       //console.log("🛠️ DEBUG: Réinitialisation de l'onboarding pour test");
@@ -43,8 +43,8 @@ export default function Index() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F0F1E' }}>
-        <ActivityIndicator size="large" color="#6C5CE7" />
-        <Text style={{color:'white', marginTop: 10}}>Chargement...</Text>
+        <ActivityIndicator size="large" color="#8A3AFF" />
+        <Text style={{ color: 'white', marginTop: 10 }}>Chargement...</Text>
       </View>
     );
   }

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 1461 642" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-244.235158,-1.374665)">
+        <g transform="matrix(0.646183,0,0,0.646183,227.928635,-35.699853)">
+            <g transform="matrix(1.231343,0,-0,1.231343,787.032784,399.880909)">
+                <g transform="matrix(600,0,0,600,673.305051,346.321232)">
+                </g>
+                <text x="524.505px" y="346.321px" style="font-family:'ClashDisplay-Bold', 'Clash Display';font-weight:700;font-size:600px;fill:white;stroke:white;stroke-width:1.26px;">I</text>
+            </g>
+            <g transform="matrix(1.231343,0,-0,1.231343,1019.165261,399.880909)">
+                <g transform="matrix(600,0,0,600,1021.305051,346.321232)">
+                </g>
+                <text x="524.505px" y="346.321px" style="font-family:'ClashDisplay-Bold', 'Clash Display';font-weight:700;font-size:600px;fill:white;stroke:white;stroke-width:1.26px;">A</text>
+            </g>
+            <g transform="matrix(1.582969,0,-0,1.231343,-197.477281,398.880909)">
+                <g transform="matrix(600,0,0,600,1004.505051,346.321232)">
+                </g>
+                <text x="524.505px" y="346.321px" style="font-family:'ClashDisplay-Bold', 'Clash Display';font-weight:700;font-size:600px;fill:white;stroke:white;stroke-width:1.09px;">X</text>
+            </g>
+            <g transform="matrix(0.2977,0,-0,0.2977,521.401825,553.541331)">
+                <g transform="matrix(1,0,0,1,-1666.666667,-1666.666667)">
+                    <g transform="matrix(4.166667,0,0,4.166667,0,0)">
+                        <g id="Dexia-Logo" serif:id="Dexia Logo">
+                            <g transform="matrix(0.24,0,0,0.24,0,0)">
+                                <path d="M2474.833,1750L1656.458,916.667L2212.958,916.667L3039.792,1750L2212.958,2583.333L1656.458,2583.333L2474.833,1750Z" style="fill:white;"/>
+                            </g>
+                            <g transform="matrix(0.24,0,0,0.24,0,0)">
+                                <path d="M416.667,2583.333L416.667,916.667L1128.625,916.667C1128.625,916.667 1361.417,920.958 1640.083,1198.958L2192.208,1750L1640.083,2301.042C1361.417,2579.042 1128.625,2583.333 1128.625,2583.333L416.667,2583.333ZM806.625,1775L806.667,1775.03L806.667,1778.345L806.625,1778.375L808.333,2220.042L1029.167,2220.042C1029.167,2220.042 1438.042,2226.625 1438.042,1778.375C1438.042,1777.811 1438.041,1777.249 1438.039,1776.688C1438.041,1776.126 1438.042,1775.564 1438.042,1775C1438.042,1766.504 1437.895,1758.172 1437.607,1750C1422.69,1326.997 1029.167,1333.333 1029.167,1333.333L808.333,1333.333L806.625,1775Z" style="fill:white;"/>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+        <g transform="matrix(1,0,0,1,-131,-906)">
+            <g transform="matrix(100,0,0,100,1188.131703,1503.055213)">
+            </g>
+            <text x="451.632px" y="1503.055px" style="font-family:'ClashDisplay-Light', 'Clash Display';font-weight:300;font-size:100px;fill:white;stroke:white;stroke-width:1px;">The Right Swipe</text>
+        </g>
+    </g>
+</svg>
