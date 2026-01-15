@@ -31,7 +31,10 @@ export default function MainPage() {
   const [watchlistCount, setWatchlistCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [isSelectedMovieInWatchlist, setIsSelectedMovieInWatchlist] = useState(false);
+  const [showWatchlistModal, setShowWatchlistModal] = useState(false);
+  const [allWatchlistMovies, setAllWatchlistMovies] = useState<Movie[]>([]);
   const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const watchlistModalTranslateY = useSharedValue(SCREEN_HEIGHT);
 
   const calculateMatchPercentage = async (movie: Movie, preferences: { genres: number[], keywords: string[] }): Promise<number> => {
     if (preferences.genres.length === 0) {
@@ -262,6 +265,34 @@ export default function MainPage() {
     };
   });
 
+  const watchlistModalAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: watchlistModalTranslateY.value }],
+    };
+  });
+
+  const openWatchlistModal = async () => {
+    try {
+      const userId = CURRENT_USER_ID;
+      const movies = await getWatchlistMovies(userId);
+      setAllWatchlistMovies(movies);
+      setShowWatchlistModal(true);
+      watchlistModalTranslateY.value = withSpring(0, {
+        damping: 20,
+        stiffness: 90,
+        mass: 0.8,
+      });
+    } catch (error) {
+      console.error('Erreur ouverture modal watchlist:', error);
+    }
+  };
+
+  const closeWatchlistModal = () => {
+    watchlistModalTranslateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, () => {
+      runOnJS(setShowWatchlistModal)(false);
+    });
+  };
+
   const handleToggleWatchlist = async () => {
     if (!selectedMovie) return;
 
@@ -309,7 +340,7 @@ export default function MainPage() {
             onPress={() => router.push('/settings')}
             className="w-10 h-10 bg-darkCard rounded-full items-center justify-center"
           >
-            <FontAwesome5 name="user" size={16} color="#8A3AFF" />
+            <FontAwesome5 name="user" size={16} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
@@ -317,22 +348,30 @@ export default function MainPage() {
         <View className="px-6 mb-8">
           <View className="flex-row gap-3">
             {/* Carte 1 : Films aimés */}
-            <View className="flex-1 bg-darkCard rounded-2xl p-4 items-center">
+            <TouchableOpacity
+              className="flex-1 bg-darkCard rounded-2xl p-4 items-center"
+              activeOpacity={0.7}
+              onPress={() => { }}
+            >
               <View className="w-10 h-10 bg-[#8A3AFF]/20 rounded-full items-center justify-center mb-2">
                 <FontAwesome name="heart" size={18} color="#8A3AFF" />
               </View>
               <Text className="text-white text-2xl font-bold">{likeCount}</Text>
               <Text className="text-gray-400 text-[10px] uppercase font-medium mt-1">Films aimés</Text>
-            </View>
+            </TouchableOpacity>
 
             {/* Carte 2 : À voir */}
-            <View className="flex-1 bg-darkCard rounded-2xl p-4 items-center">
+            <TouchableOpacity
+              className="flex-1 bg-darkCard rounded-2xl p-4 items-center"
+              activeOpacity={0.7}
+              onPress={openWatchlistModal}
+            >
               <View className="w-10 h-10 bg-[#F59E0B]/20 rounded-full items-center justify-center mb-2">
                 <FontAwesome name="bookmark" size={18} color="#F59E0B" />
               </View>
               <Text className="text-white text-2xl font-bold">{watchlistCount}</Text>
               <Text className="text-gray-400 text-[10px] uppercase font-medium mt-1">À voir</Text>
-            </View>
+            </TouchableOpacity>
 
             {/* Carte 3 : Jours actif */}
             <View className="flex-1 bg-darkCard rounded-2xl p-4 items-center">
@@ -349,7 +388,7 @@ export default function MainPage() {
         <View className="mb-8">
           <View className="px-6 flex-row justify-between items-center mb-4">
             <Text className="text-white text-lg font-bold">À voir plus tard</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={openWatchlistModal}>
               <Text className="text-primary text-xs font-bold">Tout voir</Text>
             </TouchableOpacity>
           </View>
@@ -537,7 +576,7 @@ export default function MainPage() {
               modalAnimatedStyle,
             ]}
           >
-            <View className="bg-darkCard rounded-t-[32px] overflow-hidden h-[85%]">
+            <View className="bg-[#1A1A2E] rounded-t-[32px] overflow-hidden h-[85%]">
               <ScrollView
                 className="flex-1"
                 bounces={false}
@@ -554,7 +593,7 @@ export default function MainPage() {
                         />
                       )}
                       <LinearGradient
-                        colors={['transparent', 'rgba(26, 26, 46, 0.8)', '#1A1A2E']}
+                        colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#1A1A2E']}
                         locations={[0, 0.6, 1]}
                         className="absolute bottom-0 left-0 right-0 h-48"
                       />
@@ -612,7 +651,7 @@ export default function MainPage() {
                         >
                           {selectedMovieCast.map((actor, index) => (
                             <View key={index} className="mr-4 w-20 items-center">
-                              <View className="w-20 h-20 rounded-full bg-darkCard mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
+                              <View className="w-20 h-20 rounded-full bg-[#2A2A3A] mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
                                 <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
                                   <Text className="text-white/30 font-bold text-lg">
                                     {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -671,6 +710,112 @@ export default function MainPage() {
                   </TouchableOpacity>
                 </View>
               </View>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* MODAL WATCHLIST */}
+      <Modal
+        visible={showWatchlistModal}
+        transparent={true}
+        animationType="none"
+        onRequestClose={closeWatchlistModal}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
+          <Animated.View
+            style={[
+              {
+                flex: 1,
+                justifyContent: 'flex-end',
+              },
+              watchlistModalAnimatedStyle,
+            ]}
+          >
+            <View className="bg-[#1A1A2E] rounded-t-[32px] overflow-hidden h-[85%]">
+              {/* Header */}
+              <View className="px-6 pt-6 pb-4 border-b border-gray-800">
+                <View className="flex-row justify-between items-center">
+                  <View className="flex-row items-center gap-3">
+                    <View className="w-10 h-10 bg-[#F59E0B]/20 rounded-full items-center justify-center">
+                      <FontAwesome name="bookmark" size={18} color="#F59E0B" />
+                    </View>
+                    <View>
+                      <Text className="text-white text-xl font-bold">À voir</Text>
+                      <Text className="text-gray-400 text-sm">{allWatchlistMovies.length} films</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={closeWatchlistModal} className="w-10 h-10 bg-gray-800 rounded-full items-center justify-center">
+                    <FontAwesome5 name="times" size={18} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Liste des films */}
+              <ScrollView
+                className="flex-1 px-6"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
+              >
+                {allWatchlistMovies.length > 0 ? (
+                  <View className="gap-4">
+                    {allWatchlistMovies.map((movie) => (
+                      <TouchableOpacity
+                        key={movie.id}
+                        onPress={() => {
+                          closeWatchlistModal();
+                          setTimeout(() => openInfoModalById(movie.id), 350);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View className="flex-row bg-darkCard p-3 rounded-2xl">
+                          <Image
+                            source={getPosterSource(movie)}
+                            className="w-24 h-32 rounded-xl"
+                            resizeMode="cover"
+                          />
+                          <View className="flex-1 ml-4 justify-between py-1">
+                            <View>
+                              <Text className="text-white text-lg font-bold" numberOfLines={2}>{movie.title}</Text>
+                              <Text className="text-gray-400 text-xs mt-1">
+                                {movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}
+                              </Text>
+                            </View>
+                            <View className="flex-row items-center gap-2">
+                              <View className="flex-row items-center gap-1">
+                                <FontAwesome name="star" size={12} color="#FACC15" />
+                                <Text className="text-white font-bold text-sm">{movie.vote_average.toFixed(1)}</Text>
+                              </View>
+                              <View className="bg-[#F59E0B]/20 px-2 py-1 rounded-md">
+                                <Text className="text-[#F59E0B] text-[10px] font-bold">Dans ma liste</Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : (
+                  <View className="items-center py-16">
+                    <FontAwesome name="bookmark-o" size={64} color="#6B7280" />
+                    <Text className="text-gray-400 text-lg font-bold mt-6 mb-2 text-center">
+                      Votre liste est vide
+                    </Text>
+                    <Text className="text-gray-500 text-sm text-center mb-8 leading-5">
+                      Ajoutez des films depuis la découverte{"\n"}ou les recommandations
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        closeWatchlistModal();
+                        router.push('/swipe');
+                      }}
+                      className="bg-[#F59E0B] px-6 py-3 rounded-full"
+                    >
+                      <Text className="text-white font-bold">Découvrir des films</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </ScrollView>
             </View>
           </Animated.View>
         </View>
