@@ -11,6 +11,7 @@ import {
   StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { t } from '../src/i18n';
 
 const COLORS = {
   background: '#0F0F1E',
@@ -31,8 +32,20 @@ const SectionContainer = ({ children }: { children: React.ReactNode }) => (
 );
 
 
-const SettingItem = ({ icon, label, subLabel, onPress, showChevron = true }: any) => (
-  <TouchableOpacity style={styles.row} onPress={onPress}>
+const SettingItem = ({
+  icon,
+  label,
+  subLabel,
+  onPress,
+  showChevron = true,
+}: {
+  icon: string;
+  label: string;
+  subLabel?: string;
+  onPress?: () => void;
+  showChevron?: boolean;
+}) => (
+  <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
     <View style={styles.rowLeft}>
       <View style={styles.iconContainer}>
         <Icon name={icon} size={20} color={COLORS.accent} />
@@ -42,12 +55,23 @@ const SettingItem = ({ icon, label, subLabel, onPress, showChevron = true }: any
         {subLabel && <Text style={styles.rowSubLabel}>{subLabel}</Text>}
       </View>
     </View>
-    {showChevron && <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />}
+    {showChevron && (
+      <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+    )}
   </TouchableOpacity>
 );
 
-
-const SettingSwitch = ({ icon, label, value, onValueChange }: any) => (
+const SettingSwitch = ({
+  icon,
+  label,
+  value,
+  onValueChange,
+}: {
+  icon: string;
+  label: string;
+  value: boolean;
+  onValueChange: (v: boolean) => void;
+}) => (
   <View style={styles.row}>
     <View style={styles.rowLeft}>
       <View style={styles.iconContainer}>
@@ -57,109 +81,154 @@ const SettingSwitch = ({ icon, label, value, onValueChange }: any) => (
     </View>
     <Switch
       trackColor={{ false: '#3e3e3e', true: COLORS.accent }}
-      thumbColor={'#fff'}
-      onValueChange={onValueChange}
+      thumbColor="#fff"
       value={value}
+      onValueChange={onValueChange}
     />
   </View>
 );
 
-const SettingRadio = ({ icon, label, selected, onPress }: any) => (
-  <TouchableOpacity style={styles.row} onPress={onPress}>
+const SettingRadio = ({
+  icon,
+  label,
+  selected,
+  onPress,
+}: {
+  icon: string;
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
     <View style={styles.rowLeft}>
       <View style={styles.iconContainer}>
-        <Icon name={icon} size={20} color={selected ? COLORS.accent : COLORS.textSecondary} />
+        <Icon
+          name={icon}
+          size={20}
+          color={selected ? COLORS.accent : COLORS.textSecondary}
+        />
       </View>
       <Text style={styles.rowLabel}>{label}</Text>
     </View>
-    <View style={[styles.radioOuter, selected && { borderColor: COLORS.accent }]}>
+    <View
+      style={[
+        styles.radioOuter,
+        selected && { borderColor: COLORS.accent },
+      ]}
+    >
       {selected && <View style={styles.radioInner} />}
     </View>
   </TouchableOpacity>
 );
 
 
-const Settings = () => {
-  const [theme, setTheme] = useState('sombre');
+export default function Settings() {
+  const [theme, setTheme] = useState<'dark' | 'light' | 'auto'>('dark');
   const [notifications, setNotifications] = useState(true);
-  const [autoPlay, setAutoPlay] = useState(true);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('..')} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Icon name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Paramètres</Text>
+        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
-        <SectionTitle title="Langue" />
+        {/* Language */}
+        <SectionTitle title={t('settings.language.section')} />
         <SectionContainer>
           <SettingItem
             icon="translate"
-            label="Langue de l'application"
-            subLabel="Français"
+            label={t('settings.language.app')}
+            subLabel="English"
           />
         </SectionContainer>
 
-        <SectionTitle title="Thème" />
+        {/* Theme */}
+        <SectionTitle title={t('settings.theme.section')} />
         <SectionContainer>
           <SettingRadio
             icon="weather-night"
-            label="Mode sombre"
-            selected={theme === 'sombre'}
-            onPress={() => setTheme('sombre')}
+            label={t('settings.theme.dark')}
+            selected={theme === 'dark'}
+            onPress={() => setTheme('dark')}
           />
           <View style={styles.divider} />
           <SettingRadio
             icon="white-balance-sunny"
-            label="Mode clair"
-            selected={theme === 'clair'}
-            onPress={() => setTheme('clair')}
+            label={t('settings.theme.light')}
+            selected={theme === 'light'}
+            onPress={() => setTheme('light')}
           />
           <View style={styles.divider} />
           <SettingRadio
             icon="theme-light-dark"
-            label="Automatique"
+            label={t('settings.theme.auto')}
             selected={theme === 'auto'}
             onPress={() => setTheme('auto')}
           />
         </SectionContainer>
 
-        <SectionTitle title="Préférences" />
+        {/* Preferences */}
+        <SectionTitle title={t('settings.preferences.section')} />
         <SectionContainer>
-          <SettingItem icon="view-grid-outline" label="Genres préférés" />
+          <SettingItem
+            icon="view-grid-outline"
+            label={t('settings.preferences.genres')}
+          />
           <View style={styles.divider} />
           <SettingSwitch
             icon="bell-outline"
-            label="Notifications"
+            label={t('settings.preferences.notifications')}
             value={notifications}
-            onValueChange={setNotifications} />
+            onValueChange={setNotifications}
+          />
         </SectionContainer>
 
-        <SectionTitle title="Compte" />
+        {/* Account */}
+        <SectionTitle title={t('settings.account.section')} />
         <SectionContainer>
-          <SettingItem icon="account" label="Profil" />
+          <SettingItem
+            icon="account"
+            label={t('settings.account.profile')}
+          />
           <View style={styles.divider} />
-          <SettingItem icon="lock" label="Confidentialité" />
+          <SettingItem
+            icon="lock"
+            label={t('settings.account.privacy')}
+          />
           <View style={styles.divider} />
-          <SettingItem icon="shield-check" label="Sécurité" />
+          <SettingItem
+            icon="shield-check"
+            label={t('settings.account.security')}
+          />
         </SectionContainer>
 
-        <SectionTitle title="À propos" />
+        {/* About */}
+        <SectionTitle title={t('settings.about.section')} />
         <SectionContainer>
-          <SettingItem icon="help-circle-outline" label="Aide & Support" />
+          <SettingItem
+            icon="help-circle-outline"
+            label={t('settings.about.help')}
+          />
           <View style={styles.divider} />
-          <SettingItem icon="file-document-outline" label="Conditions d'utilisation" />
+          <SettingItem
+            icon="file-document-outline"
+            label={t('settings.about.terms')}
+          />
           <View style={styles.divider} />
           <SettingItem
             icon="information-outline"
-            label="Version"
+            label={t('settings.about.version')}
             subLabel="2.1.4"
             showChevron={false}
           />
@@ -169,7 +238,7 @@ const Settings = () => {
       </ScrollView>
     </SafeAreaView>
   );
-};
+}
 
 
 const styles = StyleSheet.create({
@@ -199,7 +268,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
@@ -263,5 +332,3 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
 });
-
-export default Settings;
