@@ -420,13 +420,27 @@ export async function getLikedMovieIds(userId: number): Promise<number[]> {
   return result.map(r => r.movie_id);
 }
 
+import { getMovieGenreById } from './movies';
+
 export async function getLikedMovies(userId: number): Promise<any[]> {
   const movieIds = await getLikedMovieIds(userId);
   if (movieIds.length === 0) return [];
 
   const { getMoviesByIds } = await import('./movies');
-  return getMoviesByIds(movieIds);
+  const movies = await getMoviesByIds(movieIds);
+  const moviesWithGenres = await Promise.all(
+    movies.map(async (movie) => {
+      const genres = await getMovieGenreById(movie.id);
+      return {
+        ...movie,
+        genres, // pour le camembert
+      };
+    })
+  );
+
+  return moviesWithGenres;
 }
+
 
 
 /**

@@ -13,7 +13,23 @@ import { getUserPreferences, CURRENT_USER_ID, setOnboardingDone } from '../src/m
 import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, getLikeCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded } from '../src/models/interaction';
 import { getMovieCast, Cast } from '../src/models/cast';
 import { getLikedMovies } from '../src/models/interaction';
+import GenrePieChart from '../src/components/GenrePieChart';
 
+
+function computeGenreDistribution(movies: any[]) {
+  const genreCount: Record<string, number> = {};
+
+  movies.forEach(movie => {
+    movie.genres?.forEach((genre: any) => {
+      genreCount[genre.name] = (genreCount[genre.name] || 0) + 1;
+    });
+  });
+
+  return Object.entries(genreCount).map(([name, count]) => ({
+    name,
+    count,
+  }));
+}
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -40,6 +56,8 @@ export default function MainPage() {
   const [allWatchlistMovies, setAllWatchlistMovies] = useState<Movie[]>([]);
   const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const watchlistModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const genreData = computeGenreDistribution(allLikedMovies);
+  console.log(' genreData:', genreData); // temporaire pour test
 
   const calculateMatchPercentage = async (movie: Movie, preferences: { genres: number[], keywords: string[] }): Promise<number> => {
     if (preferences.genres.length === 0) {
@@ -130,6 +148,13 @@ export default function MainPage() {
     }
   };
 
+
+  const loadLikedMovies = async () => {
+  const movies = await getLikedMovies(CURRENT_USER_ID);
+  setAllLikedMovies(movies);
+};
+
+
   const loadRecommendations = async () => {
     setLoading(true);
     try {
@@ -192,6 +217,7 @@ export default function MainPage() {
       // Recharger aussi la watchlist et les stats quand on revient sur cet écran
       loadWatchlist();
       loadStats();
+      loadLikedMovies();
     }, [])
   );
 
@@ -519,6 +545,18 @@ const closeLikesModal = () => {
             </View>
           )}
         </View>
+
+
+        {/* SECTION GENRES PRÉFÉRÉS */}
+<View className="px-6 mb-10">
+  <View className="bg-darkCard rounded-2xl p-5">
+    <Text className="text-white text-lg font-bold mb-4 text-center">
+      Vos genres préférés
+    </Text>
+
+    <GenrePieChart data={genreData} />
+  </View>
+</View>
 
         {/* SECTION CTA DISCOVER */}
         <View className="px-6 mb-8">
