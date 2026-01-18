@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../src/context/ThemeContext';
 import { router } from 'expo-router';
 import { Logo } from '../src/components/Logo';
+import { t } from '../src/i18n'; 
 
 const welcomeScreen = () => {
   const { isDark, colors } = useTheme();
@@ -14,7 +15,6 @@ const welcomeScreen = () => {
 
       {/* PARTIE HAUTE : IMAGE / LOGO */}
       <View className="flex-1 items-center justify-center p-6">
-
         <View className="mb-10 items-center justify-center">
           <Logo width={220} height={220} />
         </View>
@@ -24,11 +24,11 @@ const welcomeScreen = () => {
         </Text>
 
         <Text className="text-[#FF4FFD] text-lg italic text-center mb-6 font-hanken-italic">
-          The Right Swipe
+          {t('welcome.subtitle')}
         </Text>
 
         <Text className="text-textSecondary text-lg text-center leading-7 px-4 font-medium font-hanken">
-          Découvre des films qui te correspondent vraiment en quelques swipes.
+          {t('welcome.description')}
         </Text>
       </View>
 
@@ -40,7 +40,7 @@ const welcomeScreen = () => {
           className="w-full bg-primary py-4 rounded-2xl items-center justify-center shadow-lg shadow-primary/30"
         >
           <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' }}>
-            Commencer l'aventure
+            {t('welcome.startButton')}
           </Text>
         </TouchableOpacity>
       </View>
