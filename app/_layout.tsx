@@ -7,6 +7,8 @@ import './global.css';
 
 SplashScreen.preventAutoHideAsync();
 
+import { ThemeProvider } from '../src/context/ThemeContext';
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     'HankenGrotesk': require('../assets/fonts/HankenGrotesk-VariableFont_wght.ttf'),
@@ -25,7 +27,9 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <ThemeProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Modal, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
@@ -6,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useCallback } from 'react';
 import { Logo } from '../src/components/Logo';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
+import { useTheme } from '../src/context/ThemeContext';
 
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
@@ -35,6 +37,7 @@ export default function MainPage() {
   const [allWatchlistMovies, setAllWatchlistMovies] = useState<Movie[]>([]);
   const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const watchlistModalTranslateY = useSharedValue(SCREEN_HEIGHT);
+  const { isDark, colors } = useTheme();
 
   const calculateMatchPercentage = async (movie: Movie, preferences: { genres: number[], keywords: string[] }): Promise<number> => {
     if (preferences.genres.length === 0) {
@@ -321,75 +324,77 @@ export default function MainPage() {
     router.replace('/welcomeScreen');
   };
 
-  return (
-    <View className="flex-1 bg-dark">
-      <StatusBar style="light" />
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
         {/* HEADER */}
-        <View className="px-6 pt-14 pb-6 flex-row justify-between items-center">
-          <View className="flex-row items-center">
-            <Logo width={50} height={50} color="white" />
-            <View className="ml-3">
-              <Text className="text-[#F7F0FF] text-2xl font-bold font-hanken">Dexia</Text>
-              <Text className="text-[#FF4FFD] text-xs italic font-hanken-italic">The Right Swipe</Text>
+        <View style={{ paddingHorizontal: 24, paddingTop: 56, paddingBottom: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Logo width={50} height={50} />
+            <View style={{ marginLeft: 12 }}>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>Dexia</Text>
+              <Text style={{ color: '#FF4FFD', fontSize: 12, fontStyle: 'italic' }}>The Right Swipe</Text>
             </View>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/settings')}
-            className="w-10 h-10 bg-darkCard rounded-full items-center justify-center"
+            style={{ width: 40, height: 40, backgroundColor: colors.card, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}
           >
-            <FontAwesome5 name="user" size={16} color="#9CA3AF" />
+            <FontAwesome5 name="user" size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         {/* SECTION STATS */}
-        <View className="px-6 mb-8">
-          <View className="flex-row gap-3">
+        <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             {/* Carte 1 : Films aimés */}
             <TouchableOpacity
-              className="flex-1 bg-darkCard rounded-2xl p-4 items-center"
+              style={{ flex: 1, backgroundColor: colors.card, borderRadius: 16, padding: 16, alignItems: 'center' }}
               activeOpacity={0.7}
               onPress={() => { }}
             >
-              <View className="w-10 h-10 bg-[#8A3AFF]/20 rounded-full items-center justify-center mb-2">
+              <View style={{ width: 40, height: 40, backgroundColor: 'rgba(138, 58, 255, 0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <FontAwesome name="heart" size={18} color="#8A3AFF" />
               </View>
-              <Text className="text-white text-2xl font-bold">{likeCount}</Text>
-              <Text className="text-gray-400 text-[10px] uppercase font-medium mt-1">Films aimés</Text>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>{likeCount}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>Films aimés</Text>
             </TouchableOpacity>
 
             {/* Carte 2 : À voir */}
             <TouchableOpacity
-              className="flex-1 bg-darkCard rounded-2xl p-4 items-center"
+              style={{ flex: 1, backgroundColor: colors.card, borderRadius: 16, padding: 16, alignItems: 'center' }}
               activeOpacity={0.7}
               onPress={openWatchlistModal}
             >
-              <View className="w-10 h-10 bg-[#F59E0B]/20 rounded-full items-center justify-center mb-2">
+              <View style={{ width: 40, height: 40, backgroundColor: 'rgba(245, 158, 11, 0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <FontAwesome name="bookmark" size={18} color="#F59E0B" />
               </View>
-              <Text className="text-white text-2xl font-bold">{watchlistCount}</Text>
-              <Text className="text-gray-400 text-[10px] uppercase font-medium mt-1">À voir</Text>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>{watchlistCount}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>À voir</Text>
             </TouchableOpacity>
 
             {/* Carte 3 : Jours actif */}
-            <View className="flex-1 bg-darkCard rounded-2xl p-4 items-center">
-              <View className="w-10 h-10 bg-[#22C55E]/20 rounded-full items-center justify-center mb-2">
+            <View style={{ flex: 1, backgroundColor: colors.card, borderRadius: 16, padding: 16, alignItems: 'center' }}>
+              <View style={{ width: 40, height: 40, backgroundColor: 'rgba(34, 197, 94, 0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <FontAwesome5 name="fire" size={18} color="#22C55E" />
               </View>
-              <Text className="text-white text-2xl font-bold">12</Text>
-              <Text className="text-gray-400 text-[10px] uppercase font-medium mt-1">Jours actif</Text>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>12</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>Jours actif</Text>
             </View>
           </View>
         </View>
 
         {/* SECTION À VOIR PLUS TARD (Scroll Horizontal) */}
-        <View className="mb-8">
-          <View className="px-6 flex-row justify-between items-center mb-4">
-            <Text className="text-white text-lg font-bold">À voir plus tard</Text>
+        <View style={{ marginBottom: 32 }}>
+          <View style={{ paddingHorizontal: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>À voir plus tard</Text>
             <TouchableOpacity onPress={openWatchlistModal}>
-              <Text className="text-primary text-xs font-bold">Tout voir</Text>
+              <Text style={{ color: '#8A3AFF', fontSize: 12, fontWeight: 'bold' }}>Tout voir</Text>
             </TouchableOpacity>
           </View>
 
@@ -414,37 +419,37 @@ export default function MainPage() {
                     </View>
                     <View className="absolute bottom-2 left-2 flex-row items-center gap-1">
                       <FontAwesome name="star" size={10} color="#FACC15" />
-                      <Text className="text-white text-xs font-bold">{movie.vote_average.toFixed(1)}</Text>
+                      <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: 'bold' }}>{movie.vote_average.toFixed(1)}</Text>
                     </View>
                   </View>
-                  <Text className="text-white text-sm font-bold truncate" numberOfLines={1}>{movie.title}</Text>
-                  <Text className="text-gray-500 text-[10px]">{movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</Text>
+                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: 'bold' }} numberOfLines={1}>{movie.title}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10 }}>{movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           ) : (
             <View className="items-center py-8 px-6">
               <FontAwesome name="bookmark-o" size={48} color="#6B7280" />
-              <Text className="text-gray-400 text-lg font-bold mt-4 mb-2 text-center">
+              <Text className="text-textSecondary text-lg font-bold mt-4 mb-2 text-center">
                 Votre liste est vide
               </Text>
-              <Text className="text-gray-500 text-sm text-center mb-6 leading-5">
+              <Text className="text-textSecondary text-sm text-center mb-6 leading-5">
                 Ajoutez des films depuis la découverte ou les recommandations
               </Text>
               <TouchableOpacity
                 onPress={() => router.push('/swipe')}
                 className="bg-primary px-6 py-3 rounded-full"
               >
-                <Text className="text-white font-bold">Découvrir des films</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Découvrir des films</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
         {/* SECTION RECOMMANDATIONS (Liste Verticale) */}
-        <View className="px-6 mb-8">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-white text-lg font-bold w-48">Recommandations personnalisées</Text>
+        <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold', width: 192 }}>Recommandations personnalisées</Text>
           </View>
 
           {loading ? (
@@ -459,16 +464,16 @@ export default function MainPage() {
                   onPress={() => openInfoModal(movie)}
                   activeOpacity={0.7}
                 >
-                  <View className="flex-row bg-darkCard p-3 rounded-2xl">
+                  <View style={{ flexDirection: 'row', backgroundColor: colors.card, padding: 12, borderRadius: 16 }}>
                     <Image
                       source={getPosterSource(movie)}
                       className="w-24 h-32 rounded-xl"
                       resizeMode="cover"
                     />
-                    <View className="flex-1 ml-4 justify-between py-1">
+                    <View style={{ flex: 1, marginLeft: 16, justifyContent: 'space-between', paddingVertical: 4 }}>
                       <View>
-                        <Text className="text-white text-lg font-bold" numberOfLines={2}>{movie.title}</Text>
-                        <Text className="text-gray-400 text-xs mt-1">
+                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }} numberOfLines={2}>{movie.title}</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4 }}>
                           {movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}
                         </Text>
                         <View className="flex-row gap-2 mt-2 flex-wrap">
@@ -479,10 +484,10 @@ export default function MainPage() {
                           ))}
                         </View>
                       </View>
-                      <View className="flex-row items-center gap-1">
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <FontAwesome name="star" size={12} color="#FACC15" />
-                        <Text className="text-white font-bold text-sm">{movie.vote_average.toFixed(1)}</Text>
-                        <Text className="text-gray-500 text-xs ml-1">({movie.matchPercentage}% match)</Text>
+                        <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }}>{movie.vote_average.toFixed(1)}</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginLeft: 4 }}>({movie.matchPercentage}% match)</Text>
                       </View>
                     </View>
                   </View>
@@ -490,7 +495,7 @@ export default function MainPage() {
               ))}
 
               {recommendations.length === 0 && (
-                <Text className="text-gray-400 text-center py-4">Aucune recommandation pour le moment.</Text>
+                <Text className="text-textSecondary text-center py-4">Aucune recommandation pour le moment.</Text>
               )}
             </View>
           )}
@@ -510,7 +515,7 @@ export default function MainPage() {
                   <FontAwesome5 name="fire" size={32} color="white" />
                 </View>
 
-                <Text className="text-white text-xl font-bold mb-2 text-center">Prêt à découvrir ?</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>Prêt à découvrir ?</Text>
 
                 <Text className="text-white/90 text-sm mb-8 text-center leading-5">
                   Swipez pour trouver votre prochain film préféré
@@ -529,7 +534,7 @@ export default function MainPage() {
         </View>
 
         <View className="px-6 mb-8 mt-4 border-t border-gray-800 pt-6">
-          <Text className="text-gray-500 text-xs text-center mb-4 uppercase tracking-widest">Zone de Développement</Text>
+          <Text className="text-textSecondary text-xs text-center mb-4 uppercase tracking-widest">Zone de Développement</Text>
 
           <TouchableOpacity
             onPress={handleResetOnboarding}
@@ -543,20 +548,20 @@ export default function MainPage() {
       </ScrollView>
 
       {/* BOTTOM NAV FIXE */}
-      <View className="absolute bottom-0 left-0 right-0 bg-dark border-t border-gray-900 px-6 py-4 flex-row justify-around pb-6">
-        <TouchableOpacity className="items-center gap-1">
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: 24, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 24 }}>
+        <TouchableOpacity style={{ alignItems: 'center', gap: 4 }}>
           <FontAwesome5 name="home" size={20} color="#8A3AFF" />
-          <Text className="text-[10px] font-medium text-primary">Accueil</Text>
+          <Text style={{ fontSize: 10, fontWeight: '500', color: '#8A3AFF' }}>Accueil</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/swipe')} className="items-center gap-1">
-          <FontAwesome5 name="layer-group" size={20} color="#9CA3AF" />
-          <Text className="text-[10px] font-medium text-gray-400">Découvrir</Text>
+        <TouchableOpacity onPress={() => router.push('/swipe')} style={{ alignItems: 'center', gap: 4 }}>
+          <FontAwesome5 name="layer-group" size={20} color={colors.textSecondary} />
+          <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textSecondary }}>Découvrir</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/settings')} className="items-center gap-1">
-          <FontAwesome5 name="user" size={20} color="#9CA3AF" />
-          <Text className="text-[10px] font-medium text-gray-400">Profil</Text>
+        <TouchableOpacity onPress={() => router.push('/settings')} style={{ alignItems: 'center', gap: 4 }}>
+          <FontAwesome5 name="user" size={20} color={colors.textSecondary} />
+          <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textSecondary }}>Profil</Text>
         </TouchableOpacity>
       </View>
 
@@ -576,7 +581,7 @@ export default function MainPage() {
               modalAnimatedStyle,
             ]}
           >
-            <View className="bg-[#1A1A2E] rounded-t-[32px] overflow-hidden h-[85%]">
+            <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden', height: '85%' }}>
               <ScrollView
                 className="flex-1"
                 bounces={false}
@@ -593,7 +598,7 @@ export default function MainPage() {
                         />
                       )}
                       <LinearGradient
-                        colors={['transparent', 'rgba(21, 21, 33, 0.8)', '#1A1A2E']}
+                        colors={['transparent', isDark ? 'rgba(21, 21, 33, 0.8)' : 'rgba(255, 255, 255, 0.8)', colors.card]}
                         locations={[0, 0.6, 1]}
                         className="absolute bottom-0 left-0 right-0 h-48"
                       />
@@ -602,18 +607,23 @@ export default function MainPage() {
                     <View className="px-6 -mt-12 pb-10 relative z-10">
                       <View className="flex-row justify-between items-end mb-4">
                         <Text
-                          className="text-white text-3xl font-bold flex-1 mr-4 leading-tight"
                           style={{
-                            textShadowColor: 'rgba(0, 0, 0, 0.75)',
-                            textShadowOffset: { width: 0, height: 1 },
-                            textShadowRadius: 4
+                            color: '#FFFFFF',
+                            fontSize: 28,
+                            fontWeight: 'bold',
+                            flex: 1,
+                            marginRight: 16,
+                            lineHeight: 34,
+                            textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                            textShadowOffset: { width: 0, height: 2 },
+                            textShadowRadius: 6
                           }}
                         >
                           {selectedMovie.title}
                         </Text>
                         <View className="bg-[#8A3AFF] px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-[#8A3AFF]/30">
                           <FontAwesome name="star" size={14} color="#FACC15" solid />
-                          <Text className="text-white font-bold ml-1.5 text-base">
+                          <Text style={{ color: '#FFFFFF', fontWeight: 'bold', marginLeft: 6, fontSize: 16 }}>
                             {selectedMovie.vote_average.toFixed(1)}
                           </Text>
                         </View>
@@ -626,7 +636,7 @@ export default function MainPage() {
                           </Text>
                         </View>
                         <FontAwesome name="calendar" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
-                        <Text className="text-gray-400 font-medium text-base">
+                        <Text className="text-textSecondary font-medium text-base">
                           {new Date(selectedMovie.release_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </Text>
                       </View>
@@ -642,7 +652,7 @@ export default function MainPage() {
                         ))}
                       </View>
 
-                      <Text className="text-white text-xl font-bold mb-3 mt-2">Casting</Text>
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 12, marginTop: 8 }}>Casting</Text>
                       <View className="-mx-6 mb-8">
                         <ScrollView
                           horizontal
@@ -650,18 +660,16 @@ export default function MainPage() {
                           contentContainerStyle={{ paddingHorizontal: 24 }}
                         >
                           {selectedMovieCast.map((actor, index) => (
-                            <View key={index} className="mr-4 w-20 items-center">
-                              <View className="w-20 h-20 rounded-full bg-[#2A2A3A] mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
-                                <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
-                                  <Text className="text-white/30 font-bold text-lg">
-                                    {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                  </Text>
-                                </View>
+                            <View key={index} style={{ marginRight: 16, width: 80, alignItems: 'center' }}>
+                              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.card, marginBottom: 8, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ color: colors.textSecondary, fontWeight: 'bold', fontSize: 18 }}>
+                                  {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </Text>
                               </View>
-                              <Text className="text-white text-xs font-bold text-center w-full leading-tight" numberOfLines={2}>
+                              <Text style={{ color: colors.text, fontSize: 12, fontWeight: 'bold', textAlign: 'center', width: '100%', lineHeight: 14 }} numberOfLines={2}>
                                 {actor.name}
                               </Text>
-                              <Text className="text-gray-400 text-[10px] text-center w-full leading-tight mt-0.5" numberOfLines={2}>
+                              <Text style={{ color: colors.textSecondary, fontSize: 10, textAlign: 'center', width: '100%', lineHeight: 12, marginTop: 2 }} numberOfLines={2}>
                                 {actor.role}
                               </Text>
                             </View>
@@ -669,8 +677,8 @@ export default function MainPage() {
                         </ScrollView>
                       </View>
 
-                      <Text className="text-white text-xl font-bold mb-3">Synopsis</Text>
-                      <Text className="text-gray-400 text-base leading-7 pb-32">
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>Synopsis</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 28, paddingBottom: 128 }}>
                         {selectedMovie.overview || 'Aucune description disponible pour ce film.'}
                       </Text>
                     </View>
@@ -678,7 +686,7 @@ export default function MainPage() {
                 )}
               </ScrollView>
 
-              <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#1A1A2E] to-transparent">
+              <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: colors.card }}>
                 <View className="flex-row gap-3">
                   <TouchableOpacity
                     onPress={handleToggleWatchlist}
@@ -703,20 +711,20 @@ export default function MainPage() {
 
                   <TouchableOpacity
                     onPress={closeInfoModal}
-                    className="bg-gray-600 px-6 py-4 rounded-2xl"
+                    style={{ backgroundColor: colors.card, paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16 }}
                     activeOpacity={0.8}
                   >
-                    <Text className="text-white font-bold">Fermer</Text>
+                    <Text style={{ color: colors.text, fontWeight: 'bold' }}>Fermer</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
           </Animated.View>
         </View>
-      </Modal>
+      </Modal >
 
       {/* MODAL WATCHLIST */}
-      <Modal
+      < Modal
         visible={showWatchlistModal}
         transparent={true}
         animationType="none"
@@ -732,17 +740,17 @@ export default function MainPage() {
               watchlistModalAnimatedStyle,
             ]}
           >
-            <View className="bg-[#1A1A2E] rounded-t-[32px] overflow-hidden h-[85%]">
+            <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden', height: '85%' }}>
               {/* Header */}
-              <View className="px-6 pt-6 pb-4 border-b border-gray-800">
+              <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                 <View className="flex-row justify-between items-center">
                   <View className="flex-row items-center gap-3">
                     <View className="w-10 h-10 bg-[#F59E0B]/20 rounded-full items-center justify-center">
                       <FontAwesome name="bookmark" size={18} color="#F59E0B" />
                     </View>
                     <View>
-                      <Text className="text-white text-xl font-bold">À voir</Text>
-                      <Text className="text-gray-400 text-sm">{allWatchlistMovies.length} films</Text>
+                      <Text className="text-text text-xl font-bold">À voir</Text>
+                      <Text className="text-textSecondary text-sm">{allWatchlistMovies.length} films</Text>
                     </View>
                   </View>
                   <TouchableOpacity onPress={closeWatchlistModal} className="w-10 h-10 bg-gray-800 rounded-full items-center justify-center">
@@ -768,7 +776,7 @@ export default function MainPage() {
                         }}
                         activeOpacity={0.7}
                       >
-                        <View className="flex-row bg-darkCard p-3 rounded-2xl">
+                        <View className="flex-row bg-card p-3 rounded-2xl">
                           <Image
                             source={getPosterSource(movie)}
                             className="w-24 h-32 rounded-xl"
@@ -776,15 +784,15 @@ export default function MainPage() {
                           />
                           <View className="flex-1 ml-4 justify-between py-1">
                             <View>
-                              <Text className="text-white text-lg font-bold" numberOfLines={2}>{movie.title}</Text>
-                              <Text className="text-gray-400 text-xs mt-1">
+                              <Text className="text-text text-lg font-bold" numberOfLines={2}>{movie.title}</Text>
+                              <Text className="text-textSecondary text-xs mt-1">
                                 {movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}
                               </Text>
                             </View>
                             <View className="flex-row items-center gap-2">
                               <View className="flex-row items-center gap-1">
                                 <FontAwesome name="star" size={12} color="#FACC15" />
-                                <Text className="text-white font-bold text-sm">{movie.vote_average.toFixed(1)}</Text>
+                                <Text className="text-text font-bold text-sm">{movie.vote_average.toFixed(1)}</Text>
                               </View>
                               <View className="bg-[#F59E0B]/20 px-2 py-1 rounded-md">
                                 <Text className="text-[#F59E0B] text-[10px] font-bold">Dans ma liste</Text>
@@ -798,10 +806,10 @@ export default function MainPage() {
                 ) : (
                   <View className="items-center py-16">
                     <FontAwesome name="bookmark-o" size={64} color="#6B7280" />
-                    <Text className="text-gray-400 text-lg font-bold mt-6 mb-2 text-center">
+                    <Text className="text-textSecondary text-lg font-bold mt-6 mb-2 text-center">
                       Votre liste est vide
                     </Text>
-                    <Text className="text-gray-500 text-sm text-center mb-8 leading-5">
+                    <Text className="text-textSecondary text-sm text-center mb-8 leading-5">
                       Ajoutez des films depuis la découverte{"\n"}ou les recommandations
                     </Text>
                     <TouchableOpacity
@@ -811,7 +819,7 @@ export default function MainPage() {
                       }}
                       className="bg-[#F59E0B] px-6 py-3 rounded-full"
                     >
-                      <Text className="text-white font-bold">Découvrir des films</Text>
+                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Découvrir des films</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -819,7 +827,7 @@ export default function MainPage() {
             </View>
           </Animated.View>
         </View>
-      </Modal>
-    </View>
+      </Modal >
+    </SafeAreaView >
   );
 }
