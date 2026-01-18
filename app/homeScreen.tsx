@@ -14,6 +14,24 @@ import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies
 import { getUserPreferences, CURRENT_USER_ID, setOnboardingDone } from '../src/models/user';
 import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, getLikeCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded } from '../src/models/interaction';
 import { getMovieCast, Cast } from '../src/models/cast';
+import { getLikedMovies } from '../src/models/interaction';
+import GenrePieChart from '../src/components/GenrePieChart';
+
+
+function computeGenreDistribution(movies: any[]) {
+  const genreCount: Record<string, number> = {};
+
+  movies.forEach(movie => {
+    movie.genres?.forEach((genre: any) => {
+      genreCount[genre.name] = (genreCount[genre.name] || 0) + 1;
+    });
+  });
+
+  return Object.entries(genreCount).map(([name, count]) => ({
+    name,
+    count,
+  }));
+}
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -34,10 +52,15 @@ export default function MainPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [isSelectedMovieInWatchlist, setIsSelectedMovieInWatchlist] = useState(false);
   const [showWatchlistModal, setShowWatchlistModal] = useState(false);
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const [allLikedMovies, setAllLikedMovies] = useState<Movie[]>([]);
+  const likesModalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const [allWatchlistMovies, setAllWatchlistMovies] = useState<Movie[]>([]);
   const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const watchlistModalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const { isDark, colors } = useTheme();
+  const genreData = computeGenreDistribution(allLikedMovies);
+  console.log(' genreData:', genreData); // temporaire pour test
 
   const calculateMatchPercentage = async (movie: Movie, preferences: { genres: number[], keywords: string[] }): Promise<number> => {
     if (preferences.genres.length === 0) {
@@ -128,6 +151,13 @@ export default function MainPage() {
     }
   };
 
+
+  const loadLikedMovies = async () => {
+    const movies = await getLikedMovies(CURRENT_USER_ID);
+    setAllLikedMovies(movies);
+  };
+
+
   const loadRecommendations = async () => {
     setLoading(true);
     try {
@@ -190,6 +220,7 @@ export default function MainPage() {
       // Recharger aussi la watchlist et les stats quand on revient sur cet écran
       loadWatchlist();
       loadStats();
+      loadLikedMovies();
     }, [])
   );
 
@@ -274,6 +305,11 @@ export default function MainPage() {
     };
   });
 
+  const likesModalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: likesModalTranslateY.value }],
+  }));
+
+
   const openWatchlistModal = async () => {
     try {
       const userId = CURRENT_USER_ID;
@@ -295,6 +331,20 @@ export default function MainPage() {
       runOnJS(setShowWatchlistModal)(false);
     });
   };
+
+  const openLikesModal = async () => {
+    const movies = await getLikedMovies(CURRENT_USER_ID);
+    setAllLikedMovies(movies);
+    setShowLikesModal(true);
+    likesModalTranslateY.value = withSpring(0);
+  };
+
+  const closeLikesModal = () => {
+    likesModalTranslateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, () => {
+      runOnJS(setShowLikesModal)(false);
+    });
+  };
+
 
   const handleToggleWatchlist = async () => {
     if (!selectedMovie) return;
@@ -356,7 +406,7 @@ export default function MainPage() {
             <TouchableOpacity
               style={{ flex: 1, backgroundColor: colors.card, borderRadius: 16, padding: 16, alignItems: 'center' }}
               activeOpacity={0.7}
-              onPress={() => { }}
+              onPress={openLikesModal}
             >
               <View style={{ width: 40, height: 40, backgroundColor: 'rgba(138, 58, 255, 0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <FontAwesome name="heart" size={18} color="#8A3AFF" />
@@ -410,7 +460,7 @@ export default function MainPage() {
                       />
                     ) : (
                       <View className="w-full h-full bg-gray-800 items-center justify-center">
-                        <FontAwesome5 name="image" size={24} color="#6B7280" />
+                        <FontAwesome5 name="image" size={24} color={colors.textSecondary} />
                       </View>
                     )}
                     <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} className="absolute inset-0" />
@@ -429,7 +479,7 @@ export default function MainPage() {
             </ScrollView>
           ) : (
             <View className="items-center py-8 px-6">
-              <FontAwesome name="bookmark-o" size={48} color="#6B7280" />
+              <FontAwesome name="bookmark-o" size={48} color={colors.textSecondary} />
               <Text className="text-textSecondary text-lg font-bold mt-4 mb-2 text-center">
                 Votre liste est vide
               </Text>
@@ -499,6 +549,18 @@ export default function MainPage() {
               )}
             </View>
           )}
+        </View>
+
+
+        {/* SECTION GENRES PRÉFÉRÉS */}
+        <View className="px-6 mb-10">
+          <View className="bg-darkCard rounded-2xl p-5">
+            <Text className="text-white text-lg font-bold mb-4 text-center">
+              Vos genres préférés
+            </Text>
+
+            <GenrePieChart data={genreData} />
+          </View>
         </View>
 
         {/* SECTION CTA DISCOVER */}
@@ -776,7 +838,7 @@ export default function MainPage() {
                         }}
                         activeOpacity={0.7}
                       >
-                        <View className="flex-row bg-card p-3 rounded-2xl">
+                        <View style={{ flexDirection: 'row', backgroundColor: colors.card, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
                           <Image
                             source={getPosterSource(movie)}
                             className="w-24 h-32 rounded-xl"
@@ -784,15 +846,15 @@ export default function MainPage() {
                           />
                           <View className="flex-1 ml-4 justify-between py-1">
                             <View>
-                              <Text className="text-text text-lg font-bold" numberOfLines={2}>{movie.title}</Text>
-                              <Text className="text-textSecondary text-xs mt-1">
+                              <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }} numberOfLines={2}>{movie.title}</Text>
+                              <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4 }}>
                                 {movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}
                               </Text>
                             </View>
                             <View className="flex-row items-center gap-2">
                               <View className="flex-row items-center gap-1">
                                 <FontAwesome name="star" size={12} color="#FACC15" />
-                                <Text className="text-text font-bold text-sm">{movie.vote_average.toFixed(1)}</Text>
+                                <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }}>{movie.vote_average.toFixed(1)}</Text>
                               </View>
                               <View className="bg-[#F59E0B]/20 px-2 py-1 rounded-md">
                                 <Text className="text-[#F59E0B] text-[10px] font-bold">Dans ma liste</Text>
@@ -805,7 +867,7 @@ export default function MainPage() {
                   </View>
                 ) : (
                   <View className="items-center py-16">
-                    <FontAwesome name="bookmark-o" size={64} color="#6B7280" />
+                    <FontAwesome name="bookmark-o" size={64} color={colors.textSecondary} />
                     <Text className="text-textSecondary text-lg font-bold mt-6 mb-2 text-center">
                       Votre liste est vide
                     </Text>
@@ -827,7 +889,137 @@ export default function MainPage() {
             </View>
           </Animated.View>
         </View>
-      </Modal >
-    </SafeAreaView >
+      </Modal>
+
+      {/* MODAL LIKED */}
+      <Modal
+        visible={showLikesModal}
+        transparent={true}
+        animationType="none"
+        onRequestClose={closeLikesModal}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
+          <Animated.View
+            style={[
+              {
+                flex: 1,
+                justifyContent: 'flex-end',
+              },
+              likesModalAnimatedStyle,
+            ]}
+          >
+            <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden', height: '85%' }}>
+
+              {/* HEADER */}
+              <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <View className="flex-row justify-between items-center">
+                  <View className="flex-row items-center gap-3">
+                    <View className="w-10 h-10 bg-[#EF4444]/20 rounded-full items-center justify-center">
+                      <FontAwesome name="heart" size={18} color="#EF4444" />
+                    </View>
+                    <View>
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold' }}>Films aimés</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
+                        {allLikedMovies.length} films
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={closeLikesModal}
+                    style={{ width: 40, height: 40, backgroundColor: colors.card, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+                  >
+                    <FontAwesome5 name="times" size={18} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* LISTE DES FILMS */}
+              <ScrollView
+                className="flex-1 px-6"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
+              >
+                {allLikedMovies.length > 0 ? (
+                  <View className="gap-4">
+                    {allLikedMovies.map((movie) => (
+                      <TouchableOpacity
+                        key={movie.id}
+                        onPress={() => {
+                          closeLikesModal();
+                          setTimeout(() => openInfoModalById(movie.id), 350);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View style={{ flexDirection: 'row', backgroundColor: colors.card, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                          <Image
+                            source={getPosterSource(movie)}
+                            className="w-24 h-32 rounded-xl"
+                            resizeMode="cover"
+                          />
+
+                          <View className="flex-1 ml-4 justify-between py-1">
+                            <View>
+                              <Text
+                                style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}
+                                numberOfLines={2}
+                              >
+                                {movie.title}
+                              </Text>
+                              <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4 }}>
+                                {movie.release_date
+                                  ? movie.release_date.split('-')[0]
+                                  : 'N/A'}
+                              </Text>
+                            </View>
+
+                            <View className="flex-row items-center gap-2">
+                              <View className="flex-row items-center gap-1">
+                                <FontAwesome name="star" size={12} color="#FACC15" />
+                                <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }}>
+                                  {movie.vote_average.toFixed(1)}
+                                </Text>
+                              </View>
+
+                              <View className="bg-[#EF4444]/20 px-2 py-1 rounded-md">
+                                <Text className="text-[#EF4444] text-[10px] font-bold">
+                                  Aimé
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : (
+                  <View className="items-center py-16">
+                    <FontAwesome name="heart-o" size={64} color={colors.textSecondary} />
+                    <Text style={{ color: colors.textSecondary, fontSize: 18, fontWeight: 'bold', marginTop: 24, marginBottom: 8, textAlign: 'center' }}>
+                      Vous n’avez aimé aucun film
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 32, lineHeight: 20 }}>
+                      Likez des films depuis la découverte{"\n"}ou les recommandations
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        closeLikesModal();
+                        router.push('/swipe');
+                      }}
+                      className="bg-[#EF4444] px-6 py-3 rounded-full"
+                    >
+                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>
+                        Découvrir des films
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
+
+    </SafeAreaView>
   );
 }
