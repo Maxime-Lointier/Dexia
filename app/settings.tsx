@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import {
   View,
@@ -11,10 +11,26 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
+import { t, setLanguage, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
+import { updateUserLanguage, CURRENT_USER_ID } from '../src/models/user';
 
 const Settings = () => {
   const { theme, setTheme, isDark, colors } = useTheme();
   const [notifications, setNotifications] = useState(true);
+    const [locale, setLocale] = useState(getCurrentLanguage());
+  useEffect(() => {
+    const unsubscribe = subscribeLanguageChange((newLang) => {
+      setLocale(newLang);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // basculer fr et en
+  const toggleLanguage = async () => {
+    const newLang = locale === 'fr' ? 'en' : 'fr';
+    setLanguage(newLang); 
+    await updateUserLanguage(CURRENT_USER_ID, newLang); 
+  };
 
   // Composants avec styles dynamiques
   const SectionTitle = ({ title }: { title: string }) => (
@@ -99,75 +115,83 @@ const Settings = () => {
         >
           <Icon name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>Paramètres</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>
+          {t('settings.title')}
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}>
 
-        <SectionTitle title="Langue" />
+        {/* SECTION LANGUE */}
+        <SectionTitle title={t('settings.language.sectionTitle')} />
         <SectionContainer>
           <SettingItem
             icon="translate"
-            label="Langue de l'application"
-            subLabel="Français"
+            label={t('settings.language.appLanguage')}
+            subLabel={t('settings.language.current')}
+            onPress={toggleLanguage}
           />
         </SectionContainer>
 
-        <SectionTitle title="Thème" />
+        {/* SECTION THÈME */}
+        <SectionTitle title={t('settings.theme.sectionTitle')} />
         <SectionContainer>
           <SettingRadio
             icon="weather-night"
-            label="Mode sombre"
+            label={t('settings.theme.dark')}
             selected={theme === 'dark'}
             onPress={() => setTheme('dark')}
           />
           <Divider />
           <SettingRadio
             icon="white-balance-sunny"
-            label="Mode clair"
+            label={t('settings.theme.light')}
             selected={theme === 'light'}
             onPress={() => setTheme('light')}
           />
           <Divider />
           <SettingRadio
             icon="theme-light-dark"
-            label="Automatique"
+            label={t('settings.theme.auto')}
             selected={theme === 'system'}
             onPress={() => setTheme('system')}
           />
         </SectionContainer>
 
-        <SectionTitle title="Préférences" />
+        {/* SECTION PRÉFÉRENCES */}
+        <SectionTitle title={t('settings.preferences.sectionTitle')} />
         <SectionContainer>
-          <SettingItem icon="view-grid-outline" label="Genres préférés" />
+          <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} />
           <Divider />
           <SettingSwitch
             icon="bell-outline"
-            label="Notifications"
+            label={t('settings.preferences.notifications')}
             value={notifications}
             onValueChange={setNotifications}
           />
         </SectionContainer>
 
-        <SectionTitle title="Compte" />
+        {/* SECTION COMPTE */}
+        <SectionTitle title={t('settings.account.sectionTitle')} />
         <SectionContainer>
-          <SettingItem icon="account" label="Profil" />
+          <SettingItem icon="account" label={t('settings.account.profile')} />
           <Divider />
-          <SettingItem icon="lock" label="Confidentialité" />
+          <SettingItem icon="lock" label={t('settings.account.privacy')} />
           <Divider />
-          <SettingItem icon="shield-check" label="Sécurité" />
+          <SettingItem icon="shield-check" label={t('settings.account.security')} />
         </SectionContainer>
 
-        <SectionTitle title="À propos" />
+        {/* SECTION À PROPOS */}
+        <SectionTitle title={t('settings.about.sectionTitle')} />
         <SectionContainer>
-          <SettingItem icon="help-circle-outline" label="Aide & Support" />
+          <SettingItem icon="help-circle-outline" label={t('settings.about.help')} />
           <Divider />
-          <SettingItem icon="file-document-outline" label="Conditions d'utilisation" />
+          <SettingItem icon="file-document-outline" label={t('settings.about.terms')} />
           <Divider />
           <SettingItem
             icon="information-outline"
-            label="Version"
+            label={t('settings.about.version')}
             subLabel="2.2.0"
             showChevron={false}
           />

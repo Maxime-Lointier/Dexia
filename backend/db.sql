@@ -40,6 +40,7 @@ CREATE TABLE user_profile (
   preferences TEXT, -- le onboarding puis pourra changer avec like/dislike
   onboarding_done INTEGER DEFAULT 0,
   keywords TEXT -- mots-clés extraits ou préférés
+  language TEXT DEFAULT 'fr'
 );
 
 CREATE TABLE user_interactions (

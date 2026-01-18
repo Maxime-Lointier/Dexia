@@ -17,7 +17,7 @@ export default {
 
     preferences: {
       sectionTitle: "Préférences",
-      favoriteGenres: "Genres préférés",
+      favoriteGenres: "Genres favoris",
       notifications: "Notifications",
     },
 
