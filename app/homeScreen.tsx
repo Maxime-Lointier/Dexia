@@ -553,9 +553,9 @@ export default function MainPage() {
 
 
         {/* SECTION GENRES PRÉFÉRÉS */}
-        <View className="px-6 mb-10">
-          <View className="bg-darkCard rounded-2xl p-5">
-            <Text className="text-white text-lg font-bold mb-4 text-center">
+        <View style={{ paddingHorizontal: 24, marginBottom: 40 }}>
+          <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 20 }}>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' }}>
               Vos genres préférés
             </Text>
 
