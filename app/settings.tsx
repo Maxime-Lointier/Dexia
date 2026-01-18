@@ -14,10 +14,13 @@ import { useTheme } from '../src/context/ThemeContext';
 import { t, setLanguage, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
 import { updateUserLanguage, CURRENT_USER_ID } from '../src/models/user';
 
+import { useUser } from '../src/context/UserContext';
+
 const Settings = () => {
   const { theme, setTheme, isDark, colors } = useTheme();
+  const { currentUser } = useUser();
   const [notifications, setNotifications] = useState(true);
-    const [locale, setLocale] = useState(getCurrentLanguage());
+  const [locale, setLocale] = useState(getCurrentLanguage());
   useEffect(() => {
     const unsubscribe = subscribeLanguageChange((newLang) => {
       setLocale(newLang);
@@ -28,8 +31,10 @@ const Settings = () => {
   // basculer fr et en
   const toggleLanguage = async () => {
     const newLang = locale === 'fr' ? 'en' : 'fr';
-    setLanguage(newLang); 
-    await updateUserLanguage(CURRENT_USER_ID, newLang); 
+    setLanguage(newLang);
+    if (currentUser) {
+      await updateUserLanguage(currentUser.id, newLang);
+    }
   };
 
   // Composants avec styles dynamiques
@@ -175,7 +180,19 @@ const Settings = () => {
         {/* SECTION COMPTE */}
         <SectionTitle title={t('settings.account.sectionTitle')} />
         <SectionContainer>
-          <SettingItem icon="account" label={t('settings.account.profile')} />
+          <SettingItem
+            icon="account"
+            label={currentUser?.name || t('settings.account.profile')}
+            subLabel="Gérer mon profil"
+            onPress={() => {/* TODO: Edit profile name? */ }}
+          />
+          <Divider />
+          <SettingItem
+            icon="account-switch"
+            label="Changer de profil"
+            subLabel="Utiliser un autre compte"
+            onPress={() => router.push('/profile-selection')}
+          />
           <Divider />
           <SettingItem icon="lock" label={t('settings.account.privacy')} />
           <Divider />
