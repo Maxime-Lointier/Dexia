@@ -34,5 +34,11 @@ export default {
       terms: "Terms of service",
       version: "Version",
     },
+
+    welcome: {
+      subtitle : "The Right Swipe",
+      description :"Discover movies that truly match you in just a few swipes.",
+      startButton : "Start the adventure",
+    }
   },
 };

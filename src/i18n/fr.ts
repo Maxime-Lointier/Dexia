@@ -34,5 +34,11 @@ export default {
       terms: "Conditions d'utilisation",
       version: "Version",
     },
+
+    welcome: {
+      subtitle: "The Right Swipe",
+      description :"Découvre des films qui te correspondent vraiment en quelques swipes.",
+      startButton: "Commencer l'aventure",
+    }
   },
 };
