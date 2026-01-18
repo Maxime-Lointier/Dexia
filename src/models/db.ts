@@ -43,6 +43,20 @@ async function migrateDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
         }
       }
     }
+      // Migration 3: Ajouter la colonne language si elle n'existe pas
+    if (!columnNames.includes('language')) {
+      console.log('🔧 Migration: Ajout de la colonne language...');
+      try {
+        await database.runAsync('ALTER TABLE user_profile ADD COLUMN language TEXT DEFAULT "fr"');
+        console.log('✅ Colonne language ajoutée avec succès');
+      } catch (error: any) {
+        if (error?.message?.includes('duplicate column') || error?.code === 1) {
+          console.log('ℹ️ Colonne language déjà présente');
+        } else {
+          throw error;
+    }
+  }
+}
   } catch (error: any) {
     // Si l'erreur est due à une colonne déjà existante, on l'ignore
     if (error?.message?.includes('duplicate column') || error?.code === 1) {
