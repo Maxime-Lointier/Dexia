@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Dimensions } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import { useTheme } from '../context/ThemeContext';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -14,10 +15,12 @@ interface Props {
 }
 
 export default function GenrePieChart({ data }: Props) {
+  const { colors } = useTheme();
+
   if (!data || data.length === 0) {
     return (
-      <View className="items-center py-6">
-        <Text className="text-gray-400 text-sm text-center">
+      <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center' }}>
           Likez des films pour voir vos genres préférés
         </Text>
       </View>
@@ -27,7 +30,7 @@ export default function GenrePieChart({ data }: Props) {
   // total pour calculer les %
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
-  const colors = [
+  const chartColors = [
     '#EF4444',
     '#8B5CF6',
     '#22C55E',
@@ -42,22 +45,22 @@ export default function GenrePieChart({ data }: Props) {
     const percent = Math.round((item.count / total) * 100);
 
     return {
-      name: item.name,            
-      population: percent,        
-      color: colors[index % colors.length],
-      legendFontColor: '#E5E7EB',
+      name: item.name,
+      population: percent,
+      color: chartColors[index % chartColors.length],
+      legendFontColor: colors.text,
       legendFontSize: 12,
     };
   });
 
   return (
-    <View className="bg-darkCard rounded-2xl p-4 items-center">
+    <View style={{ alignItems: 'center' }}>
       <PieChart
         data={pieData}
         width={screenWidth - 64}
         height={220}
         chartConfig={{
-          color: () => '#fff',
+          color: () => colors.text,
         }}
         accessor="population"
         backgroundColor="transparent"
