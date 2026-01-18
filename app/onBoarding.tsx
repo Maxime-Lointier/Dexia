@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 as Icon } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTheme } from '../src/context/ThemeContext';
 
 import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
 
@@ -40,6 +41,7 @@ const Onboarding = () => {
   //States pour l'UI
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isDark } = useTheme();
 
   // Charger les données au montage du composant
   useEffect(() => {
@@ -81,8 +83,8 @@ const Onboarding = () => {
   const isContinueEnabled = selectedGenres.length >= 3;
 
   return (
-    <SafeAreaView className="flex-1 bg-dark">
-      <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
+    <SafeAreaView className="flex-1 bg-background">
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0F0F1E" : "#FFFFFF"} />
 
       {/* HEADER */}
       {/* Top Bar */}
@@ -90,8 +92,8 @@ const Onboarding = () => {
 
         {/* Titres */}
         <View className="items-center mb-4">
-          <Text className="text-white text-3xl font-bold mb-3 text-center font-hanken">Vos genres préférés</Text>
-          <Text className="text-gray-400 text-base text-center">
+          <Text className="text-text text-3xl font-bold mb-3 text-center font-hanken">Vos genres préférés</Text>
+          <Text className="text-textSecondary text-base text-center">
             Sélectionnez au moins 3 genres ({selectedGenres.length}/3)
           </Text>
         </View>
@@ -101,7 +103,7 @@ const Onboarding = () => {
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#8A3AFF" />
-          <Text className="text-gray-400 mt-4">Chargement...</Text>
+          <Text className="text-textSecondary mt-4">Chargement...</Text>
         </View>
       ) : (
         <ScrollView
@@ -131,7 +133,7 @@ const Onboarding = () => {
                   <View className="z-10 relative">
                     <Icon name={style.icon} size={24} color="white" style={{ marginBottom: 8 }} />
                     {/* Attention : ton modèle renvoie 'name' ou 'label' ? adapte ici */}
-                    <Text className="text-white font-semibold text-lg">{genre.name}</Text>
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 18 }}>{genre.name}</Text>
                   </View>
 
                   {/* Icone Check */}
@@ -148,7 +150,7 @@ const Onboarding = () => {
       )}
 
       {/* FOOTER : BOUTON CONTINUER */}
-      <View className="absolute bottom-0 left-0 right-0 p-6 bg-dark/95 border-t border-white/5">
+      <View className="absolute bottom-0 left-0 right-0 p-6 bg-background/95 border-t border-white/5">
         <TouchableOpacity
           disabled={!isContinueEnabled}
           onPress={async () => {
@@ -170,7 +172,7 @@ const Onboarding = () => {
           className={`w-full py-4 rounded-full items-center justify-center ${isContinueEnabled ? 'bg-primary' : 'bg-gray-700'
             }`}
         >
-          <Text className={`font-semibold text-lg ${isContinueEnabled ? 'text-white' : 'text-gray-500'
+          <Text className={`font-semibold text-lg ${isContinueEnabled ? 'text-white' : 'text-textSecondary'
             }`}>
             Continuer
           </Text>

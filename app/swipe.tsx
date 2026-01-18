@@ -22,6 +22,7 @@ import { getUserSeenMovieIds, addInteraction, ActionType, toggleWatchlist, isInW
 import { getPosterById } from '../src/utils/posterMap';
 import { Logo } from '../src/components/Logo';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '../src/context/ThemeContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -38,6 +39,7 @@ const SwipeScreen = () => {
   const [matchPercentage, setMatchPercentage] = useState<number>(0);
   const [isCurrentMovieInWatchlist, setIsCurrentMovieInWatchlist] = useState(false);
   const BATCH_SIZE = 10;
+  const { isDark, colors } = useTheme();
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -416,11 +418,11 @@ const SwipeScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-dark">
+      <SafeAreaView className="flex-1 bg-background">
         <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#8A3AFF" />
-          <Text className="text-gray-400 mt-4">Chargement...</Text>
+          <Text className="text-textSecondary mt-4">Chargement...</Text>
         </View>
       </SafeAreaView>
     );
@@ -428,10 +430,10 @@ const SwipeScreen = () => {
 
   if (movies.length === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-dark">
+      <SafeAreaView className="flex-1 bg-background">
         <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
         <View className="flex-1 justify-center items-center px-6">
-          <Text className="text-white text-xl text-center">Aucun film disponible</Text>
+          <Text className="text-text text-xl text-center">Aucun film disponible</Text>
         </View>
       </SafeAreaView>
     );
@@ -441,16 +443,17 @@ const SwipeScreen = () => {
   const posterSource = getPosterSource(currentMovie);
 
   return (
-    <SafeAreaView className="flex-1 bg-dark">
-      <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
-      <View className="flex-row justify-between items-center px-6 pt-2 pb-4">
+      {/* HEADER */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <TouchableOpacity
-          onPress={() => router.push('/homeScreen')}
-          className="flex-row items-center"
+          onPress={() => router.push('/')}
+          style={{ flexDirection: 'row', alignItems: 'center' }}
         >
-          <Logo width={40} height={40} color="white" />
-          <Text className="text-[#F7F0FF] text-xl font-bold ml-3 font-hanken">Dexia</Text>
+          <Logo width={40} height={40} />
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold', marginLeft: 12 }}>Dexia</Text>
         </TouchableOpacity>
         <TouchableOpacity>
           <View style={{ width: 24, height: 24 }} />
@@ -471,7 +474,7 @@ const SwipeScreen = () => {
           >
             <View
               style={{
-                backgroundColor: '#1A1A2E',
+                backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF',
                 shadowColor: '#8A3AFF',
                 shadowOffset: { width: 0, height: 8 },
                 shadowOpacity: 0.4,
@@ -490,7 +493,7 @@ const SwipeScreen = () => {
               ) : (
                 <View className="w-full h-full bg-gray-800 items-center justify-center">
                   <Icon name="image" size={64} color="#4B5563" />
-                  <Text className="text-gray-500 mt-2">Poster indisponible</Text>
+                  <Text className="text-textSecondary mt-2">Poster indisponible</Text>
                 </View>
               )}
 
@@ -508,13 +511,13 @@ const SwipeScreen = () => {
 
               <View className="absolute top-4 right-4 bg-primary/90 px-3 py-1.5 rounded-full flex-row items-center shadow-sm z-10">
                 <Icon name="star" size={14} color="#FACC15" solid />
-                <Text className="text-white font-bold ml-1.5">
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', marginLeft: 6 }}>
                   {currentMovie.vote_average.toFixed(1)}
                 </Text>
               </View>
 
               <View className="absolute top-4 left-4 bg-[#22C55E]/90 px-3 py-1.5 rounded-full shadow-sm z-10">
-                <Text className="text-white font-bold text-xs">
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 12 }}>
                   {matchPercentage}% Match
                 </Text>
               </View>
@@ -532,7 +535,7 @@ const SwipeScreen = () => {
                 </View>
 
                 <Text
-                  className="text-white text-3xl font-bold mb-1 shadow-sm"
+                  style={{ color: '#FFFFFF', fontSize: 28, fontWeight: 'bold', marginBottom: 4, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}
                   numberOfLines={2}
                 >
                   {currentMovie.title}
@@ -564,7 +567,7 @@ const SwipeScreen = () => {
         </GestureDetector>
       </View>
 
-      <View className="absolute bottom-0 left-0 right-0 px-6 py-6 bg-dark/95 border-t border-white/5">
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingVertical: 24, backgroundColor: isDark ? 'rgba(15,15,30,0.95)' : 'rgba(255,255,255,0.95)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' }}>
         <View className="flex-row justify-around items-center">
           <TouchableOpacity
             onPress={() => handleButtonSwipe('left')}
@@ -627,7 +630,7 @@ const SwipeScreen = () => {
             ]}
           >
             <View
-              className="bg-darkCard rounded-t-[32px] overflow-hidden h-[85%]"
+              style={{ backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden', height: '85%' }}
             >
               <ScrollView
                 className="flex-1"
@@ -643,7 +646,7 @@ const SwipeScreen = () => {
                     />
                   )}
                   <LinearGradient
-                    colors={['transparent', 'rgba(15, 15, 30, 0.8)', '#1A1A2E']}
+                    colors={['transparent', isDark ? 'rgba(15, 15, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)', colors.card]}
                     locations={[0, 0.6, 1]}
                     className="absolute bottom-0 left-0 right-0 h-48"
                   />
@@ -652,18 +655,23 @@ const SwipeScreen = () => {
                 <View className="px-6 -mt-12 pb-10 relative z-10">
                   <View className="flex-row justify-between items-end mb-4">
                     <Text
-                      className="text-white text-3xl font-bold flex-1 mr-4 leading-tight"
                       style={{
-                        textShadowColor: 'rgba(0, 0, 0, 0.75)',
-                        textShadowOffset: { width: 0, height: 1 },
-                        textShadowRadius: 4
+                        color: '#FFFFFF',
+                        fontSize: 28,
+                        fontWeight: 'bold',
+                        flex: 1,
+                        marginRight: 16,
+                        lineHeight: 34,
+                        textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                        textShadowOffset: { width: 0, height: 2 },
+                        textShadowRadius: 6
                       }}
                     >
                       {currentMovie.title}
                     </Text>
                     <View className="bg-primary px-3 py-1.5 rounded-xl flex-row items-center shadow-lg shadow-primary/30">
                       <Icon name="star" size={14} color="#FACC15" solid />
-                      <Text className="text-white font-bold ml-1.5 text-base">
+                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold', marginLeft: 6, fontSize: 16 }}>
                         {currentMovie.vote_average.toFixed(1)}
                       </Text>
                     </View>
@@ -676,7 +684,7 @@ const SwipeScreen = () => {
                       </Text>
                     </View>
                     <Icon name="calendar-alt" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
-                    <Text className="text-gray-400 font-medium text-base">
+                    <Text className="text-textSecondary font-medium text-base">
                       {new Date(currentMovie.release_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </Text>
                   </View>
@@ -692,7 +700,7 @@ const SwipeScreen = () => {
                     ))}
                   </View>
 
-                  <Text className="text-white text-xl font-bold mb-3 mt-2">Casting</Text>
+                  <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 12, marginTop: 8 }}>Casting</Text>
                   <View className="-mx-6 mb-8">
                     <ScrollView
                       horizontal
@@ -700,18 +708,16 @@ const SwipeScreen = () => {
                       contentContainerStyle={{ paddingHorizontal: 24 }}
                     >
                       {currentCast.map((actor, index) => (
-                        <View key={index} className="mr-4 w-20 items-center">
-                          <View className="w-20 h-20 rounded-full bg-darkCard mb-2 overflow-hidden border border-white/10 items-center justify-center shadow-sm">
-                            <View className="items-center justify-center w-full h-full bg-gradient-to-br from-gray-700 to-gray-800">
-                              <Text className="text-white/30 font-bold text-lg">
-                                {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                              </Text>
-                            </View>
+                        <View key={index} style={{ marginRight: 16, width: 80, alignItems: 'center' }}>
+                          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.card, marginBottom: 8, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ color: colors.textSecondary, fontWeight: 'bold', fontSize: 18 }}>
+                              {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            </Text>
                           </View>
-                          <Text className="text-white text-xs font-bold text-center w-full leading-tight" numberOfLines={2}>
+                          <Text style={{ color: colors.text, fontSize: 12, fontWeight: 'bold', textAlign: 'center', width: '100%', lineHeight: 14 }} numberOfLines={2}>
                             {actor.name}
                           </Text>
-                          <Text className="text-gray-400 text-[10px] text-center w-full leading-tight mt-0.5" numberOfLines={2}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, textAlign: 'center', width: '100%', lineHeight: 12, marginTop: 2 }} numberOfLines={2}>
                             {actor.role}
                           </Text>
                         </View>
@@ -719,8 +725,8 @@ const SwipeScreen = () => {
                     </ScrollView>
                   </View>
 
-                  <Text className="text-white text-xl font-bold mb-3">Synopsis</Text>
-                  <Text className="text-gray-400 text-base leading-7 pb-32">
+                  <Text className="text-text text-xl font-bold mb-3">Synopsis</Text>
+                  <Text className="text-textSecondary text-base leading-7 pb-32">
                     {currentMovie.overview || 'Aucune description disponible pour ce film.'}
                   </Text>
                 </View>
@@ -729,10 +735,10 @@ const SwipeScreen = () => {
               <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-darkCard to-transparent">
                 <TouchableOpacity
                   onPress={closeInfoModal}
-                  className="bg-darkCard w-full py-4 rounded-2xl items-center border border-white/10 shadow-lg"
+                  className="bg-card w-full py-4 rounded-2xl items-center border border-white/10 shadow-lg"
                   activeOpacity={0.8}
                 >
-                  <Text className="text-white font-bold text-lg">Fermer</Text>
+                  <Text className="text-text font-bold text-lg">Fermer</Text>
                 </TouchableOpacity>
               </View>
             </View>
