@@ -1,4 +1,5 @@
 import { getDatabase } from './db';
+import { Language } from '../i18n';
 
 // ID de l'utilisateur unique de l'application
 export const CURRENT_USER_ID = 1;
@@ -54,6 +55,36 @@ export async function getUserPreferences(userId: number): Promise<UserPreference
   return { genres, keywords: keywordsArray };
 }
 
+
+/**
+ * Récupère la langue préférée de l'utilisateur
+ */
+export async function getUserLanguage(userId: number): Promise<Language> {
+  const db = await getDatabase();
+  try {
+    const row = await db.getFirstAsync<{ language: string | null }>(
+      'SELECT language FROM user_profile WHERE id = ?',
+      [userId]
+    );
+    return (row?.language as Language) || 'fr';
+  } catch (error) {
+    return 'fr';
+  }
+}
+
+/**
+ * Met à jour la langue de l'utilisateur
+ */
+export async function updateUserLanguage(userId: number, lang: Language): Promise<boolean> {
+  const db = await getDatabase();
+  try {
+    await db.runAsync('UPDATE user_profile SET language = ? WHERE id = ?', [lang, userId]);
+    return true;
+  } catch (error) {
+    console.error('Erreur mise à jour langue:', error);
+    return false;
+  }
+}
 /**
  * Vérifie si l'onboarding est terminé pour un utilisateur
  * @param userId - ID de l'utilisateur
