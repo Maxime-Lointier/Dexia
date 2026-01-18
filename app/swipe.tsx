@@ -38,7 +38,9 @@ const SwipeScreen = () => {
   const [userPreferences, setUserPreferences] = useState<{ genres: number[], keywords: string[] } | null>(null);
   const [matchPercentage, setMatchPercentage] = useState<number>(0);
   const [isCurrentMovieInWatchlist, setIsCurrentMovieInWatchlist] = useState(false);
+  const [isFeaturedMovie, setIsFeaturedMovie] = useState(false);
   const BATCH_SIZE = 10;
+  const FEATURED_THRESHOLD = 75; // Match % minimum pour être TOP
   const { isDark, colors } = useTheme();
 
   const translateX = useSharedValue(0);
@@ -65,7 +67,9 @@ const SwipeScreen = () => {
 
   const loadMovies = async (refresh = false) => {
     try {
-      setLoading(true);
+      if (refresh || movies.length === 0) {
+        setLoading(true);
+      }
       const userId = CURRENT_USER_ID;
       const preferences = await getUserPreferences(userId);
       setUserPreferences(preferences);
@@ -120,6 +124,14 @@ const SwipeScreen = () => {
         const genreIds = await getMovieGenreIdById(movieId);
         const match = await calculateMatchPercentage(movie, genreIds);
         setMatchPercentage(match);
+
+        // Détection film TOP recommandé
+        const shouldBeFeatured = match >= FEATURED_THRESHOLD;
+        setIsFeaturedMovie(shouldBeFeatured);
+        if (shouldBeFeatured) {
+          console.log(`⭐ TOP RECOMMANDÉ: ${movie.title} (${match}% match)`);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
       }
 
       // Vérifier si le film est dans la watchlist
@@ -129,6 +141,7 @@ const SwipeScreen = () => {
       console.error('Erreur chargement genres:', error);
       setCurrentGenres([]);
       setIsCurrentMovieInWatchlist(false);
+      setIsFeaturedMovie(false);
     }
   };
 
@@ -228,12 +241,15 @@ const SwipeScreen = () => {
 
     if (currentMovieIndex < movies.length - 1) {
       const nextIndex = currentMovieIndex + 1;
+
+      setIsFeaturedMovie(false); // Éviter le flash du badge TOP sur le film suivant
       setCurrentMovieIndex(nextIndex);
 
       if (movies.length - nextIndex <= 2) {
         loadMovies(false);
       }
     } else {
+      setIsFeaturedMovie(false);
       await loadMovies(true);
     }
   };
@@ -470,20 +486,49 @@ const SwipeScreen = () => {
                 height: SCREEN_HEIGHT * 0.65,
               },
             ]}
-            className="rounded-3xl overflow-hidden"
+
+            className="rounded-3xl"
           >
+            {/* Badge TOP POUR TOI */}
+            {isFeaturedMovie && (
+              <View style={{
+                position: 'absolute',
+                top: -12,
+                left: '50%',
+                marginLeft: -70,
+                zIndex: 100,
+                backgroundColor: '#FFD700',
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                shadowColor: '#FFD700',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.5,
+                shadowRadius: 8,
+                elevation: 20,
+              }}>
+                <Icon name="crown" size={16} color="#1A1A2E" solid />
+                <Text style={{ color: '#1A1A2E', fontWeight: 'bold', marginLeft: 6, fontSize: 12 }}>TOP POUR TOI</Text>
+              </View>
+            )}
+
             <View
               style={{
                 backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF',
-                shadowColor: '#8A3AFF',
+                shadowColor: isFeaturedMovie ? '#FFD700' : '#8A3AFF',
                 shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.4,
-                shadowRadius: 16,
-                elevation: 10,
+                shadowOpacity: isFeaturedMovie ? 0.8 : 0.4,
+                shadowRadius: isFeaturedMovie ? 24 : 16,
+                elevation: isFeaturedMovie ? 15 : 10,
                 height: '100%',
+                borderWidth: isFeaturedMovie ? 3 : 0,
+                borderColor: '#FFD700',
+                borderRadius: 24,
+                overflow: 'hidden', // Déplacé ici pour clipper l'image mais pas le badge externe
               }}
-              className="rounded-3xl relative"
-            >
+              className="relative">
               {posterSource ? (
                 <Image
                   source={posterSource}
@@ -516,11 +561,13 @@ const SwipeScreen = () => {
                 </Text>
               </View>
 
-              <View className="absolute top-4 left-4 bg-[#22C55E]/90 px-3 py-1.5 rounded-full shadow-sm z-10">
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 12 }}>
-                  {matchPercentage}% Match
-                </Text>
-              </View>
+              {!isFeaturedMovie && (
+                <View className="absolute top-4 left-4 bg-[#22C55E]/90 px-3 py-1.5 rounded-full shadow-sm z-10">
+                  <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 12 }}>
+                    {matchPercentage}% Match
+                  </Text>
+                </View>
+              )}
 
               <View className="absolute bottom-0 left-0 right-0 p-5 pb-6 flex-col">
                 <View className="flex-row flex-wrap mb-2">
@@ -678,11 +725,33 @@ const SwipeScreen = () => {
                   </View>
 
                   <View className="flex-row items-center mb-6">
-                    <View className="bg-[#22C55E]/20 px-2.5 py-1 rounded-md mr-3 border border-[#22C55E]/30">
-                      <Text className="text-[#22C55E] font-bold text-xs">
-                        {matchPercentage}% Recommandé
-                      </Text>
-                    </View>
+                    {matchPercentage >= 75 ? (
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: '#FFD700',
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderRadius: 8,
+                        marginRight: 12,
+                        shadowColor: '#FFD700',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 4
+                      }}>
+                        <Icon name="crown" size={12} color="#1A1A2E" solid />
+                        <Text style={{ color: '#1A1A2E', fontWeight: 'bold', fontSize: 12, marginLeft: 6 }}>
+                          TOP POUR TOI ({matchPercentage}%)
+                        </Text>
+                      </View>
+                    ) : (
+                      <View className="bg-[#22C55E]/20 px-2.5 py-1 rounded-md mr-3 border border-[#22C55E]/30">
+                        <Text className="text-[#22C55E] font-bold text-xs">
+                          {matchPercentage}% Recommandé
+                        </Text>
+                      </View>
+                    )}
                     <Icon name="calendar-alt" size={14} color="#9CA3AF" style={{ marginRight: 8 }} />
                     <Text className="text-textSecondary font-medium text-base">
                       {new Date(currentMovie.release_date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -725,7 +794,7 @@ const SwipeScreen = () => {
                     </ScrollView>
                   </View>
 
-                  <Text className="text-text text-xl font-bold mb-3">Synopsis</Text>
+                  <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>Synopsis</Text>
                   <Text className="text-textSecondary text-base leading-7 pb-32">
                     {currentMovie.overview || 'Aucune description disponible pour ce film.'}
                   </Text>
@@ -745,7 +814,7 @@ const SwipeScreen = () => {
           </Animated.View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };
 

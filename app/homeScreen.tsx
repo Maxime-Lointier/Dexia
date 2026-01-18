@@ -537,7 +537,15 @@ export default function MainPage() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <FontAwesome name="star" size={12} color="#FACC15" />
                         <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }}>{movie.vote_average.toFixed(1)}</Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginLeft: 4 }}>({movie.matchPercentage}% match)</Text>
+
+                        {movie.matchPercentage >= 75 ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFD700', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, marginLeft: 6 }}>
+                            <FontAwesome5 name="crown" size={10} color="#1A1A2E" solid />
+                            <Text style={{ color: '#1A1A2E', fontWeight: 'bold', fontSize: 10, marginLeft: 4 }}>TOP</Text>
+                          </View>
+                        ) : (
+                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginLeft: 4 }}>({movie.matchPercentage}% match)</Text>
+                        )}
                       </View>
                     </View>
                   </View>
