@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../src/context/ThemeContext';
 import { router } from 'expo-router';
 import { Logo } from '../src/components/Logo';
-import { t } from '../src/i18n'; 
+import { t } from '../src/i18n';
 
 const welcomeScreen = () => {
   const { isDark, colors } = useTheme();
@@ -35,7 +35,7 @@ const welcomeScreen = () => {
       {/* Bouton */}
       <View className="p-6 pb-10">
         <TouchableOpacity
-          onPress={() => router.push('/onBoarding')}
+          onPress={() => router.push('/profile-create')}
           activeOpacity={0.8}
           className="w-full bg-primary py-4 rounded-2xl items-center justify-center shadow-lg shadow-primary/30"
         >

@@ -8,6 +8,7 @@ import React, { useState, useCallback } from 'react';
 import { Logo } from '../src/components/Logo';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
 import { useTheme } from '../src/context/ThemeContext';
+import { useUser } from '../src/context/UserContext';
 
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
@@ -59,6 +60,7 @@ export default function MainPage() {
   const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const watchlistModalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const { isDark, colors } = useTheme();
+  const { currentUser, resetApp } = useUser();
   const genreData = computeGenreDistribution(allLikedMovies);
   console.log(' genreData:', genreData); // temporaire pour test
 
@@ -94,7 +96,8 @@ export default function MainPage() {
   const loadWatchlist = async () => {
     try {
       console.log('📋 HomeScreen: Chargement watchlist...');
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
 
       // Retry mécanisme pour éviter les erreurs de DB
       let retries = 3;
@@ -125,7 +128,8 @@ export default function MainPage() {
 
   const loadStats = async () => {
     try {
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
 
       // Retry mécanisme pour éviter les erreurs de DB
       let retries = 3;
@@ -153,15 +157,18 @@ export default function MainPage() {
 
 
   const loadLikedMovies = async () => {
-    const movies = await getLikedMovies(CURRENT_USER_ID);
-    setAllLikedMovies(movies);
+    if (currentUser) {
+      const movies = await getLikedMovies(currentUser.id);
+      setAllLikedMovies(movies);
+    }
   };
 
 
   const loadRecommendations = async () => {
     setLoading(true);
     try {
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
 
       // Nettoyage automatique si nécessaire
       await cleanupInteractionsIfNeeded(userId);
@@ -216,12 +223,14 @@ export default function MainPage() {
 
   useFocusEffect(
     useCallback(() => {
-      loadRecommendations();
-      // Recharger aussi la watchlist et les stats quand on revient sur cet écran
-      loadWatchlist();
-      loadStats();
-      loadLikedMovies();
-    }, [])
+      if (currentUser) {
+        loadRecommendations();
+        // Recharger aussi la watchlist et les stats quand on revient sur cet écran
+        loadWatchlist();
+        loadStats();
+        loadLikedMovies();
+      }
+    }, [currentUser])
   );
 
   const getPosterSource = (movie: Movie): any => {
@@ -255,9 +264,10 @@ export default function MainPage() {
       const cast = await getMovieCast(movie.id);
       setSelectedMovieCast(cast);
 
-      // Vérifier si le film est dans la watchlist
-      const inWatchlist = await isInWatchlist(CURRENT_USER_ID, movie.id);
-      setIsSelectedMovieInWatchlist(inWatchlist);
+      if (currentUser) {
+        const inWatchlist = await isInWatchlist(currentUser.id, movie.id);
+        setIsSelectedMovieInWatchlist(inWatchlist);
+      }
     } catch (error) {
       console.error('Erreur chargement détails film:', error);
       setSelectedMovieGenres([]);
@@ -275,9 +285,10 @@ export default function MainPage() {
 
   const openInfoModalById = async (movieId: number) => {
     try {
+      if (!currentUser) return;
       const movie = await getMovieById(movieId);
       if (movie) {
-        const preferences = await getUserPreferences(CURRENT_USER_ID);
+        const preferences = await getUserPreferences(currentUser.id);
         const genreIds = await getMovieGenreIdById(movieId);
         const match = await calculateMatchPercentage(movie, preferences);
         await openInfoModal({ ...movie, matchPercentage: match });
@@ -312,7 +323,8 @@ export default function MainPage() {
 
   const openWatchlistModal = async () => {
     try {
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
       const movies = await getWatchlistMovies(userId);
       setAllWatchlistMovies(movies);
       setShowWatchlistModal(true);
@@ -333,7 +345,8 @@ export default function MainPage() {
   };
 
   const openLikesModal = async () => {
-    const movies = await getLikedMovies(CURRENT_USER_ID);
+    if (!currentUser) return;
+    const movies = await getLikedMovies(currentUser.id);
     setAllLikedMovies(movies);
     setShowLikesModal(true);
     likesModalTranslateY.value = withSpring(0);
@@ -350,8 +363,8 @@ export default function MainPage() {
     if (!selectedMovie) return;
 
     try {
-      const success = await toggleWatchlist(CURRENT_USER_ID, selectedMovie.id);
-      if (success) {
+      if (selectedMovie && currentUser) {
+        await toggleWatchlist(currentUser.id, selectedMovie.id);
         setIsSelectedMovieInWatchlist(!isSelectedMovieInWatchlist);
         // Recharger la watchlist et les stats pour mettre à jour l'affichage immédiatement
         await loadWatchlist();
@@ -363,19 +376,10 @@ export default function MainPage() {
   };
 
   const handleResetOnboarding = async () => {
-    console.log("🔄 Reset de l'onboarding demandé...");
-
-    // Vider immédiatement l'état local
-    setWatchlistMovies([]);
-    setWatchlistCount(0);
-    setLikeCount(0);
-
-    await setOnboardingDone(CURRENT_USER_ID, false);
-    router.replace('/welcomeScreen');
+    console.log("🔄 Reset complet de l'application demandé...");
+    await resetApp();
+    router.replace('/');
   };
-
-
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />

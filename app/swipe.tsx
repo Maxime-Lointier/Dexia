@@ -23,6 +23,7 @@ import { getPosterById } from '../src/utils/posterMap';
 import { Logo } from '../src/components/Logo';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../src/context/ThemeContext';
+import { useUser } from '../src/context/UserContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -42,6 +43,7 @@ const SwipeScreen = () => {
   const BATCH_SIZE = 10;
   const FEATURED_THRESHOLD = 75; // Match % minimum pour être TOP
   const { isDark, colors } = useTheme();
+  const { currentUser } = useUser();
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -50,8 +52,10 @@ const SwipeScreen = () => {
   const swipeOverlayOpacity = useSharedValue(0);
 
   useEffect(() => {
-    loadMovies();
-  }, []);
+    if (currentUser) {
+      loadMovies();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     if (movies.length > 0 && currentMovieIndex < movies.length) {
@@ -70,7 +74,8 @@ const SwipeScreen = () => {
       if (refresh || movies.length === 0) {
         setLoading(true);
       }
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
       const preferences = await getUserPreferences(userId);
       setUserPreferences(preferences);
       const seenIds = await getUserSeenMovieIds(userId);
@@ -135,8 +140,10 @@ const SwipeScreen = () => {
       }
 
       // Vérifier si le film est dans la watchlist
-      const inWatchlist = await isInWatchlist(CURRENT_USER_ID, movieId);
-      setIsCurrentMovieInWatchlist(inWatchlist);
+      if (currentUser) {
+        const inWatchlist = await isInWatchlist(currentUser.id, movieId);
+        setIsCurrentMovieInWatchlist(inWatchlist);
+      }
     } catch (error) {
       console.error('Erreur chargement genres:', error);
       setCurrentGenres([]);
@@ -178,7 +185,9 @@ const SwipeScreen = () => {
     if (movies.length === 0) return;
 
     const currentMovie = movies[currentMovieIndex];
-    await addInteraction(CURRENT_USER_ID, currentMovie.id, actionType);
+    if (currentUser) {
+      await addInteraction(currentUser.id, currentMovie.id, actionType);
+    }
 
     const genresIds = await getMovieGenreIdById(currentMovie.id);
 
@@ -192,9 +201,11 @@ const SwipeScreen = () => {
         const extractedKeywords = await extractKeywordsFromMovie(currentMovie, genres);
 
         if (extractedKeywords.length > 0) {
-          const success = await addDynamicKeywords(CURRENT_USER_ID, extractedKeywords);
-          if (success) {
-            console.log(`🎯 Mots-clés ajoutés: ${extractedKeywords.join(', ')}`);
+          if (currentUser) {
+            const success = await addDynamicKeywords(currentUser.id, extractedKeywords);
+            if (success) {
+              console.log(`🎯 Mots-clés ajoutés: ${extractedKeywords.join(', ')}`);
+            }
           }
         }
       } catch (error) {
@@ -205,9 +216,11 @@ const SwipeScreen = () => {
     // 🎯 GÉRER LES GENRES AVEC POIDS (LIKE ET DISLIKE seulement)
     if (actionType === 'like' || actionType === 'dislike') {
       try {
-        const success = await manageDynamicGenres(CURRENT_USER_ID, genresIds, actionType);
-        if (success) {
-          console.log(`🎯 Genres ${actionType}: ${genresIds.join(', ')}`);
+        if (currentUser) {
+          const success = await manageDynamicGenres(currentUser.id, genresIds, actionType);
+          if (success) {
+            console.log(`🎯 Genres ${actionType}: ${genresIds.join(', ')}`);
+          }
         }
       } catch (error) {
         console.error(`Erreur gestion genres ${actionType}:`, error);
@@ -217,19 +230,22 @@ const SwipeScreen = () => {
     // 🆕 NOUVEAU : Détection anti-bulle tous les 5 films
     if ((currentMovieIndex + 1) % 5 === 0) {
       try {
-        const recentInteractions = await getUserSeenMovieIds(CURRENT_USER_ID); // Récupérer interactions récentes
-        const bubbleDetection = await detectFilterBubble(CURRENT_USER_ID, recentInteractions.slice(-20));
+        if (currentUser) {
+          const recentInteractions = await getUserSeenMovieIds(currentUser.id); // Récupérer interactions récentes
+          const bubbleDetection = await detectFilterBubble(currentUser.id, recentInteractions.slice(-20));
 
-        if (bubbleDetection.hasBubble) {
-          console.log(`🎯 Bulle détectée: ${bubbleDetection.bubbleType} (${bubbleDetection.confidence.toFixed(2)})`);
+          if (bubbleDetection.hasBubble) {
+            console.log(`🎯 Bulle détectée: ${bubbleDetection.bubbleType} (${bubbleDetection.confidence.toFixed(2)})`);
 
-          // Appliquer la stratégie de nettoyage
-          const cleanupSuccess = await cleanupKeywords(CURRENT_USER_ID, bubbleDetection.bubbleType);
-          if (cleanupSuccess) {
-            console.log(`🧹 Nettoyage des mots-clés appliqué pour ${bubbleDetection.bubbleType}`);
-            // Recharger les films avec les nouveaux critères
-            await loadMovies(true);
-            return;
+            // Appliquer la stratégie de nettoyage
+            const cleanupSuccess = await cleanupKeywords(currentUser.id, bubbleDetection.bubbleType);
+
+            if (cleanupSuccess) {
+              console.log(`🧹 Nettoyage des mots-clés appliqué pour ${bubbleDetection.bubbleType}`);
+              // Recharger les films avec les nouveaux critères
+              await loadMovies(true);
+              return;
+            }
           }
         }
       } catch (error) {
@@ -407,8 +423,11 @@ const SwipeScreen = () => {
 
     try {
       // Ajouter à la watchlist avec invalidation du cache
-      const success = await toggleWatchlist(CURRENT_USER_ID, currentMovie.id);
-      console.log(`📋 Swipe: Résultat toggle watchlist: ${success}`);
+      if (currentUser) {
+        const success = await toggleWatchlist(currentUser.id, currentMovie.id);
+        setIsCurrentMovieInWatchlist(!isCurrentMovieInWatchlist);
+        // ...
+      }
 
       // Passer au film suivant sans affecter les préférences
       if (currentMovieIndex < movies.length - 1) {
