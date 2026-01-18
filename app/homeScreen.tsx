@@ -811,12 +811,12 @@ export default function MainPage() {
                       <FontAwesome name="bookmark" size={18} color="#F59E0B" />
                     </View>
                     <View>
-                      <Text className="text-text text-xl font-bold">À voir</Text>
-                      <Text className="text-textSecondary text-sm">{allWatchlistMovies.length} films</Text>
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold' }}>À voir</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{allWatchlistMovies.length} films</Text>
                     </View>
                   </View>
-                  <TouchableOpacity onPress={closeWatchlistModal} className="w-10 h-10 bg-gray-800 rounded-full items-center justify-center">
-                    <FontAwesome5 name="times" size={18} color="#9CA3AF" />
+                  <TouchableOpacity onPress={closeWatchlistModal} style={{ width: 40, height: 40, backgroundColor: colors.card, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
+                    <FontAwesome5 name="times" size={18} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
               </View>
