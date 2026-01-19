@@ -256,13 +256,13 @@ const Settings = () => {
           <Divider />
           <SettingItem icon="lock" label={t('settings.account.privacy')} onPress={() => router.push('/privacy')} />
           <Divider />
-          <SettingItem icon="shield-check" label={t('settings.account.security')} />
+          <SettingItem icon="shield-check" label={t('settings.account.security')}/>
         </SectionContainer>
 
         {/* SECTION À PROPOS */}
         <SectionTitle title={t('settings.about.sectionTitle')} />
         <SectionContainer>
-            <SettingItem icon="help-circle-outline" label={t('settings.about.help')} />
+            <SettingItem icon="help-circle-outline" label={t('settings.about.help')} onPress={() => router.push('/help')} />
             <Divider />
             <SettingItem icon="file-document-outline" label={t('settings.about.terms')} />
             <Divider />

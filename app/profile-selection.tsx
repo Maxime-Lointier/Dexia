@@ -1,14 +1,17 @@
 import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 as Icon } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '../src/context/UserContext';
 import { useTheme } from '../src/context/ThemeContext';
 import { Logo } from '../src/components/Logo'; 
+import * as LocalAuthentication from 'expo-local-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = (width - 64) / 2;
+const BIOMETRIC_KEY = 'SETTINGS_BIOMETRIC_ENABLED';
 
 const ProfileSelection = () => {
     const { users, switchUser, refreshUsers } = useUser();
@@ -22,11 +25,38 @@ const ProfileSelection = () => {
     );
 
     const handleProfileSelect = async (userId: number, isOnboardingDone: boolean) => {
-        await switchUser(userId);
-        if (isOnboardingDone) {
-            router.replace('/homeScreen');
-        } else {
-            router.replace('/onBoarding');
+        
+        try {
+            // 1. Vérifier si la sécurité est activée dans les paramètres
+            const isBiometricEnabled = await AsyncStorage.getItem(BIOMETRIC_KEY);
+
+            if (isBiometricEnabled === 'true') {
+                // 2. Demander l'authentification (FaceID / TouchID / Code PIN)
+                const result = await LocalAuthentication.authenticateAsync({
+                    promptMessage: 'Confirmez votre identité pour accéder au profil',
+                    fallbackLabel: 'Utiliser le code PIN',
+                    disableDeviceFallback: false, // Permet le code PIN si FaceID échoue
+                });
+
+                // 3. Si l'authentification échoue ou est annulée, on arrête tout
+                if (!result.success) {
+                    return; 
+                }
+            }
+
+            // 4. Si tout est bon (ou pas de sécu), on connecte l'utilisateur
+            await switchUser(userId);
+            
+            if (isOnboardingDone) {
+                router.replace('/homeScreen');
+            } else {
+                router.replace('/onBoarding');
+            }
+
+        } catch (error) {
+            console.error("Erreur authentification :", error);
+            // En cas d'erreur technique, on laisse passer ou on affiche une alerte
+            Alert.alert("Erreur", "Impossible de vérifier l'identité.");
         }
     };
 
