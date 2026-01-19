@@ -166,4 +166,15 @@ likedMovies: {
   emptySub: "Likez des films depuis la découverte\nou les recommandations",
   discoverBtn: "Découvrir des films",
 },
-};
+watchlist: {
+  title: "À voir",
+  movieSingular: "film",
+  moviesPlural: "films",
+  inListBadge: "Dans ma liste",
+  emptyTitle: "Votre liste est vide",
+  emptySub: "Ajoutez des films depuis la découverte\nou les recommandations",
+  discoverBtn: "Découvrir des films",
+  inList: "Dans ma liste",
+  close: "Fermer",
+},
+};  

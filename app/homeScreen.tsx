@@ -795,7 +795,7 @@ export default function MainPage() {
                         solid={isSelectedMovieInWatchlist}
                       />
                       <Text className={`font-bold ${isSelectedMovieInWatchlist ? 'text-white' : 'text-orange-500'}`}>
-                        {isSelectedMovieInWatchlist ? 'Dans ma liste' : 'À voir'}
+                        {isSelectedMovieInWatchlist ? t('watchlist.inList') : t('watchlist.title')}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -805,7 +805,7 @@ export default function MainPage() {
                     style={{ backgroundColor: colors.card, paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}
                     activeOpacity={0.8}
                   >
-                    <Text style={{ color: colors.text, fontWeight: 'bold' }}>Fermer</Text>
+                    <Text style={{ color: colors.text, fontWeight: 'bold' }}>{t('watchlist.close')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -840,7 +840,7 @@ export default function MainPage() {
                       <FontAwesome name="bookmark" size={18} color="#F59E0B" />
                     </View>
                     <View>
-                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold' }}>À voir</Text>
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold' }}>{t('watchlist.title')}</Text>
                       <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{allWatchlistMovies.length} films</Text>
                     </View>
                   </View>
@@ -886,7 +886,7 @@ export default function MainPage() {
                                 <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 14 }}>{movie.vote_average.toFixed(1)}</Text>
                               </View>
                               <View className="bg-[#F59E0B]/20 px-2 py-1 rounded-md">
-                                <Text className="text-[#F59E0B] text-[10px] font-bold">Dans ma liste</Text>
+                                <Text className="text-[#F59E0B] text-[10px] font-bold">{t('watchlist.inList')}</Text>
                               </View>
                             </View>
                           </View>
@@ -898,10 +898,10 @@ export default function MainPage() {
                   <View className="items-center py-16">
                     <FontAwesome name="bookmark-o" size={64} color={colors.textSecondary} />
                     <Text className="text-textSecondary text-lg font-bold mt-6 mb-2 text-center">
-                      Votre liste est vide
+                      {t('home.watchlist.emptyTitle')}
                     </Text>
                     <Text className="text-textSecondary text-sm text-center mb-8 leading-5">
-                      Ajoutez des films depuis la découverte{"\n"}ou les recommandations
+                      {t('home.watchlist.emptySub')}
                     </Text>
                     <TouchableOpacity
                       onPress={() => {
@@ -910,7 +910,7 @@ export default function MainPage() {
                       }}
                       className="bg-[#F59E0B] px-6 py-3 rounded-full"
                     >
-                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Découvrir des films</Text>
+                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{t('home.watchlist.discoverBtn')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
