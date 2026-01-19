@@ -8,7 +8,7 @@ import { useUser } from '../src/context/UserContext';
 import { useTheme } from '../src/context/ThemeContext';
 import { t, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
 import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
-import { Genre, getAllGenres, getTopRatedMovies, Movie, getMoviesByGenres } from '../src/models/movies';
+import { Genre, getAllGenres, getTopRatedMovies, Movie, getMoviesByGenres } from '../src/models/movies'; 
 import { updateUserPreferences, setOnboardingDone } from '../src/models/user';
 
 const { width } = Dimensions.get('window');
