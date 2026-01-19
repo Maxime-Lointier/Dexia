@@ -5,6 +5,7 @@ export default {
       sectionTitle: "Langue",
       appLanguage: "Langue de l'application",
       current: "Français",
+      select: "Choisir la langue",
     },
     theme: {
       sectionTitle: "Thème",
@@ -108,4 +109,9 @@ export default {
     discover: "Découvrir",
     profile: "Profil",
   },
+  favoriteGenres: {
+  title: "Vos Genres",
+  autoInfo: "Les genres que vous likez souvent (+5 fois) sont cochés automatiquement.",
+  saveOk: "OK"
+},
 };

@@ -7,13 +7,13 @@ import {
   SafeAreaView, 
   StatusBar, 
   StyleSheet, 
-  ActivityIndicator,
-  Alert
+  ActivityIndicator
 } from 'react-native';
 import { router } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
 import { useUser } from '../src/context/UserContext';
+import { t } from '../src/i18n'; 
 import { 
     getUserPreferences, 
     updateUserPreferences, 
@@ -21,26 +21,27 @@ import {
     getDatabase 
 } from '../src/models/user';
 
+// On garde les id et icones ici, mais les noms sont générés par i18n
 const ALL_GENRES = [
-  { id: 28, name: "Action", icon: "fire" },
-  { id: 12, name: "Aventure", icon: "compass-outline" },
-  { id: 16, name: "Animation", icon: "creation" },
-  { id: 35, name: "Comédie", icon: "emoticon-happy-outline" },
-  { id: 80, name: "Crime", icon: "pistol" },
-  { id: 99, name: "Documentaire", icon: "file-document-outline" },
-  { id: 18, name: "Drame", icon: "drama-masks" },
-  { id: 10751, name: "Famille", icon: "home-heart" },
-  { id: 14, name: "Fantastique", icon: "unicorn-variant" },
-  { id: 36, name: "Histoire", icon: "book-open-page-variant" },
-  { id: 27, name: "Horreur", icon: "ghost" },
-  { id: 10402, name: "Musique", icon: "music" },
-  { id: 9648, name: "Mystère", icon: "magnify" },
-  { id: 10749, name: "Romance", icon: "heart" },
-  { id: 878, name: "Science-Fiction", icon: "robot" },
-  { id: 10770, name: "Téléfilm", icon: "television-classic" },
-  { id: 53, name: "Thriller", icon: "eye-outline" },
-  { id: 10752, name: "Guerre", icon: "tank" },
-  { id: 37, name: "Western", icon: "horseshoe" },
+  { id: 28, icon: "fire" },
+  { id: 12, icon: "compass-outline" },
+  { id: 16, icon: "creation" },
+  { id: 35, icon: "emoticon-happy-outline" },
+  { id: 80, icon: "pistol" },
+  { id: 99, icon: "file-document-outline" },
+  { id: 18, icon: "drama-masks" },
+  { id: 10751, icon: "home-heart" },
+  { id: 14, icon: "unicorn-variant" },
+  { id: 36, icon: "book-open-page-variant" },
+  { id: 27, icon: "ghost" },
+  { id: 10402, icon: "music" },
+  { id: 9648, icon: "magnify" },
+  { id: 10749, icon: "heart" },
+  { id: 878, icon: "robot" },
+  { id: 10770, icon: "television-classic" },
+  { id: 53, icon: "eye-outline" },
+  { id: 10752, icon: "tank" },
+  { id: 37, icon: "horseshoe" },
 ];
 
 const THRESHOLD_AUTO_SELECT = 8;
@@ -54,8 +55,6 @@ const FavoriteGenres = () => {
   
   const [fullPreferences, setFullPreferences] = useState<UserPreferences | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
-  
-  // Pour stocker le classement (ID -> Score)
   const [genreScores, setGenreScores] = useState<{[key: number]: number}>({});
 
   useEffect(() => {
@@ -65,9 +64,7 @@ const FavoriteGenres = () => {
   const loadData = async () => {
     if (currentUser) {
       try {
-
         const db = await getDatabase();
-        
         const row = await db.getFirstAsync<{ preferences: string | null, genre_weights: string | null }>(
             'SELECT preferences, genre_weights FROM user_profile WHERE id = ?', [currentUser.id]
         );
@@ -87,13 +84,11 @@ const FavoriteGenres = () => {
             .filter(id => weights[id] >= THRESHOLD_AUTO_SELECT);
 
         const mergedSelection = [...new Set([...manualGenres, ...autoAddedGenres])];
-
         const prefsObj = await getUserPreferences(currentUser.id);
-        setFullPreferences(prefsObj);
         
+        setFullPreferences(prefsObj);
         setSelectedGenres(mergedSelection);
         setLoading(false);
-
       } catch (e) {
         console.error(e);
         setLoading(false);
@@ -113,7 +108,6 @@ const FavoriteGenres = () => {
 
   const handleSave = async () => {
     if (!currentUser || !fullPreferences) return;
-
     setSaving(true);
     try {
       const updatedPreferences: UserPreferences = {
@@ -131,7 +125,6 @@ const FavoriteGenres = () => {
 
   const getRank = (genreId: number) => {
     const score = genreScores[genreId] || 0;
-    
     if (score < THRESHOLD_AUTO_SELECT) return null;
 
     const sortedIds = Object.keys(genreScores)
@@ -147,14 +140,22 @@ const FavoriteGenres = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {/* Header */}
+      {/* Header*/}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.card }]}>
           <Icon name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Vos Genres</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {t('favoriteGenres.title')}
+        </Text>
         <TouchableOpacity onPress={handleSave} disabled={saving || loading} style={{ padding: 8 }}>
-            {saving ? <ActivityIndicator size="small" color="#8A3AFF" /> : <Text style={{ color: '#8A3AFF', fontWeight: 'bold', fontSize: 16 }}>OK</Text>}
+            {saving ? (
+                <ActivityIndicator size="small" color="#8A3AFF" />
+            ) : (
+                <Text style={{ color: '#8A3AFF', fontWeight: 'bold', fontSize: 16 }}>
+                    {t('favoriteGenres.saveOk')}
+                </Text>
+            )}
         </TouchableOpacity>
       </View>
 
@@ -165,10 +166,11 @@ const FavoriteGenres = () => {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
             
+            {/* Info Box avec Traduction */}
             <View style={[styles.infoBox, { backgroundColor: 'rgba(138, 58, 255, 0.1)', borderColor: 'rgba(138, 58, 255, 0.3)' }]}>
                 <Icon name="creation" size={24} color="#8A3AFF" style={{marginRight: 12}} />
                 <Text style={{color: colors.text, flex: 1, fontSize: 13, lineHeight: 18}}>
-                    Les genres que vous likez souvent (+5 fois) sont cochés automatiquement.
+                    {t('favoriteGenres.autoInfo')}
                 </Text>
             </View>
 
@@ -178,7 +180,7 @@ const FavoriteGenres = () => {
                       const selectedA = selectedGenres.includes(a.id) ? 1 : 0;
                       const selectedB = selectedGenres.includes(b.id) ? 1 : 0;
                       if (selectedA !== selectedB) return selectedB - selectedA;
-                      return a.name.localeCompare(b.name);
+                      return t(`onboarding.genres.${a.id}`).localeCompare(t(`onboarding.genres.${b.id}`));
                   })
                   .map((genre) => {
                     const isSelected = selectedGenres.includes(genre.id);
@@ -193,8 +195,6 @@ const FavoriteGenres = () => {
                                 { 
                                     backgroundColor: isSelected ? (isTop ? '#5b21b6' : '#8A3AFF') : colors.card,
                                     borderColor: isSelected ? (isTop ? '#F59E0B' : '#8A3AFF') : colors.border,
-                                    borderWidth: isTop ? 1 : 1,
-                                    elevation: isTop ? 4 : 0
                                 }
                             ]}
                             onPress={() => toggleGenre(genre.id)}
@@ -216,18 +216,19 @@ const FavoriteGenres = () => {
                                 color: isSelected ? '#fff' : colors.text,
                                 fontWeight: isSelected ? '600' : '400' 
                             }}>
-                                {genre.name}
+                                {/* traduction basés sur l id*/}
+                                {t(`onboarding.genres.${genre.id}`)}
                             </Text>
                         </TouchableOpacity>
                     );
                 })}
             </View>
-
         </ScrollView>
       )}
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   header: {
