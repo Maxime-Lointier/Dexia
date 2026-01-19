@@ -267,7 +267,7 @@ const Settings = () => {
               <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
                 <View style={styles.dragIndicator} />
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  {t('settings.language.select')}
+                  {t('settings.language.sectionTitle')}
                 </Text>
                 {AVAILABLE_LANGUAGES.map((lang, index) => (
                   <View key={lang.code}>
