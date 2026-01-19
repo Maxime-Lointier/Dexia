@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
 import { useUser } from '../src/context/UserContext';
-import { clearUserHistory, deleteUser } from '../src/models/user';
+import { clearUserHistory, deleteUser, getAllUsers } from '../src/models/user';
 
 const Privacy = () => {
   const { colors, isDark } = useTheme();
@@ -19,8 +19,8 @@ const Privacy = () => {
       "Cela supprimera tous vos likes, films vus et réinitialisera l'apprentissage de l'algorithme. Vos listes manuelles resteront.",
       [
         { text: "Annuler", style: "cancel" },
-        { 
-          text: "Effacer", 
+        {
+          text: "Effacer",
           style: "destructive",
           onPress: async () => {
             if (currentUser) {
@@ -44,16 +44,22 @@ const Privacy = () => {
       "Attention, cette action est irréversible. Toutes vos données seront perdues définitivement.",
       [
         { text: "Annuler", style: "cancel" },
-        { 
-          text: "Supprimer", 
+        {
+          text: "Supprimer",
           style: "destructive",
           onPress: async () => {
             if (currentUser) {
               const success = await deleteUser(currentUser.id);
               if (success) {
-                await refreshUsers(); // Mettre à jour la liste globale
-                logout(); // Déconnecter l'utilisateur actuel
-                router.replace('/profile-selection'); // Retour au menu principal
+                const remainingUsers = await getAllUsers();
+                logout();
+
+                if (remainingUsers.length === 0) {
+                  router.replace('/welcomeScreen');
+                } else {
+                  await refreshUsers();
+                  router.replace('/profile-selection');
+                }
               } else {
                 Alert.alert("Erreur", "Impossible de supprimer le profil.");
               }
@@ -114,13 +120,13 @@ const Privacy = () => {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
-        
+
         {/* INFO DATA LOCAL */}
         <View style={[styles.infoBox, { backgroundColor: 'rgba(138, 58, 255, 0.1)', borderColor: 'rgba(138, 58, 255, 0.3)' }]}>
-            <Icon name="shield-check-outline" size={24} color="#8A3AFF" style={{marginRight: 12}} />
-            <Text style={{color: colors.text, flex: 1, fontSize: 14, lineHeight: 20}}>
-                Vos données sont stockées localement sur votre appareil. Nous ne partageons vos préférences avec aucun tiers.
-            </Text>
+          <Icon name="shield-check-outline" size={24} color="#8A3AFF" style={{ marginRight: 12 }} />
+          <Text style={{ color: colors.text, flex: 1, fontSize: 14, lineHeight: 20 }}>
+            Vos données sont stockées localement sur votre appareil. Nous ne partageons vos préférences avec aucun tiers.
+          </Text>
         </View>
 
         {/* SECTION DONNÉES */}
@@ -185,12 +191,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   infoBox: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-      borderRadius: 12,
-      borderWidth: 1,
-      marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 20,
   }
 });
 
