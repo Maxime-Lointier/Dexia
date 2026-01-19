@@ -157,4 +157,13 @@ help: {
       a4: "Vos listes et préférences sont sauvegardées localement.",
     }
   },
+likedMovies: {
+  title: "Films aimés",
+  movieSingular: "film",
+  moviesPlural: "films",
+  likedBadge: "Aimé",
+  emptyTitle: "Vous n’avez aimé aucun film",
+  emptySub: "Likez des films depuis la découverte\nou les recommandations",
+  discoverBtn: "Découvrir des films",
+},
 };
