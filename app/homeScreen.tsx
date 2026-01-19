@@ -13,7 +13,7 @@ import { useUser } from '../src/context/UserContext';
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
 import { getUserPreferences, CURRENT_USER_ID, setOnboardingDone } from '../src/models/user';
-import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, getLikeCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded } from '../src/models/interaction';
+import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, getLikeCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded, toggleLike, hasUserInteractedWithMovie } from '../src/models/interaction';
 import { getMovieCast, Cast } from '../src/models/cast';
 import { getLikedMovies } from '../src/models/interaction';
 import GenrePieChart from '../src/components/GenrePieChart';
@@ -52,6 +52,7 @@ export default function MainPage() {
   const [watchlistCount, setWatchlistCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [isSelectedMovieInWatchlist, setIsSelectedMovieInWatchlist] = useState(false);
+  const [isSelectedMovieLiked, setIsSelectedMovieLiked] = useState(false);
   const [showWatchlistModal, setShowWatchlistModal] = useState(false);
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [allLikedMovies, setAllLikedMovies] = useState<Movie[]>([]);
@@ -267,12 +268,14 @@ export default function MainPage() {
       if (currentUser) {
         const inWatchlist = await isInWatchlist(currentUser.id, movie.id);
         setIsSelectedMovieInWatchlist(inWatchlist);
+        const isLiked = await hasUserInteractedWithMovie(currentUser.id, movie.id, 'like');
+        setIsSelectedMovieLiked(isLiked);
       }
     } catch (error) {
       console.error('Erreur chargement détails film:', error);
-      setSelectedMovieGenres([]);
       setSelectedMovieCast([]);
       setIsSelectedMovieInWatchlist(false);
+      setIsSelectedMovieLiked(false);
     }
 
     setShowInfoModal(true);
@@ -375,6 +378,21 @@ export default function MainPage() {
     }
   };
 
+  const handleToggleLike = async () => {
+    if (!selectedMovie) return;
+
+    try {
+      if (selectedMovie && currentUser) {
+        await toggleLike(currentUser.id, selectedMovie.id);
+        setIsSelectedMovieLiked(!isSelectedMovieLiked);
+        await loadStats(); // Recharger stats car le nombre de likes change
+        await loadLikedMovies(); // Recharger la liste des films aimés
+      }
+    } catch (error) {
+      console.error('Erreur toggle like:', error);
+    }
+  };
+
   const handleResetOnboarding = async () => {
     console.log("🔄 Reset complet de l'application demandé...");
     await resetApp();
@@ -432,14 +450,7 @@ export default function MainPage() {
               <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>À voir</Text>
             </TouchableOpacity>
 
-            {/* Carte 3 : Jours actif */}
-            <View style={{ flex: 1, backgroundColor: colors.card, borderRadius: 16, padding: 16, alignItems: 'center' }}>
-              <View style={{ width: 40, height: 40, backgroundColor: 'rgba(34, 197, 94, 0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                <FontAwesome5 name="fire" size={18} color="#22C55E" />
-              </View>
-              <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>12</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>Jours actif</Text>
-            </View>
+
           </View>
         </View>
 
@@ -607,17 +618,6 @@ export default function MainPage() {
           </View>
         </View>
 
-        <View className="px-6 mb-8 mt-4 border-t border-gray-800 pt-6">
-          <Text className="text-textSecondary text-xs text-center mb-4 uppercase tracking-widest">Zone de Développement</Text>
-
-          <TouchableOpacity
-            onPress={handleResetOnboarding}
-            className="bg-red-500/10 border border-red-500/50 py-3 rounded-xl items-center flex-row justify-center gap-2"
-          >
-            <FontAwesome5 name="undo" size={14} color="#EF4444" />
-            <Text className="text-red-500 font-bold text-sm">Reset Onboarding (pour tester première connexion)</Text>
-          </TouchableOpacity>
-        </View>
 
       </ScrollView>
 
@@ -763,6 +763,22 @@ export default function MainPage() {
               <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: colors.card }}>
                 <View className="flex-row gap-3">
                   <TouchableOpacity
+                    onPress={handleToggleLike}
+                    className={`h-14 w-14 rounded-2xl items-center justify-center ${isSelectedMovieLiked
+                      ? 'bg-red-500'
+                      : 'bg-red-500/20 border border-red-500'
+                      }`}
+                    activeOpacity={0.8}
+                  >
+                    <FontAwesome
+                      name="heart"
+                      size={20}
+                      color={isSelectedMovieLiked ? "white" : "#EF4444"}
+                      solid={isSelectedMovieLiked}
+                    />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     onPress={handleToggleWatchlist}
                     className={`flex-1 py-4 rounded-2xl items-center ${isSelectedMovieInWatchlist
                       ? 'bg-orange-500'
@@ -778,14 +794,14 @@ export default function MainPage() {
                         solid={isSelectedMovieInWatchlist}
                       />
                       <Text className={`font-bold ${isSelectedMovieInWatchlist ? 'text-white' : 'text-orange-500'}`}>
-                        {isSelectedMovieInWatchlist ? 'Dans ma liste' : 'Ajouter à ma liste'}
+                        {isSelectedMovieInWatchlist ? 'Dans ma liste' : 'À voir'}
                       </Text>
                     </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={closeInfoModal}
-                    style={{ backgroundColor: colors.card, paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16 }}
+                    style={{ backgroundColor: colors.card, paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}
                     activeOpacity={0.8}
                   >
                     <Text style={{ color: colors.text, fontWeight: 'bold' }}>Fermer</Text>

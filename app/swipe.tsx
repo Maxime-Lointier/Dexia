@@ -483,13 +483,7 @@ const SwipeScreen = () => {
 
       {/* HEADER */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <TouchableOpacity
-          onPress={() => router.push('/')}
-          style={{ flexDirection: 'row', alignItems: 'center' }}
-        >
-          <Logo width={40} height={40} />
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold', marginLeft: 12 }}>Dexia</Text>
-        </TouchableOpacity>
+
         <TouchableOpacity>
           <View style={{ width: 24, height: 24 }} />
         </TouchableOpacity>
