@@ -13,6 +13,7 @@ import {
 
 interface UserContextType {
     currentUser: UserProfile | null;
+    setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
     users: UserProfile[];
     isLoading: boolean;
     switchUser: (userId: number) => Promise<void>;
@@ -131,7 +132,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <UserContext.Provider value={{ currentUser, users, isLoading, switchUser, addUser, removeUser, logout, refreshUsers, resetApp }}>
+        <UserContext.Provider value={{ currentUser,setCurrentUser, users, isLoading, switchUser, addUser, removeUser, logout, refreshUsers, resetApp }}>
             {children}
         </UserContext.Provider>
     );

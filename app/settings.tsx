@@ -10,7 +10,11 @@ import {
   StatusBar,
   Modal,
   StyleSheet,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Alert
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
@@ -26,12 +30,18 @@ const AVAILABLE_LANGUAGES = [
 
 const Settings = () => {
   const { theme, setTheme, isDark, colors } = useTheme();
-  const { currentUser } = useUser();
-  
-  // États
+  const { currentUser, setCurrentUser } = useUser(); // Assure-toi que setCurrentUser est dispo dans ton contexte
+
+  // --- États ---
   const [notifications, setNotifications] = useState(true);
   const [locale, setLocale] = useState(getCurrentLanguage());
+  
+  // Modals
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [nameModalVisible, setNameModalVisible] = useState(false);
+  
+  // Input pour le nom
+  const [tempName, setTempName] = useState('');
 
   useEffect(() => {
     const unsubscribe = subscribeLanguageChange((newLang) => {
@@ -40,13 +50,38 @@ const Settings = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fonction pour changer la langue via le Modal
+  // --- Logique Langue ---
   const handleLanguageSelect = async (langCode: string) => {
     setLanguage(langCode as any);
     if (currentUser) {
       await updateUserLanguage(currentUser.id, langCode as any);
     }
-    setLanguageModalVisible(false); // Fermer le modal après sélection
+    setLanguageModalVisible(false);
+  };
+
+  // --- Logique Nom de Profil ---
+  const openNameEditor = () => {
+    if (currentUser) {
+      setTempName(currentUser.name); // Pré-remplir avec le nom actuel
+      setNameModalVisible(true);
+    }
+  };
+
+  const saveName = async () => {
+    if (tempName.trim().length === 0) {
+      Alert.alert("Erreur", "Le nom ne peut pas être vide.");
+      return;
+    }
+
+    // 1. Mise à jour locale (Context)
+    if (currentUser && setCurrentUser) {
+      setCurrentUser({ ...currentUser, name: tempName });
+      
+      // 2. TODO: Appel API/Base de données ici
+      // await updateUserName(currentUser.id, tempName); 
+    }
+
+    setNameModalVisible(false);
   };
 
   // --- Composants UI Helper ---
@@ -121,7 +156,7 @@ const Settings = () => {
 
   const Divider = () => <View style={{ height: 1, backgroundColor: colors.border, marginLeft: 64 }} />;
 
-  // --- Rendu ---
+  // --- Rendu Principal ---
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -143,15 +178,16 @@ const Settings = () => {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}>
 
+        {/* ... AUTRES SECTIONS ... */}
+
         {/* SECTION LANGUE */}
         <SectionTitle title={t('settings.language.sectionTitle')} />
         <SectionContainer>
           <SettingItem
             icon="translate"
             label={t('settings.language.appLanguage')}
-            // Affiche le label de la langue actuelle (ex: Français)
             subLabel={AVAILABLE_LANGUAGES.find(l => l.code === locale)?.label || locale}
-            onPress={() => setLanguageModalVisible(true)} // Ouvre le modal
+            onPress={() => setLanguageModalVisible(true)}
           />
         </SectionContainer>
 
@@ -183,24 +219,25 @@ const Settings = () => {
         {/* SECTION PRÉFÉRENCES */}
         <SectionTitle title={t('settings.preferences.sectionTitle')} />
         <SectionContainer>
-          <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} />
-          <Divider />
-          <SettingSwitch
-            icon="bell-outline"
-            label={t('settings.preferences.notifications')}
-            value={notifications}
-            onValueChange={setNotifications}
-          />
+            <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} />
+            <Divider />
+            <SettingSwitch 
+                icon="bell-outline" 
+                label={t('settings.preferences.notifications')} 
+                value={notifications}
+                onValueChange={setNotifications}
+            />
         </SectionContainer>
 
-        {/* SECTION COMPTE */}
+        {/* SECTION COMPTE (MODIFIÉE) */}
         <SectionTitle title={t('settings.account.sectionTitle')} />
         <SectionContainer>
+          {/* Item 1: Profil (Cliquer ici ouvre le modal) */}
           <SettingItem
             icon="account"
             label={currentUser?.name || t('settings.account.profile')}
             subLabel="Gérer mon profil"
-            onPress={() => {/* TODO */ }}
+            onPress={openNameEditor} 
           />
           <Divider />
           <SettingItem
@@ -218,16 +255,16 @@ const Settings = () => {
         {/* SECTION À PROPOS */}
         <SectionTitle title={t('settings.about.sectionTitle')} />
         <SectionContainer>
-          <SettingItem icon="help-circle-outline" label={t('settings.about.help')} />
-          <Divider />
-          <SettingItem icon="file-document-outline" label={t('settings.about.terms')} />
-          <Divider />
-          <SettingItem
-            icon="information-outline"
-            label={t('settings.about.version')}
-            subLabel="2.2.0"
-            showChevron={false}
-          />
+            <SettingItem icon="help-circle-outline" label={t('settings.about.help')} />
+            <Divider />
+            <SettingItem icon="file-document-outline" label={t('settings.about.terms')} />
+            <Divider />
+            <SettingItem 
+                icon="information-outline" 
+                label={t('settings.about.version')} 
+                subLabel="2.2.0" 
+                showChevron={false} 
+            />
         </SectionContainer>
 
         <View style={{ height: 40 }} />
@@ -244,13 +281,10 @@ const Settings = () => {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                {/* Barre de drag (visuelle) */}
                 <View style={styles.dragIndicator} />
-                
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   {t('settings.language.select')}
                 </Text>
-
                 {AVAILABLE_LANGUAGES.map((lang, index) => (
                   <View key={lang.code}>
                     <TouchableOpacity
@@ -263,45 +297,95 @@ const Settings = () => {
                           {lang.label}
                         </Text>
                       </View>
-                      
-                      {/* Coche si sélectionné */}
                       {locale === lang.code && (
                         <View style={styles.checkCircle}>
                            <Icon name="check" size={16} color="#fff" />
                         </View>
                       )}
                     </TouchableOpacity>
-                    {/* Séparateur sauf pour le dernier */}
                     {index < AVAILABLE_LANGUAGES.length - 1 && (
                       <View style={{ height: 1, backgroundColor: colors.border, marginLeft: 50 }} />
                     )}
                   </View>
                 ))}
-                
-                {/* Bouton Annuler */}
-                <TouchableOpacity 
-                  style={[styles.cancelButton, { backgroundColor: colors.background }]} 
-                  onPress={() => setLanguageModalVisible(false)}
-                >
-                  <Text style={{ color: colors.text, fontWeight: '600' }}>Annuler</Text>
-                </TouchableOpacity>
-
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
 
+      {/* --- NOUVEAU : MODAL EDITER PROFIL --- */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={nameModalVisible}
+        onRequestClose={() => setNameModalVisible(false)}
+      >
+        {/* KeyboardAvoidingView permet de remonter le modal quand le clavier sort */}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={() => setNameModalVisible(false)}>
+            <View style={{flex: 1, justifyContent: 'flex-end'}}>
+                <TouchableWithoutFeedback>
+                  <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                    <View style={styles.dragIndicator} />
+                    
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier mon profil</Text>
+                    
+                    <Text style={{color: colors.textSecondary, marginBottom: 8, fontSize: 14}}>
+                        Nom d'utilisateur
+                    </Text>
+
+                    {/* Champ de texte */}
+                    <TextInput 
+                        style={[styles.input, { 
+                            color: colors.text, 
+                            backgroundColor: isDark ? '#232433' : '#f3f4f6',
+                            borderColor: isDark ? '#333' : '#ddd'
+                        }]}
+                        value={tempName}
+                        onChangeText={setTempName}
+                        placeholder="Entrez votre nom"
+                        placeholderTextColor={colors.textSecondary}
+                        autoFocus={true}
+                    />
+
+                    {/* Boutons d'action */}
+                    <View style={{flexDirection: 'row', gap: 12, marginTop: 24}}>
+                         <TouchableOpacity 
+                            style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, flex: 1 }]} 
+                            onPress={() => setNameModalVisible(false)}
+                        >
+                            <Text style={{ color: colors.text, fontWeight: '600' }}>Annuler</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={[styles.button, { backgroundColor: '#8A3AFF', flex: 1 }]} 
+                            onPress={saveName}
+                        >
+                            <Text style={{ color: '#fff', fontWeight: '600' }}>Enregistrer</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                  </View>
+                </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </SafeAreaView>
   );
 };
 
-// Styles spécifiques au Modal
+// Styles
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Fond sombre semi-transparent
-    justifyContent: 'flex-end', // Pousse le contenu vers le bas
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'flex-end',
   },
   modalContent: {
     borderTopLeftRadius: 24,
@@ -342,11 +426,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelButton: {
-    marginTop: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
+  // Nouveaux styles pour l'input et boutons
+  input: {
+      height: 50,
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      fontSize: 16,
+  },
+  button: {
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center'
   }
 });
 
