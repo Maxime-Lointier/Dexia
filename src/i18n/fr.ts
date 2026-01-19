@@ -136,4 +136,25 @@ privacy: {
   errorClear: "Impossible d'effacer l'historique.",
   errorDelete: "Impossible de supprimer le profil.",
 },
+help: {
+    title: "Aide & Support",
+    heroTitle: "Comment pouvons-nous vous aider ?",
+    heroSub: "Trouvez des réponses aux questions fréquentes ou contactez-nous directement.",
+    faqSection: "Questions Fréquentes",
+    contactSection: "Nous contacter",
+    contactSub: "Vous ne trouvez pas la réponse ? Notre équipe est là pour vous aider.",
+    sendEmail: "Envoyer un e-mail",
+    emailSubject: "Support Dexia App",
+    emailBody: "Bonjour, j'ai besoin d'aide concernant...",
+    faq: {
+      q1: "Comment fonctionne le swipe ?",
+      a1: "Glissez vers la droite pour aimer un film (Like), vers la gauche pour passer (Dislike).",
+      q2: "Où sont mes films sauvegardés ?",
+      a2: "Vous pouvez retrouver tous vos films aimés et votre watchlist dans l'onglet 'A voir plus tard' situé dans onglet Accueil.",
+      q3: "Comment changer mes genres préférés ?",
+      a3: "Allez dans Paramètres > Préférences > Genres préférés. Vous pourrez y sélectionner ou désélectionner les catégories qui vous intéressent.",
+      q4: "L'application fonctionne-t-elle hors ligne ?",
+      a4: "Vos listes et préférences sont sauvegardées localement.",
+    }
+  },
 };
