@@ -246,3 +246,25 @@ export async function getMoviesOutsideGenres(
   return result;
 }
 
+/**
+ * Récupère plusieurs films par leurs IDs
+ * @param movieIds - Liste des IDs de films à récupérer
+ * @returns Promise<Movie[]> - Liste des films correspondants
+ */
+export async function getMoviesByIds(movieIds: number[]): Promise<Movie[]> {
+  if (!movieIds || movieIds.length === 0) {
+    return [];
+  }
+
+  const db = await getDatabase();
+  try {
+    const placeholders = movieIds.map(() => '?').join(',');
+    const sql = `SELECT * FROM movies WHERE id IN (${placeholders}) ORDER BY vote_average DESC`;
+    const result = await db.getAllAsync<Movie>(sql, movieIds);
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des films par IDs:', error);
+    return [];
+  }
+}
+

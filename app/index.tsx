@@ -1,60 +1,39 @@
-import { Link } from 'expo-router';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { View, ActivityIndicator, Text } from 'react-native';
+import { Redirect, router } from 'expo-router';
+import { useUser } from '../src/context/UserContext';
+import { useTheme } from '../src/context/ThemeContext';
 
-const Onboarding = () => {
+export default function Index() {
+  const { currentUser, users, isLoading } = useUser();
+  const { colors } = useTheme();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (currentUser) {
+        // Si user déjà chargé (auto-login), on check l'onboarding
+        if (currentUser.onboarding_done) {
+          router.replace('/homeScreen');
+        } else {
+          router.replace('/onBoarding');
+        }
+      } else {
+        // Pas de user actif
+        if (users.length === 0) {
+          // Premier lancement absolu
+          router.replace('/welcomeScreen');
+        } else {
+          // Des profils existent, on choisit
+          router.replace('/profile-selection');
+        }
+      }
+    }
+  }, [currentUser, isLoading, users]);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.innerContainer}>
-        <Text style={styles.title}>Page Onboarding</Text>
-
-        <Link href="/homeScreen">
-          <Text style={styles.link}>Go to homeScreen.tsx</Text>
-        </Link>
-
-        <Link href="/welcomeScreen">
-          <Text style={styles.link}>Go to welcomeScreen.tsx</Text>
-        </Link>
-
-        <Link href="/onBoarding">
-          <Text style={styles.link}>Go to onBoarding.tsx</Text>
-        </Link>
-
-        <Link href="/settings">
-          <Text style={styles.link}>Go to settings.tsx</Text>
-        </Link>
-
-        <Link href="/swipe">
-          <Text style={styles.link}>Go to swipe.tsx</Text>
-        </Link>
-      </View>
-    </ScrollView>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <ActivityIndicator size="large" color="#8A3AFF" />
+      <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Démarrage...</Text>
+    </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5', 
-  },
-  innerContainer: {
-    width: '100%',
-    maxWidth: 400, 
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center', 
-  },
-  link: {
-    fontSize: 18,
-    color: '#007BFF', 
-    marginBottom: 12, 
-    textAlign: 'center', 
-  },
-});
-
-export default Onboarding;
+}

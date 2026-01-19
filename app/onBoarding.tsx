@@ -236,6 +236,7 @@ const Onboarding = () => {
   const isStep2Valid = selectedMovies.length >= 3; // Forcer l'utilisateur à en choisir pour calibrer l'algo
   const canContinue = step === 1 ? isStep1Valid : isStep2Valid;
 
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />

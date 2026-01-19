@@ -1,24 +1,84 @@
 import * as SQLite from 'expo-sqlite';
-import { ensureDatabasePresent, updateDatabaseSchema } from '../initDatabase';
+import { ensureDatabasePresent } from '../initDatabase';
 
 let db: SQLite.SQLiteDatabase | null = null;
+let migrationDone = false;
 
 /**
- * Ajoute la colonne keywords à la table user_profile si elle n'existe pas
+ * Migrations de la base de données
+ * Ajoute les colonnes manquantes si elles n'existent pas
  */
 async function migrateDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
   try {
-    // Vérifier si la colonne keywords existe déjà
+    // Récupérer toutes les colonnes de la table user_profile
     const tableInfo = await database.getAllAsync('PRAGMA table_info(user_profile)');
-    const hasKeywordsColumn = tableInfo.some((col: any) => col.name === 'keywords');
-    
-    if (!hasKeywordsColumn) {
-      console.log('Migration: Ajout de la colonne keywords à user_profile');
-      await database.runAsync('ALTER TABLE user_profile ADD COLUMN keywords TEXT DEFAULT "[]"');
-      console.log('Migration terminée avec succès');
+    const columnNames = tableInfo.map((col: any) => col.name);
+
+    // Migration 1: Ajouter la colonne keywords si elle n'existe pas
+    if (!columnNames.includes('keywords')) {
+      console.log('🔧 Migration: Ajout de la colonne keywords...');
+      try {
+        await database.runAsync('ALTER TABLE user_profile ADD COLUMN keywords TEXT DEFAULT "[]"');
+        console.log('✅ Colonne keywords ajoutée avec succès');
+      } catch (error: any) {
+        if (error?.message?.includes('duplicate column') || error?.code === 1) {
+          console.log('ℹ️ Colonne keywords déjà présente');
+        } else {
+          throw error;
+        }
+      }
     }
-  } catch (error) {
-    console.error('Erreur lors de la migration de la base de données:', error);
+
+    // Migration 2: Ajouter la colonne genre_weights si elle n'existe pas
+    if (!columnNames.includes('genre_weights')) {
+      console.log('🔧 Migration: Ajout de la colonne genre_weights...');
+      try {
+        await database.runAsync('ALTER TABLE user_profile ADD COLUMN genre_weights TEXT DEFAULT "{}"');
+        console.log('✅ Colonne genre_weights ajoutée avec succès');
+      } catch (error: any) {
+        if (error?.message?.includes('duplicate column') || error?.code === 1) {
+          console.log('ℹ️ Colonne genre_weights déjà présente');
+        } else {
+          throw error;
+        }
+      }
+    }
+    // Migration 3: Ajouter la colonne language si elle n'existe pas
+    if (!columnNames.includes('language')) {
+      console.log('🔧 Migration: Ajout de la colonne language...');
+      try {
+        await database.runAsync('ALTER TABLE user_profile ADD COLUMN language TEXT DEFAULT "fr"');
+        console.log('✅ Colonne language ajoutée avec succès');
+      } catch (error: any) {
+        if (error?.message?.includes('duplicate column') || error?.code === 1) {
+          console.log('ℹ️ Colonne language déjà présente');
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Migration 4: Ajouter la colonne name si elle n'existe pas (Multi-profils)
+    if (!columnNames.includes('name')) {
+      console.log('🔧 Migration: Ajout de la colonne name...');
+      try {
+        await database.runAsync('ALTER TABLE user_profile ADD COLUMN name TEXT DEFAULT "Utilisateur"');
+        console.log('✅ Colonne name ajoutée avec succès');
+      } catch (error: any) {
+        if (error?.message?.includes('duplicate column') || error?.code === 1) {
+          console.log('ℹ️ Colonne name déjà présente');
+        } else {
+          throw error;
+        }
+      }
+    }
+  } catch (error: any) {
+    // Si l'erreur est due à une colonne déjà existante, on l'ignore
+    if (error?.message?.includes('duplicate column') || error?.code === 1) {
+      console.log('ℹ️ Colonne déjà présente (ignoré)');
+    } else {
+      console.error('Erreur lors de la migration de la base de données:', error);
+    }
   }
 }
 
@@ -30,14 +90,22 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   // S'assurer que la base de données est présente
   await ensureDatabasePresent();
 
-  // Mettre à jour le schéma de la base si nécessaire
-  await updateDatabaseSchema();
-
   // Pour expo-sqlite, on utilise juste le nom de la base
   // expo-sqlite cherche dans documentDirectory par défaut
   const dbName = 'database.db';
   db = await SQLite.openDatabaseAsync(dbName);
-  
+
+  // Appliquer les migrations si nécessaire (une seule fois)
+  if (!migrationDone) {
+    migrationDone = true;
+    try {
+      await migrateDatabase(db);
+    } catch (error) {
+      console.error('Erreur lors de la migration:', error);
+      migrationDone = false; // Réessayer la prochaine fois en cas d'erreur
+    }
+  }
+
   try {
     const genresCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM genres');
     const moviesCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM movies');
@@ -45,10 +113,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   } catch (e) {
     console.error('Erreur lors de la vérification de la base:', e);
   }
-  
-  // Appliquer les migrations si nécessaire
-  await migrateDatabase(db);
-  
+
   return db;
 }
 

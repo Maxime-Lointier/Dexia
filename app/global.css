@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Mode Clair */
+    --background: 255 255 255;
+    --card: 244 244 245;
+    --text: 15 15 30;
+    --text-secondary: 113 113 122;
+  }
+
+  .dark {
+    /* Mode Sombre */
+    --background: 15 15 30;
+    --card: 26 26 46;
+    --text: 247 240 255;
+    --text-secondary: 161 161 170;
+  }
+}
