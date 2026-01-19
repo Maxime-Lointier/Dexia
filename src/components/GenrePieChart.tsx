@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Dimensions } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 import { useTheme } from "../context/ThemeContext";
+import { t } from "../i18n";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -27,7 +28,7 @@ export default function GenrePieChart({ data }: Props) {
             textAlign: "center",
           }}
         >
-          Likez des films pour voir vos genres préférés
+          {t('home.likePrompt')}
         </Text>
       </View>
     );

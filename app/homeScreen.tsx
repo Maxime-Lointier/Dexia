@@ -504,7 +504,7 @@ export default function MainPage() {
         {/* SECTION RECOMMANDATIONS (Liste Verticale) */}
         <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold', width: 192 }}>Recommandations personnalisées</Text>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold', width: 192 }}>{t('home.recommendations.title')}</Text>
           </View>
 
           {loading ? (
@@ -549,7 +549,7 @@ export default function MainPage() {
                             <Text style={{ color: '#1A1A2E', fontWeight: 'bold', fontSize: 10, marginLeft: 4 }}>TOP</Text>
                           </View>
                         ) : (
-                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginLeft: 4 }}>({movie.matchPercentage}% match)</Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginLeft: 4 }}>({movie.matchPercentage}{t('home.recommendations.match')})</Text>
                         )}
                       </View>
                     </View>
@@ -558,7 +558,7 @@ export default function MainPage() {
               ))}
 
               {recommendations.length === 0 && (
-                <Text className="text-textSecondary text-center py-4">Aucune recommandation pour le moment.</Text>
+                <Text className="text-textSecondary text-center py-4">{t('home.recommendations.none')}</Text>
               )}
             </View>
           )}
@@ -569,7 +569,7 @@ export default function MainPage() {
         <View style={{ paddingHorizontal: 24, marginBottom: 40 }}>
           <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 20 }}>
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' }}>
-              Vos genres préférés
+              {t('home.favoriteGenres')}
             </Text>
 
             <GenrePieChart data={genreData} />
@@ -590,10 +590,10 @@ export default function MainPage() {
                   <FontAwesome5 name="fire" size={32} color="white" />
                 </View>
 
-                <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>Prêt à découvrir ?</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>{t('home.readyTitle')}</Text>
 
                 <Text className="text-white/90 text-sm mb-8 text-center leading-5">
-                  Swipez pour trouver votre prochain film préféré
+                  {t('home.readySub')}
                 </Text>
 
                 <TouchableOpacity
@@ -601,7 +601,7 @@ export default function MainPage() {
                   className="bg-white w-full py-4 rounded-full items-center justify-center shadow-lg"
                   activeOpacity={0.9}
                 >
-                  <Text className="text-[#8A3AFF] font-bold text-base">Commencer</Text>
+                  <Text className="text-[#8A3AFF] font-bold text-base">{t('home.startBtn')}</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -609,14 +609,14 @@ export default function MainPage() {
         </View>
 
         <View className="px-6 mb-8 mt-4 border-t border-gray-800 pt-6">
-          <Text className="text-textSecondary text-xs text-center mb-4 uppercase tracking-widest">Zone de Développement</Text>
+          <Text className="text-textSecondary text-xs text-center mb-4 uppercase tracking-widest">{t('home.devZone')}</Text>
 
           <TouchableOpacity
             onPress={handleResetOnboarding}
             className="bg-red-500/10 border border-red-500/50 py-3 rounded-xl items-center flex-row justify-center gap-2"
           >
             <FontAwesome5 name="undo" size={14} color="#EF4444" />
-            <Text className="text-red-500 font-bold text-sm">Reset Onboarding (pour tester première connexion)</Text>
+            <Text className="text-red-500 font-bold text-sm">{t('home.resetOnboarding')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -626,17 +626,17 @@ export default function MainPage() {
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: 24, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 24 }}>
         <TouchableOpacity style={{ alignItems: 'center', gap: 4 }}>
           <FontAwesome5 name="home" size={20} color="#8A3AFF" />
-          <Text style={{ fontSize: 10, fontWeight: '500', color: '#8A3AFF' }}>Accueil</Text>
+          <Text style={{ fontSize: 10, fontWeight: '500', color: '#8A3AFF' }}>{t('tabs.home')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push('/swipe')} style={{ alignItems: 'center', gap: 4 }}>
           <FontAwesome5 name="layer-group" size={20} color={colors.textSecondary} />
-          <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textSecondary }}>Découvrir</Text>
+          <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textSecondary }}>{t('tabs.discover')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push('/settings')} style={{ alignItems: 'center', gap: 4 }}>
           <FontAwesome5 name="user" size={20} color={colors.textSecondary} />
-          <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textSecondary }}>Profil</Text>
+          <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textSecondary }}>{t('tabs.profile')}</Text>
         </TouchableOpacity>
       </View>
 
