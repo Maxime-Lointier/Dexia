@@ -7,8 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient'; // Assurez-vous d'avoir i
 import { useUser } from '../src/context/UserContext';
 import { useTheme } from '../src/context/ThemeContext';
 import { t, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
-import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
-import { Genre, getAllGenres, getTopRatedMovies, Movie, getMoviesByGenres } from '../src/models/movies'; 
+
+import { Genre, getAllGenres, getTopRatedMovies, Movie, getMoviesByGenres } from '../src/models/movies';
 import { updateUserPreferences, setOnboardingDone } from '../src/models/user';
 
 const { width } = Dimensions.get('window');
@@ -45,7 +45,7 @@ const Onboarding = () => {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Sélections
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [selectedMovies, setSelectedMovies] = useState<number[]>([]);
@@ -53,7 +53,7 @@ const Onboarding = () => {
   const { isDark, colors } = useTheme();
   const { currentUser, refreshUsers } = useUser();
   const [locale, setLocale] = useState(getCurrentLanguage());
-  
+
   // Scroll Ref pour remonter en haut lors du changement d'étape
   const scrollRef = useRef<ScrollView>(null);
 
@@ -83,8 +83,8 @@ const Onboarding = () => {
       setLoading(true);
       // NOTE: Ici, idéalement, vous devriez appeler une API "discover" filtrée par les genres choisis.
       // Pour l'exemple, on prend les Top Rated, mais imaginez: `getMoviesByGenres(selectedGenres)`
-      const moviesData = await getTopRatedMovies(30); 
-      
+      const moviesData = await getTopRatedMovies(30);
+
       // Petit filtrage côté client pour simuler la pertinence (si l'API ne le fait pas)
       // On priorise les films qui contiennent au moins un des genres sélectionnés
       const sortedMovies = moviesData.sort((a, b) => {
@@ -123,7 +123,7 @@ const Onboarding = () => {
         keywords: [], // À remplir plus tard via analyse des films
         actors: []    // À remplir plus tard
       });
-      
+
       // Vous pourriez ajouter une fonction pour sauvegarder les films "liked" :
       // await saveUserLikedMovies(currentUser.id, selectedMovies);
 
@@ -170,7 +170,7 @@ const Onboarding = () => {
           >
             {/* Overlay sélection */}
             {isSelected && <View className="absolute inset-0 bg-black/50 z-10" />}
-            
+
             <View className="flex-1 p-4 justify-between z-0">
               <Icon name={style.icon} size={24} color="white" style={{ opacity: 0.9 }} />
               <Text className="text-white font-bold text-lg shadow-sm">
@@ -192,9 +192,9 @@ const Onboarding = () => {
 
   const renderStep2Movies = () => (
     <View className="flex-row flex-wrap justify-between">
-       <Text className="w-full text-base mb-4" style={{ color: colors.textSecondary }}>
-          {t('onboarding.movies_subtitle')} {/* "Sélectionnez les films que vous avez aimés" */}
-       </Text>
+      <Text className="w-full text-base mb-4" style={{ color: colors.textSecondary }}>
+        {t('onboarding.movies_subtitle')} {/* "Sélectionnez les films que vous avez aimés" */}
+      </Text>
       {movies.map((movie) => {
         const isSelected = selectedMovies.includes(movie.id);
 
@@ -207,7 +207,7 @@ const Onboarding = () => {
             className="mb-4 relative"
           >
             <View className={`rounded-xl overflow-hidden aspect-[2/3] ${isSelected ? 'ring-4 ring-primary' : ''}`}>
-              <Image 
+              <Image
                 source={{ uri: `${TMDB_IMAGE_URL}${movie.poster_path}` }}
                 className="w-full h-full"
                 resizeMode="cover"
@@ -218,9 +218,9 @@ const Onboarding = () => {
                 </View>
               )}
             </View>
-            <Text 
-              numberOfLines={1} 
-              className="mt-2 text-xs font-medium text-center" 
+            <Text
+              numberOfLines={1}
+              className="mt-2 text-xs font-medium text-center"
               style={{ color: isSelected ? colors.primary : colors.text }}
             >
               {movie.title}
@@ -245,9 +245,9 @@ const Onboarding = () => {
       <View className="px-6 pt-2 pb-2">
         {/* Barre de progression simple */}
         <View className="flex-row h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full mb-6 overflow-hidden">
-          <View 
-            className="bg-primary h-full rounded-full transition-all duration-500" 
-            style={{ width: step === 1 ? '50%' : '100%' }} 
+          <View
+            className="bg-primary h-full rounded-full transition-all duration-500"
+            style={{ width: step === 1 ? '50%' : '100%' }}
           />
         </View>
 
@@ -256,8 +256,8 @@ const Onboarding = () => {
             {step === 1 ? t('onboarding.title_step1') : t('onboarding.title_step2')}
           </Text>
           <Text className="text-sm text-center" style={{ color: colors.textSecondary }}>
-            {step === 1 
-              ? `${selectedGenres.length}/3 ${t('onboarding.min_selection')}` 
+            {step === 1
+              ? `${selectedGenres.length}/3 ${t('onboarding.min_selection')}`
               : `${selectedMovies.length}/3 ${t('onboarding.min_movies')}`
             }
           </Text>
@@ -273,10 +273,10 @@ const Onboarding = () => {
           </Text>
         </View>
       ) : (
-        <ScrollView 
+        <ScrollView
           ref={scrollRef}
-          className="px-6 flex-1" 
-          contentContainerStyle={{ paddingBottom: 140 }} 
+          className="px-6 flex-1"
+          contentContainerStyle={{ paddingBottom: 140 }}
           showsVerticalScrollIndicator={false}
         >
           {step === 1 ? renderStep1Genres() : renderStep2Movies()}
@@ -285,36 +285,36 @@ const Onboarding = () => {
 
       {/* FOOTER */}
       <View className="absolute bottom-0 left-0 right-0 p-6">
-          {/* Dégradé pour fondre le contenu sous le bouton */}
-          <LinearGradient
-            colors={isDark ? ['transparent', 'rgba(15,15,30,0.95)', '#0F0F1E'] : ['transparent', 'rgba(255,255,255,0.9)', '#FFFFFF']}
-            className="absolute inset-0 -top-12 h-[180%]"
-            pointerEvents="none"
-          />
-          
-        <View className="flex-row items-center justify-between">
-           {/* Bouton Retour (Visible seulement étape 2) */}
-           {step === 2 && (
-              <TouchableOpacity 
-                onPress={() => setStep(1)}
-                className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 items-center justify-center mr-4"
-              >
-                <Icon name="arrow-left" size={18} color={colors.text} />
-              </TouchableOpacity>
-           )}
+        {/* Dégradé pour fondre le contenu sous le bouton */}
+        <LinearGradient
+          colors={isDark ? ['transparent', 'rgba(15,15,30,0.95)', '#0F0F1E'] : ['transparent', 'rgba(255,255,255,0.9)', '#FFFFFF']}
+          className="absolute inset-0 -top-12 h-[180%]"
+          pointerEvents="none"
+        />
 
+        <View className="flex-row items-center justify-between">
+          {/* Bouton Retour (Visible seulement étape 2) */}
+          {step === 2 && (
             <TouchableOpacity
-              disabled={!canContinue}
-              onPress={handleNextStep}
-              className={`flex-1 py-4 rounded-2xl items-center justify-center shadow-lg flex-row space-x-2 
-                ${canContinue ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-800'}`}
-              style={{ elevation: canContinue ? 4 : 0 }}
+              onPress={() => setStep(1)}
+              className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 items-center justify-center mr-4"
             >
-              <Text className={`font-bold text-lg ${canContinue ? 'text-white' : 'text-gray-500'}`}>
-                {step === 1 ? t('onboarding.continue') : t('onboarding.finish')}
-              </Text>
-              {canContinue && <Icon name={step === 1 ? "arrow-right" : "check"} size={16} color="white" style={{ marginLeft: 8 }} />}
+              <Icon name="arrow-left" size={18} color={colors.text} />
             </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            disabled={!canContinue}
+            onPress={handleNextStep}
+            className={`flex-1 py-4 rounded-2xl items-center justify-center shadow-lg flex-row space-x-2 
+                ${canContinue ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-800'}`}
+            style={{ elevation: canContinue ? 4 : 0 }}
+          >
+            <Text className={`font-bold text-lg ${canContinue ? 'text-white' : 'text-gray-500'}`}>
+              {step === 1 ? t('onboarding.continue') : t('onboarding.finish')}
+            </Text>
+            {canContinue && <Icon name={step === 1 ? "arrow-right" : "check"} size={16} color="white" style={{ marginLeft: 8 }} />}
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
