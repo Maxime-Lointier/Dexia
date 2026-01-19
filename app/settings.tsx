@@ -254,7 +254,7 @@ const Settings = () => {
             onPress={() => router.push('/profile-selection')}
           />
           <Divider />
-          <SettingItem icon="lock" label={t('settings.account.privacy')} />
+          <SettingItem icon="lock" label={t('settings.account.privacy')} onPress={() => router.push('/privacy')} />
           <Divider />
           <SettingItem icon="shield-check" label={t('settings.account.security')} />
         </SectionContainer>

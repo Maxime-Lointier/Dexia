@@ -841,3 +841,15 @@ export async function updateUserName(userId: number, newName: string): Promise<b
   }
 }
 
+
+export async function clearUserHistory(userId: number): Promise<boolean> {
+  const db = await getDatabase();
+  try {
+    await db.runAsync('DELETE FROM user_interactions WHERE user_id = ?', [userId]);
+    console.log(`🧹 Historique nettoyé pour user ${userId}`);
+    return true;
+  } catch (error) {
+    console.error('Erreur nettoyage historique:', error);
+    return false;
+  }
+}
