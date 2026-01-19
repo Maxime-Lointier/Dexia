@@ -240,8 +240,6 @@ const Settings = () => {
         <SectionContainer>
             <SettingItem icon="help-circle-outline" label={t('settings.about.help')} onPress={() => router.push('/help')} />
             <Divider />
-            <SettingItem icon="file-document-outline" label={t('settings.about.terms')} onPress={() => router.push('/terms')} />
-            <Divider />
             <SettingItem 
                 icon="information-outline" 
                 label={t('settings.about.version')} 

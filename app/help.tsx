@@ -26,11 +26,11 @@ if (
 const FAQ_DATA = [
   {
     question: "Comment fonctionne le swipe ?",
-    answer: "Glissez vers la droite pour aimer un film (Like), vers la gauche pour passer (Dislike). Glissez vers le haut pour l'ajouter à vos favoris (Super Like)."
+    answer: "Glissez vers la droite pour aimer un film (Like), vers la gauche pour passer (Dislike)."
   },
   {
     question: "Où sont mes films sauvegardés ?",
-    answer: "Vous pouvez retrouver tous vos films aimés et votre watchlist dans l'onglet 'Ma Liste' situé dans la barre de navigation en bas."
+    answer: "Vous pouvez retrouver tous vos films aimés et votre watchlist dans l'onglet 'Ma Liste' situé dans onglet Acceuil."
   },
   {
     question: "Comment changer mes genres préférés ?",
@@ -38,7 +38,7 @@ const FAQ_DATA = [
   },
   {
     question: "L'application fonctionne-t-elle hors ligne ?",
-    answer: "Vos listes et préférences sont sauvegardées localement. Cependant, une connexion internet est requise pour récupérer les affiches et les nouvelles recommandations de films."
+    answer: "Vos listes et préférences sont sauvegardées localement."
   },
 ];
 
