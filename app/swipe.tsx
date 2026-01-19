@@ -755,7 +755,7 @@ const SwipeScreen = () => {
                       }}>
                         <Icon name="crown" size={12} color="#1A1A2E" solid />
                         <Text style={{ color: '#1A1A2E', fontWeight: 'bold', fontSize: 12, marginLeft: 6 }}>
-                          TOP POUR TOI ({matchPercentage}%)
+                          {t('home.recommendations.topMatch')}({matchPercentage}%)
                         </Text>
                       </View>
                     ) : (

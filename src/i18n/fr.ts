@@ -26,6 +26,9 @@ export default {
       manageProfile: "Gérer mon profil",
       switchProfile: "Changer de profil",
       useOtherAccount: "Utiliser un autre compte",
+      Username: "Nom d'utilisateur",
+      Delete: "Supprimer",
+      Save: "Enregistrer"
     },
     about: {
       sectionTitle: "À propos",
@@ -94,6 +97,7 @@ export default {
     recommendations: {
       title: "Recommandations personnalisées",
       match: "match",
+      topMatch: "TOP POUR TOI",
       none: "Aucune recommandation pour le moment.",
     },
     favoriteGenres: "Vos genres préférés",
