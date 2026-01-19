@@ -225,49 +225,36 @@ export async function manageDynamicGenres(userId: number, genreIds: number[], ac
 
   const db = await getDatabase();
   try {
-    // Récupérer les préférences actuelles avec gestion des poids
-    let genreWeights: { [key: number]: number } = {};
-
-    const row = await db.getFirstAsync<{ preferences: string | null, genre_weights: string | null }>(
-      'SELECT preferences, genre_weights FROM user_profile WHERE id = ?', [userId]
+    // 1. On récupère UNIQUEMENT les poids
+    const row = await db.getFirstAsync<{ genre_weights: string | null }>(
+      'SELECT genre_weights FROM user_profile WHERE id = ?', [userId]
     );
 
-    if (row?.genre_weights) {
-      try {
+    let genreWeights: { [key: number]: number } = {};
+    if (row && row.genre_weights) {
         genreWeights = JSON.parse(row.genre_weights);
-      } catch {
-        genreWeights = {};
-      }
     }
 
-    // Mettre à jour les poids selon l'action
+    // 2. On met à jour les scores
     for (const genreId of genreIds) {
       const currentWeight = genreWeights[genreId] || 0;
 
       if (action === 'like') {
-        genreWeights[genreId] = Math.min(currentWeight + 1, 10); // Max 10 points
-      } else { // dislike
-        genreWeights[genreId] = Math.max(currentWeight - 0.5, -5); // Min -5 points
+        // On ajoute +1 (Max 100)
+        genreWeights[genreId] = Math.min(currentWeight + 1, 100);
+      } else { 
+        // On retire -0.5
+        genreWeights[genreId] = Math.max(currentWeight - 0.5, -5);
       }
     }
 
-    // Extraire les genres avec poids positif (>= 1) pour les préférences
-    const preferredGenres = Object.keys(genreWeights)
-      .map(id => parseInt(id))
-      .filter(id => genreWeights[id] >= 1);
-
-    console.log(`🎯 Genres ${action}: ${genreIds.join(', ')}`);
-    console.log(`🎯 Genres préférés actifs: ${preferredGenres.length} (${preferredGenres.join(', ')})`);
-
-    // Sauvegarder préférences ET poids
-    const preferencesJson = JSON.stringify(preferredGenres);
-    const weightsJson = JSON.stringify(genreWeights);
-
+    // 3. ON SAUVEGARDE JUSTE LES POIDS (On ne touche pas à la colonne 'preferences')
     await db.runAsync(
-      'UPDATE user_profile SET preferences = ?, genre_weights = ? WHERE id = ?',
-      [preferencesJson, weightsJson, userId]
+      'UPDATE user_profile SET genre_weights = ? WHERE id = ?',
+      [JSON.stringify(genreWeights), userId]
     );
 
+    console.log(`⚖️ Poids mis à jour pour User ${userId} (Action: ${action})`);
     return true;
   } catch (error) {
     console.error('Erreur gestion genres dynamiques:', error);
@@ -848,3 +835,43 @@ export async function clearUserHistory(userId: number): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Récupère le Top 5 des genres basés sur l'historique des likes (poids calculés)
+ * @param userId - ID de l'utilisateur
+ * @returns Promise<number[]> - Liste des IDs des 5 meilleurs genres
+ */
+export async function getTopGenresFromHistory(userId: number): Promise<number[]> {
+  const db = await getDatabase();
+  try {
+    const row = await db.getFirstAsync<{ genre_weights: string | null }>(
+      'SELECT genre_weights FROM user_profile WHERE id = ?',
+      [userId]
+    );
+
+    if (!row || !row.genre_weights) {
+      console.log('⚠️ Pas de poids de genres trouvés pour le tri.');
+      return [];
+    }
+
+    const weights = JSON.parse(row.genre_weights);
+
+    const topGenres = Object.keys(weights)
+      .map(key => ({ 
+        id: parseInt(key), 
+        score: weights[key] 
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(item => item.id);
+
+    console.log('🏆 Top 5 genres détectés :', topGenres);
+    return topGenres;
+
+  } catch (error) {
+    console.error('Erreur récupération top genres:', error);
+    return [];
+  }
+}
+
+export { getDatabase };
