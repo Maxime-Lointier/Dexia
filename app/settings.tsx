@@ -30,17 +30,14 @@ const AVAILABLE_LANGUAGES = [
 
 const Settings = () => {
   const { theme, setTheme, isDark, colors } = useTheme();
-  const { currentUser, setCurrentUser, refreshUsers } = useUser(); // Assure-toi que setCurrentUser est dispo dans ton contexte
+  const { currentUser, setCurrentUser, refreshUsers } = useUser();
 
-  // --- États ---
   const [notifications, setNotifications] = useState(true);
   const [locale, setLocale] = useState(getCurrentLanguage());
-  
-  // Modals
+
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [nameModalVisible, setNameModalVisible] = useState(false);
-  
-  // Input pour le nom
+
   const [tempName, setTempName] = useState('');
 
   useEffect(() => {
@@ -50,7 +47,6 @@ const Settings = () => {
     return () => unsubscribe();
   }, []);
 
-  // --- Logique Langue ---
   const handleLanguageSelect = async (langCode: string) => {
     setLanguage(langCode as any);
     if (currentUser) {
@@ -59,10 +55,9 @@ const Settings = () => {
     setLanguageModalVisible(false);
   };
 
-  // --- Logique Nom de Profil ---
   const openNameEditor = () => {
     if (currentUser) {
-      setTempName(currentUser.name); // Pré-remplir avec le nom actuel
+      setTempName(currentUser.name);
       setNameModalVisible(true);
     }
   };
@@ -71,17 +66,13 @@ const Settings = () => {
     if (tempName.trim().length === 0) return;
 
     if (currentUser) {
-        // 1. D'ABORD : On écrit dans le disque dur (BDD)
         const success = await updateUserName(currentUser.id, tempName);
         
         if (success) {
             console.log("Sauvegarde BDD ok, mise à jour context...");
-            
-            // 2. ENSUITE : On met à jour l'affichage local
+
             setCurrentUser({ ...currentUser, name: tempName });
 
-            // 3. ENFIN : On dit à toute l'appli de relire la BDD
-            // C'est ça qui va mettre à jour la page "Changer de profil"
             await refreshUsers(); 
             
             setNameModalVisible(false);
@@ -90,8 +81,6 @@ const Settings = () => {
         }
     }
 };
-
-  // --- Composants UI Helper ---
 
   const SectionTitle = ({ title }: { title: string }) => (
     <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold', marginTop: 20, marginBottom: 10, paddingHorizontal: 4 }}>
@@ -163,7 +152,6 @@ const Settings = () => {
 
   const Divider = () => <View style={{ height: 1, backgroundColor: colors.border, marginLeft: 64 }} />;
 
-  // --- Rendu Principal ---
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -185,9 +173,8 @@ const Settings = () => {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}>
 
-        {/* ... AUTRES SECTIONS ... */}
 
-        {/* SECTION LANGUE */}
+        {}
         <SectionTitle title={t('settings.language.sectionTitle')} />
         <SectionContainer>
           <SettingItem
@@ -198,7 +185,7 @@ const Settings = () => {
           />
         </SectionContainer>
 
-        {/* SECTION THÈME */}
+        {}
         <SectionTitle title={t('settings.theme.sectionTitle')} />
         <SectionContainer>
           <SettingRadio
@@ -223,7 +210,7 @@ const Settings = () => {
           />
         </SectionContainer>
 
-        {/* SECTION PRÉFÉRENCES */}
+        {}
         <SectionTitle title={t('settings.preferences.sectionTitle')} />
         <SectionContainer>
             <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} onPress={() => router.push('/favorite-genres')}  />
@@ -236,10 +223,10 @@ const Settings = () => {
             />
         </SectionContainer>
 
-        {/* SECTION COMPTE (MODIFIÉE) */}
+        {}
         <SectionTitle title={t('settings.account.sectionTitle')} />
         <SectionContainer>
-          {/* Item 1: Profil (Cliquer ici ouvre le modal) */}
+          {}
           <SettingItem
             icon="account"
             label={currentUser?.name || t('settings.account.profile')}
@@ -259,7 +246,7 @@ const Settings = () => {
           <SettingItem icon="shield-check" label={t('settings.account.security')}/>
         </SectionContainer>
 
-        {/* SECTION À PROPOS */}
+        {}
         <SectionTitle title={t('settings.about.sectionTitle')} />
         <SectionContainer>
             <SettingItem icon="help-circle-outline" label={t('settings.about.help')} onPress={() => router.push('/help')} />
@@ -270,14 +257,14 @@ const Settings = () => {
                 icon="information-outline" 
                 label={t('settings.about.version')} 
                 subLabel="2.2.0" 
-                showChevron={false} 
+                showChevron={false}
             />
         </SectionContainer>
 
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* --- MODAL DE SÉLECTION DE LANGUE --- */}
+      {}
       <Modal
         animationType="slide"
         transparent={true}
@@ -321,14 +308,14 @@ const Settings = () => {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* --- NOUVEAU : MODAL EDITER PROFIL --- */}
+      {}
       <Modal
         animationType="slide"
         transparent={true}
         visible={nameModalVisible}
         onRequestClose={() => setNameModalVisible(false)}
       >
-        {/* KeyboardAvoidingView permet de remonter le modal quand le clavier sort */}
+        {}
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
@@ -345,7 +332,7 @@ const Settings = () => {
                         Nom d'utilisateur
                     </Text>
 
-                    {/* Champ de texte */}
+                    {}
                     <TextInput 
                         style={[styles.input, { 
                             color: colors.text, 
@@ -359,7 +346,7 @@ const Settings = () => {
                         autoFocus={true}
                     />
 
-                    {/* Boutons d'action */}
+                    {}
                     <View style={{flexDirection: 'row', gap: 12, marginTop: 24}}>
                          <TouchableOpacity 
                             style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, flex: 1 }]} 
@@ -387,7 +374,6 @@ const Settings = () => {
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
@@ -433,7 +419,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Nouveaux styles pour l'input et boutons
   input: {
       height: 50,
       borderWidth: 1,
