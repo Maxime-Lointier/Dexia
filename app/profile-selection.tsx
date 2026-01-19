@@ -5,9 +5,11 @@ import { FontAwesome5 as Icon } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useUser } from '../src/context/UserContext';
 import { useTheme } from '../src/context/ThemeContext';
-import { Logo } from '../src/components/Logo'; 
+import { Logo } from '../src/components/Logo';
 import * as LocalAuthentication from 'expo-local-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logo } from '../src/components/Logo';
+import { t } from '../src/i18n';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = (width - 64) / 2;
@@ -25,7 +27,7 @@ const ProfileSelection = () => {
     );
 
     const handleProfileSelect = async (userId: number, isOnboardingDone: boolean) => {
-        
+
         try {
             const isBiometricEnabled = await AsyncStorage.getItem(BIOMETRIC_KEY);
 
@@ -37,12 +39,12 @@ const ProfileSelection = () => {
                 });
 
                 if (!result.success) {
-                    return; 
+                    return;
                 }
             }
 
             await switchUser(userId);
-            
+
             if (isOnboardingDone) {
                 router.replace('/homeScreen');
             } else {
@@ -51,7 +53,7 @@ const ProfileSelection = () => {
 
         } catch (error) {
             console.error("Erreur authentification :", error);
-            
+
             Alert.alert("Erreur", "Impossible de vérifier l'identité.");
         }
     };
@@ -65,10 +67,10 @@ const ProfileSelection = () => {
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                {}
+                { }
                 <View className="items-center pt-6 pb-10">
-                    {}
-                    <Logo width={60} height={60} /> 
+                    { }
+                    <Logo width={60} height={60} />
                 </View>
 
                 <View className="flex-1 px-6">
@@ -131,8 +133,29 @@ const ProfileSelection = () => {
                                 Ajouter
                             </Text>
                         </TouchableOpacity>
+                    ))}
+
+                        {/* Bouton Ajouter Profil */}
+                        <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={handleCreateProfile}
+                            className="items-center mb-6"
+                            style={{ width: ITEM_SIZE }}
+                        >
+                            <View
+                                className="w-24 h-24 rounded-full items-center justify-center mb-3 border-2 border-dashed"
+                                style={{ borderColor: colors.textSecondary }}
+                            >
+                                <Icon name="plus" size={32} color={colors.textSecondary} />
+                            </View>
+                            <Text
+                                className="text-lg font-medium text-center font-hanken"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                {t('profile.addProfile')}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-                </View>
             </ScrollView>
         </SafeAreaView>
     );
