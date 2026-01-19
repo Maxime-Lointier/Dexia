@@ -78,7 +78,7 @@ const Terms = () => {
         <TermSection 
             number="4"
             title="Limitation de responsabilité"
-            content="L'application est fournie 'telle quelle'. Nous ne garantissons pas que les recommandations seront toujours parfaites ou que le service sera ininterrompu (dépendance à l'API TMDB)."
+            content="L'application est fournie 'telle quelle'. Nous ne garantissons pas que les recommandations seront toujours parfaites ou que le service sera ininterrompu."
         />
 
         <TermSection 
@@ -91,7 +91,7 @@ const Terms = () => {
         <View style={[styles.footerBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Icon name="database" size={24} color={colors.textSecondary} style={{ marginBottom: 8 }} />
             <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 12 }}>
-                Ce produit utilise l'API TMDB mais n'est pas approuvé ou certifié par TMDB.
+                Ce produit utilise TMDB mais n'est pas approuvé ou certifié par TMDB.
             </Text>
         </View>
 
