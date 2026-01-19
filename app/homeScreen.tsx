@@ -947,9 +947,9 @@ export default function MainPage() {
                       <FontAwesome name="heart" size={18} color="#EF4444" />
                     </View>
                     <View>
-                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold' }}>Films aimés</Text>
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: 'bold' }}>{t('likedMovies.title')}</Text>
                       <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
-                        {allLikedMovies.length} films
+                      {allLikedMovies.length} {allLikedMovies.length > 1 ? t('likedMovies.moviesPlural') : t('likedMovies.movieSingular')}
                       </Text>
                     </View>
                   </View>
@@ -1012,7 +1012,7 @@ export default function MainPage() {
 
                               <View className="bg-[#EF4444]/20 px-2 py-1 rounded-md">
                                 <Text className="text-[#EF4444] text-[10px] font-bold">
-                                  Aimé
+                                  {t('likedMovies.likedBadge')}
                                 </Text>
                               </View>
                             </View>
@@ -1025,10 +1025,10 @@ export default function MainPage() {
                   <View className="items-center py-16">
                     <FontAwesome name="heart-o" size={64} color={colors.textSecondary} />
                     <Text style={{ color: colors.textSecondary, fontSize: 18, fontWeight: 'bold', marginTop: 24, marginBottom: 8, textAlign: 'center' }}>
-                      Vous n’avez aimé aucun film
+                      {t('likedMovies.emptyTitle')}
                     </Text>
                     <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 32, lineHeight: 20 }}>
-                      Likez des films depuis la découverte{"\n"}ou les recommandations
+                      {t('likedMovies.emptySub')}
                     </Text>
                     <TouchableOpacity
                       onPress={() => {
@@ -1038,7 +1038,7 @@ export default function MainPage() {
                       className="bg-[#EF4444] px-6 py-3 rounded-full"
                     >
                       <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>
-                        Découvrir des films
+                        {t('likedMovies.discoverBtn')}
                       </Text>
                     </TouchableOpacity>
                   </View>

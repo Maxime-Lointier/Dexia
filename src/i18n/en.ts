@@ -158,4 +158,13 @@ help: {
       a4: "Your lists and preferences are saved locally.",
     }
   },
+likedMovies: {
+  title: "Liked movies",
+  movieSingular: "movie",
+  moviesPlural: "movies",
+  likedBadge: "Liked",
+  emptyTitle: "You haven't liked any movies yet",
+  emptySub: "Like movies from discovery\nor recommendations",
+  discoverBtn: "Discover movies",
+},
   };
