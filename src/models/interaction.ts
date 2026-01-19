@@ -320,17 +320,20 @@ export async function getWatchlistMovieIds(userId: number): Promise<number[]> {
  * @returns Promise<number> - Nombre de films dans la watchlist
  */
 export async function getWatchlistCount(userId: number): Promise<number> {
-  // Si le cache existe, utiliser la longueur des IDs mis en cache
-  const cached = watchlistCache[userId];
-  if (cached && Date.now() - cached.lastUpdate < CACHE_DURATION) {
-    console.log(`📋 Count depuis cache: ${cached.movieIds.length}`);
-    return cached.movieIds.length;
-  }
+  // Si le cache existe, on l'utilise mais on vérifie quand même la cohérence si besoin
+  // Pour l'instant, on force la DB pour être sûr de la cohérence avec les films existants
 
   const db = await getDatabase();
   try {
-    const sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND action_type = ?';
-    console.log(`📋 Count depuis DB pour user ${userId}`);
+    // Utiliser un JOIN pour ne compter que les films qui existent vraiment dans la table movies
+    // Et DISTINCT pour éviter les doublons
+    const sql = `
+      SELECT COUNT(DISTINCT ui.movie_id) as count 
+      FROM user_interactions ui
+      JOIN movies m ON ui.movie_id = m.id
+      WHERE ui.user_id = ? AND ui.action_type = ?
+    `;
+    console.log(`📋 Count depuis DB (valid, distinct) pour user ${userId}`);
     const result = await db.getFirstAsync<{ count: number }>(sql, [userId, 'watchlist']);
     const count = result ? result.count : 0;
     console.log(`📋 Count DB résultat: ${count}`);
@@ -356,10 +359,17 @@ export async function getLikeCount(userId: number): Promise<number> {
       return 0;
     }
 
-    const sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND action_type = ?';
+    // Utiliser un JOIN pour ne compter que les films qui existent vraiment dans la table movies
+    // Et DISTINCT pour éviter de compter les doublons
+    const sql = `
+      SELECT COUNT(DISTINCT ui.movie_id) as count 
+      FROM user_interactions ui
+      JOIN movies m ON ui.movie_id = m.id
+      WHERE ui.user_id = ? AND ui.action_type = ?
+    `;
     const result = await db.getFirstAsync<{ count: number }>(sql, [userId, 'like']);
     const count = result ? result.count : 0;
-    console.log(`❤️ Count likes DB: ${count} pour user ${userId}`);
+    console.log(`❤️ Count likes DB (valid, distinct): ${count} pour user ${userId}`);
     return count;
   } catch (error: any) {
     console.error('Erreur lors du comptage des likes:', error);
@@ -497,6 +507,70 @@ export async function cleanupInteractionsIfNeeded(userId: number): Promise<void>
   }
 }
 
+/**
+ * Nettoie les interactions orphelines (films qui n'existent plus dans la base)
+ * @returns Promise<void>
+ */
+export async function cleanupOrphanedInteractions(): Promise<void> {
+  try {
+    const db = await getDatabase();
+    console.log('🧹 Vérification des interactions orphelines...');
+
+    // Compter avant nettoyage
+    const countResult = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM user_interactions WHERE movie_id NOT IN (SELECT id FROM movies)'
+    );
+    const count = countResult ? countResult.count : 0;
+
+    if (count > 0) {
+      console.log(`🧹 Suppression de ${count} interactions orphelines...`);
+      await db.runAsync('DELETE FROM user_interactions WHERE movie_id NOT IN (SELECT id FROM movies)');
+      console.log('✅ Interactions orphelines supprimées');
+    } else {
+      console.log('✅ Aucune interaction orpheline trouvée');
+    }
+  } catch (error) {
+    console.error('Erreur lors du nettoyage des interactions orphelines:', error);
+  }
+}
+
+/**
+ * Nettoie les doublons dans les interactions (même user, même film, même action)
+ * Ne garde que l'interaction la plus récente
+ */
+export async function cleanupDuplicateInteractions(): Promise<void> {
+  try {
+    const db = await getDatabase();
+    console.log('🧹 Vérification des doublons interactions...');
+
+    // Identifier les doublons
+    // On groupe par user_id, movie_id, action_type et on compte
+    // Si count > 1, c'est qu'il y a des doublons
+
+    // Cette requête supprime tous les doublons sauf le plus récent (MAX(id))
+    const sql = `
+      DELETE FROM user_interactions 
+      WHERE id NOT IN (
+        SELECT MAX(id) 
+        FROM user_interactions 
+        GROUP BY user_id, movie_id, action_type
+      )
+    `;
+
+    // On ne peut pas savoir combien ont été supprimés facilement avec runAsync sans info retournée
+    // mais on lance le nettoyage
+    await db.runAsync(sql);
+    console.log('✅ Doublons interactions nettoyés');
+
+  } catch (error) {
+    console.error('Erreur lors du nettoyage des doublons:', error);
+  }
+}
+
 // Initialiser la table au chargement du module
 ensureInteractionTable();
+// Nettoyer les interactions orphelines au démarrage
+cleanupOrphanedInteractions();
+// Nettoyer les doublons
+cleanupDuplicateInteractions();
 
