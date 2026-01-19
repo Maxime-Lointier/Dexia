@@ -214,6 +214,13 @@ const Settings = () => {
         <SectionTitle title={t('settings.preferences.sectionTitle')} />
         <SectionContainer>
             <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} onPress={() => router.push('/favorite-genres')}  />
+            <Divider />
+            <SettingSwitch 
+                icon="bell-outline" 
+                label={t('settings.preferences.notifications')} 
+                value={notifications}
+                onValueChange={setNotifications}
+            />
         </SectionContainer>
 
         {}
@@ -233,6 +240,8 @@ const Settings = () => {
             subLabel="Utiliser un autre compte"
             onPress={() => router.push('/profile-selection')}
           />
+          <Divider />
+          <SettingItem icon="lock" label={t('settings.account.privacy')} onPress={() => router.push('/privacy')} />
         </SectionContainer>
 
         {}

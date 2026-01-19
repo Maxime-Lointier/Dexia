@@ -30,7 +30,7 @@ const FAQ_DATA = [
   },
   {
     question: "Où sont mes films sauvegardés ?",
-    answer: "Vous pouvez retrouver tous vos films aimés et votre watchlist dans l'onglet 'Ma Liste' situé dans onglet Acceuil."
+    answer: "Vous pouvez retrouver tous vos films aimés et votre watchlist dans l'onglet 'A voir plus tard' situé dans onglet Acceuil."
   },
   {
     question: "Comment changer mes genres préférés ?",
@@ -48,7 +48,7 @@ const HelpSupport = () => {
   const handleContactSupport = () => {
     const subject = "Support Dexia App";
     const body = "Bonjour, j'ai besoin d'aide concernant...";
-    const mailtoUrl = `mailto:vuong.denis.p@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoUrl = `mailto:toad.it.ai@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     Linking.openURL(mailtoUrl).catch((err) => console.error('Erreur lors de l\'ouverture du mail', err));
   };
