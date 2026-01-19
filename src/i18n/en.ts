@@ -137,4 +137,25 @@
   errorClear: "Could not clear history.",
   errorDelete: "Could not delete profile.",
 },
+help: {
+    title: "Help & Support",
+    heroTitle: "How can we help you?",
+    heroSub: "Find answers to frequently asked questions or contact us directly.",
+    faqSection: "Frequently Asked Questions",
+    contactSection: "Contact us",
+    contactSub: "Can't find the answer? Our team is here to help.",
+    sendEmail: "Send an email",
+    emailSubject: "Support Dexia App",
+    emailBody: "Hello, I need help regarding...",
+    faq: {
+      q1: "How does swiping work?",
+      a1: "Swipe right to like a movie, left to skip (Dislike).",
+      q2: "Where are my saved movies?",
+      a2: "You can find all your liked movies and your watchlist in the 'Watch Later' section located in the Home tab.",
+      q3: "How to change my favorite genres?",
+      a3: "Go to Settings > Preferences > Favorite genres. You can select or deselect categories that interest you.",
+      q4: "Does the app work offline?",
+      a4: "Your lists and preferences are saved locally.",
+    }
+  },
   };

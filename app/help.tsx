@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { t } from '../src/i18n';
 import { 
   View, 
   Text, 
@@ -23,39 +24,24 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const FAQ_DATA = [
-  {
-    question: "Comment fonctionne le swipe ?",
-    answer: "Glissez vers la droite pour aimer un film (Like), vers la gauche pour passer (Dislike)."
-  },
-  {
-    question: "Où sont mes films sauvegardés ?",
-    answer: "Vous pouvez retrouver tous vos films aimés et votre watchlist dans l'onglet 'A voir plus tard' situé dans onglet Acceuil."
-  },
-  {
-    question: "Comment changer mes genres préférés ?",
-    answer: "Allez dans Paramètres > Préférences > Genres préférés. Vous pourrez y sélectionner ou désélectionner les catégories qui vous intéressent."
-  },
-  {
-    question: "L'application fonctionne-t-elle hors ligne ?",
-    answer: "Vos listes et préférences sont sauvegardées localement."
-  },
+// Fonction pour récupérer les données de la FAQ traduites
+const getFaqData = () => [
+  { question: t('help.faq.q1'), answer: t('help.faq.a1') },
+  { question: t('help.faq.q2'), answer: t('help.faq.a2') },
+  { question: t('help.faq.q3'), answer: t('help.faq.a3') },
+  { question: t('help.faq.q4'), answer: t('help.faq.a4') }, 
 ];
 
 const HelpSupport = () => {
   const { colors, isDark } = useTheme();
+  const faqData = getFaqData();
 
   const handleContactSupport = () => {
-    const subject = "Support Dexia App";
-    const body = "Bonjour, j'ai besoin d'aide concernant...";
+    const subject = t('help.emailSubject');
+    const body = t('help.emailBody');
     const mailtoUrl = `mailto:toad.it.ai@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     Linking.openURL(mailtoUrl).catch((err) => console.error('Erreur lors de l\'ouverture du mail', err));
-  };
-
-
-  const openLink = (url: string) => {
-    Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
   };
 
   const FAQItem = ({ item }: { item: any }) => {
@@ -92,7 +78,7 @@ const HelpSupport = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -100,36 +86,36 @@ const HelpSupport = () => {
         >
           <Icon name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Aide & Support</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('help.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         
-        {}
+        {/* Hero Section */}
         <View style={styles.heroSection}>
             <View style={[styles.heroIconCircle, { backgroundColor: 'rgba(138, 58, 255, 0.1)' }]}>
                 <Icon name="lifebuoy" size={48} color="#8A3AFF" />
             </View>
-            <Text style={[styles.heroTitle, { color: colors.text }]}>Comment pouvons-nous vous aider ?</Text>
+            <Text style={[styles.heroTitle, { color: colors.text }]}>{t('help.heroTitle')}</Text>
             <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
-                Trouvez des réponses aux questions fréquentes ou contactez-nous directement.
+                {t('help.heroSub')}
             </Text>
         </View>
 
-        {}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Questions Fréquentes</Text>
+        {/* FAQ Section */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('help.faqSection')}</Text>
         <View style={styles.faqList}>
-            {FAQ_DATA.map((item, index) => (
+            {faqData.map((item, index) => (
                 <FAQItem key={index} item={item} />
             ))}
         </View>
 
-        {}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Nous contacter</Text>
+        {/* Contact Section */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('help.contactSection')}</Text>
         <View style={[styles.contactCard, { backgroundColor: colors.card }]}>
             <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
-                Vous ne trouvez pas la réponse ? Notre équipe est là pour vous aider.
+                {t('help.contactSub')}
             </Text>
             
             <TouchableOpacity 
@@ -137,9 +123,8 @@ const HelpSupport = () => {
                 onPress={handleContactSupport}
             >
                 <Icon name="email-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Envoyer un e-mail</Text>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{t('help.sendEmail')}</Text>
             </TouchableOpacity>
-
         </View>
 
       </ScrollView>
@@ -224,17 +209,6 @@ const styles = StyleSheet.create({
       paddingVertical: 14,
       borderRadius: 12,
       marginBottom: 20,
-  },
-  socialRow: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      gap: 20,
-      paddingTop: 10,
-      borderTopWidth: 1,
-      borderTopColor: 'rgba(255,255,255,0.1)',
-  },
-  socialBtn: {
-      padding: 8,
   }
 });
 
