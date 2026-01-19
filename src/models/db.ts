@@ -3,6 +3,7 @@ import { ensureDatabasePresent } from '../initDatabase';
 
 let db: SQLite.SQLiteDatabase | null = null;
 let migrationDone = false;
+let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 /**
  * Migrations de la base de données
@@ -87,33 +88,43 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     return db;
   }
 
-  // S'assurer que la base de données est présente
-  await ensureDatabasePresent();
+  // Si une initialisation est déjà en cours, attendre sa complétion
+  if (initPromise) {
+    return initPromise;
+  }
 
-  // Pour expo-sqlite, on utilise juste le nom de la base
-  // expo-sqlite cherche dans documentDirectory par défaut
-  const dbName = 'database.db';
-  db = await SQLite.openDatabaseAsync(dbName);
-
-  // Appliquer les migrations si nécessaire (une seule fois)
-  if (!migrationDone) {
-    migrationDone = true;
+  // Verrou d'initialisation pour éviter la race condition
+  initPromise = (async () => {
     try {
-      await migrateDatabase(db);
-    } catch (error) {
-      console.error('Erreur lors de la migration:', error);
-      migrationDone = false; // Réessayer la prochaine fois en cas d'erreur
+      await ensureDatabasePresent();
+
+      const dbName = 'database.db';
+      db = await SQLite.openDatabaseAsync(dbName);
+
+      if (!migrationDone) {
+        migrationDone = true;
+        try {
+          await migrateDatabase(db);
+        } catch (error) {
+          console.error('Erreur lors de la migration:', error);
+          migrationDone = false;
+        }
+      }
+
+      try {
+        const genresCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM genres');
+        const moviesCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM movies');
+        console.log(`Base ouverte - Genres: ${genresCount?.count || 0}, Films: ${moviesCount?.count || 0}`);
+      } catch (e) {
+        console.error('Erreur lors de la vérification de la base:', e);
+      }
+
+      return db;
+    } finally {
+      initPromise = null;
     }
-  }
+  })();
 
-  try {
-    const genresCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM genres');
-    const moviesCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM movies');
-    console.log(`Base ouverte - Genres: ${genresCount?.count || 0}, Films: ${moviesCount?.count || 0}`);
-  } catch (e) {
-    console.error('Erreur lors de la vérification de la base:', e);
-  }
-
-  return db;
+  return initPromise;
 }
 

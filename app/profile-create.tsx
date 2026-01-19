@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUser } from '../src/context/UserContext';
@@ -9,12 +9,24 @@ import { t } from '../src/i18n';
 
 const ProfileCreate = () => {
     const [name, setName] = useState('');
-    const { addUser } = useUser();
+    const { addUser, users } = useUser();
     const { colors, isDark } = useTheme();
     const [loading, setLoading] = useState(false);
 
     const handleCreate = async () => {
         if (!name.trim()) return;
+
+        // Validation doublon (case insensitive)
+        const normalizedName = name.trim().toLowerCase();
+        const exists = users.some(u => u.name.toLowerCase() === normalizedName);
+
+        if (exists) {
+            Alert.alert(
+                "Nom indisponible",
+                "Ce nom de profil est déjà utilisé. Veuillez en choisir un autre."
+            );
+            return;
+        }
 
         setLoading(true);
         try {

@@ -268,3 +268,32 @@ export async function getMoviesByIds(movieIds: number[]): Promise<Movie[]> {
   }
 }
 
+/**
+ * Récupère les films correspondant à une liste de genres (pour l'Onboarding)
+ * Trie par popularité pour s'assurer d'avoir les "blockbusters" de ces genres.
+ */
+export async function getMoviesByGenres(genreIds: number[], limit: number = 20): Promise<Movie[]> {
+  if (!genreIds || genreIds.length === 0) {
+    return [];
+  }
+
+  const db = await getDatabase();
+  
+  const placeholders = genreIds.map(() => '?').join(',');
+
+  // On filtre pour garder les films qui ont AU MOINS un des genres choisis
+  
+  const sql = `
+    SELECT DISTINCT movies.* FROM movies 
+    JOIN movie_genres ON movies.id = movie_genres.movie_id 
+    WHERE movie_genres.genre_id IN (${placeholders}) 
+    ORDER BY movies.popularity DESC 
+    LIMIT ?
+  `;
+
+  // On passe les IDs et la limite en paramètres
+  const result = await db.getAllAsync<Movie>(sql, [...genreIds, limit]);
+  
+  return result;
+}
+
