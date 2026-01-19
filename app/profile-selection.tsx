@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useUser } from '../src/context/UserContext';
 import { useTheme } from '../src/context/ThemeContext';
 import { Logo } from '../src/components/Logo';
+import { t } from '../src/i18n';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = (width - 64) / 2; // 2 colonnes avec marge
@@ -45,7 +46,7 @@ const ProfileSelection = () => {
                     className="text-2xl font-bold text-center mb-10 font-hanken"
                     style={{ color: colors.text }}
                 >
-                    Qui swipe ?
+                    {t('profile.selectionTitle')}
                 </Text>
 
                 <View className="flex-row flex-wrap justify-center gap-6">
@@ -99,7 +100,7 @@ const ProfileSelection = () => {
                             className="text-lg font-medium text-center font-hanken"
                             style={{ color: colors.textSecondary }}
                         >
-                            Ajouter
+                            {t('profile.addProfile')}
                         </Text>
                     </TouchableOpacity>
                 </View>

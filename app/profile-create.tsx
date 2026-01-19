@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useUser } from '../src/context/UserContext';
 import { useTheme } from '../src/context/ThemeContext';
 import { FontAwesome5 as Icon } from '@expo/vector-icons';
+import { t } from '../src/i18n';
 
 const ProfileCreate = () => {
     const [name, setName] = useState('');
@@ -47,13 +48,13 @@ const ProfileCreate = () => {
                         className="text-3xl font-bold text-center mb-2 font-hanken"
                         style={{ color: colors.text }}
                     >
-                        Créer un profil
+                        {t('createProfile.title')}
                     </Text>
                     <Text
                         className="text-base text-center font-hanken"
                         style={{ color: colors.textSecondary }}
                     >
-                        Donnez un nom à votre espace.
+                        {t('createProfile.subtitle')}
                     </Text>
                 </View>
 
@@ -68,7 +69,7 @@ const ProfileCreate = () => {
                 <TextInput
                     value={name}
                     onChangeText={setName}
-                    placeholder="Prénom"
+                    placeholder={t('createProfile.placeholder')}
                     placeholderTextColor={colors.textSecondary}
                     className="w-full p-4 rounded-xl text-lg mb-8 font-hanken border"
                     style={{
@@ -93,7 +94,7 @@ const ProfileCreate = () => {
                     }}
                 >
                     <Text className="text-white text-lg font-bold font-hanken">
-                        {loading ? 'Création...' : 'Continuer'}
+                        {loading ? t('createProfile.creating') : t('createProfile.button')}
                     </Text>
                 </TouchableOpacity>
 

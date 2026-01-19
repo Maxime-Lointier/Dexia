@@ -13,6 +13,7 @@ import {
 
 interface UserContextType {
     currentUser: UserProfile | null;
+    setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
     users: UserProfile[];
     isLoading: boolean;
     switchUser: (userId: number) => Promise<void>;
@@ -32,7 +33,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Charger les utilisateurs
     useEffect(() => {
         initSession();
     }, []);
@@ -40,7 +40,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const initSession = async () => {
         setIsLoading(true);
         try {
-            // Charger tous les profils
             const allUsers = await getAllUsers();
             setUsers(allUsers);
 
@@ -62,7 +61,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const switchUser = async (userId: number) => {
         setIsLoading(true);
         try {
-            // Recharger la liste
             const allUsers = await getAllUsers();
             const user = allUsers.find(u => u.id === userId);
 
@@ -94,7 +92,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         try {
             const success = await deleteUser(userId);
             if (success) {
-                // Si on supprime l'user courant, logout
                 if (currentUser?.id === userId) {
                     logout();
                 }
@@ -114,13 +111,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const resetApp = async () => {
         try {
-            // 1. Reset DB
             await resetApplicationData();
 
-            // 2. Clear Local Storage
             await AsyncStorage.removeItem(LAST_USER_KEY);
 
-            // 3. Reset State
             setCurrentUser(null);
             setUsers([]);
 
@@ -131,7 +125,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <UserContext.Provider value={{ currentUser, users, isLoading, switchUser, addUser, removeUser, logout, refreshUsers, resetApp }}>
+        <UserContext.Provider value={{ currentUser,setCurrentUser, users, isLoading, switchUser, addUser, removeUser, logout, refreshUsers, resetApp }}>
             {children}
         </UserContext.Provider>
     );
