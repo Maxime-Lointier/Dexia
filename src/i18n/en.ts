@@ -87,4 +87,19 @@ export default {
       creating: "Creating...",
     },
 
+    home: {
+    stats: {
+      liked: "Liked Movies",
+      watchlist: "Watchlist",
+      activeDays: "Active Days",
+    },
+    watchlist: {
+      title: "Watch later",
+      seeAll: "See all",
+      emptyTitle: "Your list is empty",
+      emptySub: "Add movies from discovery or recommendations",
+      discoverBtn: "Discover movies",
+      notAvailable: "N/A",
+    },
+  },
 };

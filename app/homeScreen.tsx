@@ -9,6 +9,7 @@ import { Logo } from '../src/components/Logo';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
 import { useTheme } from '../src/context/ThemeContext';
 import { useUser } from '../src/context/UserContext';
+import { t } from '../src/i18n';
 
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
@@ -416,7 +417,7 @@ export default function MainPage() {
                 <FontAwesome name="heart" size={18} color="#8A3AFF" />
               </View>
               <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>{likeCount}</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>Films aimés</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>{t('home.stats.liked')}</Text>
             </TouchableOpacity>
 
             {/* Carte 2 : À voir */}
@@ -429,7 +430,7 @@ export default function MainPage() {
                 <FontAwesome name="bookmark" size={18} color="#F59E0B" />
               </View>
               <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>{watchlistCount}</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>À voir</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>{t('home.stats.watchlist')}</Text>
             </TouchableOpacity>
 
             {/* Carte 3 : Jours actif */}
@@ -438,7 +439,7 @@ export default function MainPage() {
                 <FontAwesome5 name="fire" size={18} color="#22C55E" />
               </View>
               <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>12</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>Jours actif</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>{t('home.stats.activeDays')}</Text>
             </View>
           </View>
         </View>
@@ -446,9 +447,9 @@ export default function MainPage() {
         {/* SECTION À VOIR PLUS TARD (Scroll Horizontal) */}
         <View style={{ marginBottom: 32 }}>
           <View style={{ paddingHorizontal: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>À voir plus tard</Text>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>{t('home.watchlist.title')}</Text>
             <TouchableOpacity onPress={openWatchlistModal}>
-              <Text style={{ color: '#8A3AFF', fontSize: 12, fontWeight: 'bold' }}>Tout voir</Text>
+              <Text style={{ color: '#8A3AFF', fontSize: 12, fontWeight: 'bold' }}>{t('home.watchlist.seeAll')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -485,16 +486,16 @@ export default function MainPage() {
             <View className="items-center py-8 px-6">
               <FontAwesome name="bookmark-o" size={48} color={colors.textSecondary} />
               <Text className="text-textSecondary text-lg font-bold mt-4 mb-2 text-center">
-                Votre liste est vide
+                {t('home.watchlist.emptyTitle')}
               </Text>
               <Text className="text-textSecondary text-sm text-center mb-6 leading-5">
-                Ajoutez des films depuis la découverte ou les recommandations
+                {t('home.watchlist.emptySub')}
               </Text>
               <TouchableOpacity
                 onPress={() => router.push('/swipe')}
                 className="bg-primary px-6 py-3 rounded-full"
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Découvrir des films</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{t('home.watchlist.discoverBtn')}</Text>
               </TouchableOpacity>
             </View>
           )}

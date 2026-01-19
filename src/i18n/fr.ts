@@ -83,5 +83,20 @@ createProfile: {
       placeholder: "Prénom",
       button: "Continuer",
       creating: "Création...",
-},    
+},
+home: {
+    stats: {
+      liked: "Films aimés",
+      watchlist: "À voir",
+      activeDays: "Jours actif",
+    },
+    watchlist: {
+      title: "À voir plus tard",
+      seeAll: "Tout voir",
+      emptyTitle: "Votre liste est vide",
+      emptySub: "Ajoutez des films depuis la découverte ou les recommandations",
+      discoverBtn: "Découvrir des films",
+      notAvailable: "N/A",
+    },
+  },    
 };
