@@ -1,24 +1,67 @@
 # Dexia - Application de Recommandation de Films
 
-Application mobile de recommandation de films développée avec React Native et Expo, utilisant un système de recommandation personnalisé basé sur les préférences utilisateur et un algorithme de matching intelligent.
+Dexia est une application mobile de recommandation de films développée avec React Native et Expo, utilisant un système de recommandation personnalisé basé sur les préférences utilisateur et un algorithme de matching intelligent.
 
-## 📋 Table des matières
+## Fonctionnalités
 
-- [Présentation](#-présentation)
-- [Technologies utilisées](#-technologies-utilisées)
-- [Architecture de l'application](#-architecture-de-lapplication)
-- [Base de données](#-base-de-données)
-- [Système de recommandation](#-système-de-recommandation)
-- [Algorithme de matching](#-algorithme-de-matching)
-- [Installation](#-installation)
-- [Utilisation](#-utilisation)
-- [Tests et développement](#-tests-et-développement)
+### Profil et Onboarding
+- **Création de profil** : Commencez par créer votre profil utilisateur unique.
+- **Onboarding personnalisé** : Sélectionnez vos genres préférés (action, comédie, drame, etc.) pour calibrer immédiatement les recommandations.
 
-## 🎬 Présentation
+### Paramètres
+- **Changement de langue** : L'application s'adapte automatiquement à la langue de votre appareil, mais vous pouvez aussi changer la langue manuellement.
+- **Thème** : Choisissez entre le mode clair, le mode sombre, ou laissez l'application suivre les paramètres système.
+- **Préférence** : Visualisez et gérez les genres sélectionnés comme favoris.
+- **Compte** : Gérez votre profil utilisateur.
+- **Confidentialité** : Options pour effacer l'historique ou supprimer le profil.
+- **Aide et support** : Réponses aux questions fréquentes sur l'utilisation.
 
-Dexia est une application mobile qui permet aux utilisateurs de découvrir des films selon leurs préférences. L'application propose une interface de type "swipe" (inspirée de Tinder) où l'utilisateur peut liker ou disliker des films. Le système apprend progressivement les préférences de l'utilisateur pour proposer des recommandations de plus en plus pertinentes.
+### Page d'Accueil (Main Page)
+- **Films aimés** : Historique des films likés avec descriptions et infos.
+- **À voir (Watchlist)** : Liste de films mis de côté. Possibilité de liker une fois vu.
+- **Recommandations personnalisées** : Mises à jour après chaque swipe pour s'affiner constamment.
+- **Statistiques** : Diagramme (Camembert) des genres préférés basé sur les likes.
+- **Prêt à découvrir** : Accès rapide à l'interface de swipe.
 
-L'application fonctionne entièrement en local avec une base de données SQLite, ce qui garantit la confidentialité des données et permet une utilisation hors ligne.
+### Interface de Swipe
+- **Interactions** : Like (droite), Dislike (gauche), Retour (undo), À voir.
+- **Match Score** : Indication "TOP" si la compatibilité dépasse 75%.
+- **Navigation** : Retour rapide à l'accueil.
+
+## Installation
+
+### Prérequis
+- Node.js installé.
+- Expo Go sur votre téléphone.
+
+### Mac OS
+1. Ouvrez votre terminal.
+2. Clonez le projet : `git clone [URL_DU_REPO]`
+3. Entrez dans le dossier : `cd Dexia`
+4. Installez les dépendances : `npm install`
+5. Lancez le serveur : `npx expo start`
+
+### Windows
+1. Ouvrez PowerShell ou l'invite de commande.
+2. Clonez le projet : `git clone [URL_DU_REPO]`
+3. Entrez dans le dossier : `cd Dexia`
+4. Installez les dépendances : `npm install`
+5. Lancez le serveur : `npx expo start`
+
+### Linux
+1. Ouvrez votre terminal.
+2. Clonez le projet : `git clone [URL_DU_REPO]`
+3. Entrez dans le dossier : `cd Dexia`
+4. Installez les dépendances : `npm install`
+5. Lancez le serveur : `npx expo start`
+
+### Utilisation avec Expo Go
+1. Lancez `npx expo start` sur votre ordinateur.
+2. Scannez le QR code affiché dans le terminal avec l'app Expo Go sur votre téléphone (Android) ou l'appareil photo (iOS).
+
+---
+
+## Documentation Technique
 
 ## 🛠 Technologies utilisées
 
@@ -177,74 +220,3 @@ keywordMatch = matchingKeywords.length / mots_clés_préférés.length
 Le score final est normalisé entre 20% et 98% pour éviter les scores trop extrêmes :
 - Minimum : 20% (même sans correspondance)
 - Maximum : 98% (pour laisser de la marge)
-
-## 🚀 Installation
-
-### Prérequis
-
-- Node.js (version 18 ou supérieure)
-- npm ou yarn
-- Expo CLI installé globalement : `npm install -g expo-cli`
-- Un émulateur iOS/Android ou l'application Expo Go sur votre téléphone
-
-### Étapes d'installation
-
-1. **Cloner le dépôt** (si applicable)
-   ```bash
-   git clone https://github.com/Maxime-Lointier/Dexia
-   cd Dexia
-   ```
-
-2. **Installer les dépendances**
-   ```bash
-   npm install
-   ```
-
-3. **Vérifier la base de données**
-   La base de données SQLite doit être présente dans `assets/database.db`. Si elle n'existe pas, l'application la créera automatiquement au premier lancement.
-
-4. **Lancer l'application**
-   ```bash
-   npm start
-   # ou pour un démarrage propre (cache vidé)
-   npm run start:clean
-   ```
-
-5. **Ouvrir sur un appareil**
-   - Scanner le QR code avec Expo Go (iOS/Android)
-   - Ou appuyer sur `i` pour iOS Simulator
-   - Ou appuyer sur `a` pour Android Emulator
-
-## 📱 Utilisation
-
-### Premier lancement
-
-1. **Écran de bienvenue** : Présentation de l'application
-2. **Onboarding** :
-   - Sélection de 3 à 5 genres préférés
-   - Sélection de quelques films de référence parmi les mieux notés
-   - Les préférences initiales sont enregistrées
-
-### Utilisation quotidienne
-
-1. **Page d'accueil** : Consulter les recommandations personnalisées
-2. **Swipe** : 
-   - Swiper vers la droite pour liker un film
-   - Swiper vers la gauche pour disliker
-   - Appuyer sur le film pour voir les détails (casting, synopsis)
-   - Ajouter à la watchlist depuis la modal de détails
-3. **Paramètres** : Accéder aux paramètres depuis l'icône profil
-
-### Fonctionnalités
-
-- **Recommandations personnalisées** : Mises à jour selon vos interactions
-- **Watchlist** : Liste de films à voir plus tard
-- **Détection automatique** : Le système apprend vos préférences au fil du temps
-- **Mode hors ligne** : Toutes les données sont stockées localement
-
-## 🧪 Tests et développement
-
-### Zone de développement
-
-Dans la page d'accueil, une section "Zone de Développement" permet de :
-- **Reset de l'onboarding** : Réinitialiser l'onboarding pour tester le flux complet
