@@ -26,6 +26,9 @@
         manageProfile: "Manage my profile",
         switchProfile: "Switch profile",
         useOtherAccount: "Use another account",
+        Username: "Username",
+        Delete: "Delete",
+        Save: "Save"
       },
       about: {
         sectionTitle: "About",
@@ -94,6 +97,7 @@
       recommendations: {
         title: "Personalized recommendations",
         match: "match",
+        topMatch: "TOP FOR YOU",
         none: "No recommendations for now.",
       },
       favoriteGenres: "Your favorite genres",

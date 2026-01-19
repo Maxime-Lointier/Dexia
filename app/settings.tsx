@@ -230,8 +230,8 @@ const Settings = () => {
           <Divider />
           <SettingItem
             icon="account-switch"
-            label="Changer de profil"
-            subLabel="Utiliser un autre compte"
+            label={t('settings.account.switchProfile')}
+            subLabel={t('settings.account.useOtherAccount')}
             onPress={() => router.push('/profile-selection')}
           />
           <Divider />
@@ -316,10 +316,10 @@ const Settings = () => {
                 <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
                   <View style={styles.dragIndicator} />
 
-                  <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier mon profil</Text>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}></Text>
 
                   <Text style={{ color: colors.textSecondary, marginBottom: 8, fontSize: 14 }}>
-                    Nom d'utilisateur
+                    {t('settings.account.Username')}
                   </Text>
 
                   { }
@@ -342,14 +342,14 @@ const Settings = () => {
                       style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, flex: 1 }]}
                       onPress={() => setNameModalVisible(false)}
                     >
-                      <Text style={{ color: colors.text, fontWeight: '600' }}>Annuler</Text>
+                      <Text style={{ color: colors.text, fontWeight: '600' }}>{t('settings.account.Delete')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={[styles.button, { backgroundColor: '#8A3AFF', flex: 1 }]}
                       onPress={saveName}
                     >
-                      <Text style={{ color: '#fff', fontWeight: '600' }}>Enregistrer</Text>
+                      <Text style={{ color: '#fff', fontWeight: '600' }}>{t('settings.account.Save')}</Text>
                     </TouchableOpacity>
                   </View>
 
