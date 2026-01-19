@@ -3,10 +3,11 @@ import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 as Icon } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
+import { useUser } from '../src/context/UserContext';
+import { useTheme } from '../src/context/ThemeContext';
+import { t, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
 import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
-
-import { updateUserPreferences, getOrCreateUser, setOnboardingDone } from '../src/models/user';
+import { updateUserPreferences, setOnboardingDone } from '../src/models/user';
 
 // Associe l'ID du genre à une couleur et une icône
 const GENRE_STYLES: Record<number, { icon: string; color: string; iconColor: string }> = {
@@ -37,13 +38,18 @@ const Onboarding = () => {
   //States pour données
   const [genres, setGenres] = useState<Genre[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [locale, setLocale] = useState(getCurrentLanguage());
   //States pour l'UI
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isDark, colors } = useTheme();
+  const { currentUser, refreshUsers } = useUser();
 
   // Charger les données au montage du composant
   useEffect(() => {
     loadData();
+    const unsubscribe = subscribeLanguageChange((newLang) => setLocale(newLang));
+    return () => unsubscribe(); // Nettoyage quand on quitte la page
   }, []);
 
   // Fonction pour charger les données
@@ -80,40 +86,34 @@ const Onboarding = () => {
   // Bouton "Continuer" activé seulement si 3 genres sont choisis
   const isContinueEnabled = selectedGenres.length >= 3;
 
+
   return (
-    <SafeAreaView className="flex-1 bg-dark">
-      <StatusBar barStyle="light-content" backgroundColor="#0F0F1E" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0F0F1E" : "#FFFFFF"} />
 
       {/* HEADER */}
-      {/* Top Bar */}
       <View className="px-6 pt-2 pb-4">
-
-        {/* Titres */}
         <View className="items-center mb-4">
-          <Text className="text-white text-3xl font-bold mb-3 text-center font-hanken">Vos genres préférés</Text>
-          <Text className="text-gray-400 text-base text-center">
-            Sélectionnez au moins 3 genres ({selectedGenres.length}/3)
+          {/* Titre traduit */}
+          <Text className="text-3xl font-bold mb-3 text-center font-hanken" style={{ color: colors.text }}>
+            {t('onboarding.title')}
+          </Text>
+          <Text className="text-base text-center" style={{ color: colors.textSecondary }}>
+            {t('onboarding.subtitle')} ({selectedGenres.length}/3)
           </Text>
         </View>
       </View>
 
-      {/* CONTENU : si chargement, on affiche un loader, sinon on affiche la grille des genres*/}
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#8A3AFF" />
-          <Text className="text-gray-400 mt-4">Chargement...</Text>
+          <Text className="mt-4" style={{ color: colors.textSecondary }}>{t('onboarding.loading')}</Text>
         </View>
       ) : (
-        <ScrollView
-          className="px-6"
-          contentContainerStyle={{ paddingBottom: 140 }}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView className="px-6" contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
           <View className="flex-row flex-wrap justify-between">
             {genres.map((genre) => {
-              // On vérifie si le genre est sélectionné
               const isSelected = selectedGenres.includes(genre.id);
-              // On cherche le style correspondant à l'ID
               const style = GENRE_STYLES[genre.id] || DEFAULT_STYLE;
 
               return (
@@ -123,18 +123,16 @@ const Onboarding = () => {
                   activeOpacity={0.8}
                   className={`w-[48%] h-32 mb-3 rounded-2xl p-4 justify-between overflow-hidden relative ${style.color}`}
                 >
-                  {/* Overlay sombre si sélectionné */}
-                  {isSelected && (
-                    <View className="absolute inset-0 bg-black/40 z-0" />
-                  )}
+                  {isSelected && <View className="absolute inset-0 bg-black/40 z-0" />}
 
                   <View className="z-10 relative">
                     <Icon name={style.icon} size={24} color="white" style={{ marginBottom: 8 }} />
-                    {/* Attention : ton modèle renvoie 'name' ou 'label' ? adapte ici */}
-                    <Text className="text-white font-semibold text-lg">{genre.name}</Text>
+                    {/* TRAd du genre: On utilise l'ID pour chercher le nom dans le dictionnaire */}
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 18 }}>
+                      {t(`onboarding.genres.${genre.id}`)}
+                    </Text>
                   </View>
 
-                  {/* Icone Check */}
                   {isSelected && (
                     <View className="absolute top-3 right-3 w-6 h-6 bg-white rounded-full items-center justify-center z-20">
                       <Icon name="check" size={12} style={{ color: 'black' }} />
@@ -147,36 +145,38 @@ const Onboarding = () => {
         </ScrollView>
       )}
 
-      {/* FOOTER : BOUTON CONTINUER */}
-      <View className="absolute bottom-0 left-0 right-0 p-6 bg-dark/95 border-t border-white/5">
+      {/* FOOTER */}
+      <View
+        className="absolute bottom-0 left-0 right-0 p-6 border-t border-white/5"
+        style={{ backgroundColor: colors.background }} // Fallback simple opaque, ou on pourrait gérer l'alpha manuellement
+      >
         <TouchableOpacity
           disabled={!isContinueEnabled}
           onPress={async () => {
             try {
-              console.log('Genres choisis:', selectedGenres);
-              // Obtenir ou créer le profil utilisateur unique de l'application
-              const userId = await getOrCreateUser();
-              await updateUserPreferences(userId, { genres: selectedGenres, keywords: [] });
-
-              // 🎯 MARQUER L'ONBOARDING COMME TERMINÉ
-              await setOnboardingDone(userId, true);
-              console.log('✅ Onboarding marqué comme terminé');
-
-              router.replace('/homeScreen'); // On va vers la page d'accueil
+              if (!currentUser) return;
+              await updateUserPreferences(currentUser.id, {
+                genres: selectedGenres,
+                keywords: [],
+                actors: []
+              });
+              await setOnboardingDone(currentUser.id, true); // true = done
+              await refreshUsers(); // Update context with new onboarding status
+              router.replace('/homeScreen');
             } catch (error) {
-              console.error('Erreur lors de la sauvegarde des préférences:', error);
+              console.error(error);
             }
           }}
-          className={`w-full py-4 rounded-full items-center justify-center ${isContinueEnabled ? 'bg-primary' : 'bg-gray-700'
-            }`}
+          className={`w-full py-4 rounded-full items-center justify-center ${isContinueEnabled ? 'bg-primary' : 'bg-gray-700'}`}
         >
-          <Text className={`font-semibold text-lg ${isContinueEnabled ? 'text-white' : 'text-gray-500'
-            }`}>
-            Continuer
+          <Text
+            className="font-semibold text-lg"
+            style={{ color: isContinueEnabled ? 'white' : colors.textSecondary }}
+          >
+            {t('onboarding.continue')}
           </Text>
         </TouchableOpacity>
       </View>
-
     </SafeAreaView>
   );
 };
