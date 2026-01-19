@@ -814,5 +814,30 @@ export async function getPreferredActors(userId: number): Promise<number[]> {
   }
 }
 
+/**
+ * Met à jour le nom d'un utilisateur
+ * @param userId - ID de l'utilisateur
+ * @param newName - Nouveau nom
+ * @returns Promise<boolean> - true si la mise à jour a réussi
+ */
+export async function updateUserName(userId: number, newName: string): Promise<boolean> {
+  const db = await getDatabase();
+  try {
+    // On nettoie le nom (trim) pour éviter les espaces vides
+    const cleanedName = newName.trim();
+    
+    if (cleanedName.length === 0) return false;
 
+    await db.runAsync(
+      'UPDATE user_profile SET name = ? WHERE id = ?',
+      [cleanedName, userId]
+    );
+
+    console.log(`✅ SQL: Nom mis à jour pour ID ${userId} -> "${cleanedName}"`);
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur SQL mise à jour nom:', error);
+    return false;
+  }
+}
 

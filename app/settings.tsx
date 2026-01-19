@@ -19,7 +19,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
 import { t, setLanguage, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
-import { updateUserLanguage } from '../src/models/user';
+import { updateUserLanguage,updateUserName } from '../src/models/user';
 import { useUser } from '../src/context/UserContext';
 
 // Liste des langues disponibles
@@ -30,7 +30,7 @@ const AVAILABLE_LANGUAGES = [
 
 const Settings = () => {
   const { theme, setTheme, isDark, colors } = useTheme();
-  const { currentUser, setCurrentUser } = useUser(); // Assure-toi que setCurrentUser est dispo dans ton contexte
+  const { currentUser, setCurrentUser, refreshUsers } = useUser(); // Assure-toi que setCurrentUser est dispo dans ton contexte
 
   // --- États ---
   const [notifications, setNotifications] = useState(true);
@@ -68,21 +68,28 @@ const Settings = () => {
   };
 
   const saveName = async () => {
-    if (tempName.trim().length === 0) {
-      Alert.alert("Erreur", "Le nom ne peut pas être vide.");
-      return;
-    }
+    if (tempName.trim().length === 0) return;
 
-    // 1. Mise à jour locale (Context)
-    if (currentUser && setCurrentUser) {
-      setCurrentUser({ ...currentUser, name: tempName });
-      
-      // 2. TODO: Appel API/Base de données ici
-      // await updateUserName(currentUser.id, tempName); 
-    }
+    if (currentUser) {
+        // 1. D'ABORD : On écrit dans le disque dur (BDD)
+        const success = await updateUserName(currentUser.id, tempName);
+        
+        if (success) {
+            console.log("Sauvegarde BDD ok, mise à jour context...");
+            
+            // 2. ENSUITE : On met à jour l'affichage local
+            setCurrentUser({ ...currentUser, name: tempName });
 
-    setNameModalVisible(false);
-  };
+            // 3. ENFIN : On dit à toute l'appli de relire la BDD
+            // C'est ça qui va mettre à jour la page "Changer de profil"
+            await refreshUsers(); 
+            
+            setNameModalVisible(false);
+        } else {
+            alert("Erreur lors de la sauvegarde");
+        }
+    }
+};
 
   // --- Composants UI Helper ---
 
