@@ -8,19 +8,31 @@ import {
   Switch,
   SafeAreaView,
   StatusBar,
+  Modal,
+  StyleSheet,
+  TouchableWithoutFeedback
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
 import { t, setLanguage, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
-import { updateUserLanguage, CURRENT_USER_ID } from '../src/models/user';
-
+import { updateUserLanguage } from '../src/models/user';
 import { useUser } from '../src/context/UserContext';
+
+// Liste des langues disponibles
+const AVAILABLE_LANGUAGES = [
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+];
 
 const Settings = () => {
   const { theme, setTheme, isDark, colors } = useTheme();
   const { currentUser } = useUser();
+  
+  // États
   const [notifications, setNotifications] = useState(true);
   const [locale, setLocale] = useState(getCurrentLanguage());
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+
   useEffect(() => {
     const unsubscribe = subscribeLanguageChange((newLang) => {
       setLocale(newLang);
@@ -28,16 +40,17 @@ const Settings = () => {
     return () => unsubscribe();
   }, []);
 
-  // basculer fr et en
-  const toggleLanguage = async () => {
-    const newLang = locale === 'fr' ? 'en' : 'fr';
-    setLanguage(newLang);
+  // Fonction pour changer la langue via le Modal
+  const handleLanguageSelect = async (langCode: string) => {
+    setLanguage(langCode as any);
     if (currentUser) {
-      await updateUserLanguage(currentUser.id, newLang);
+      await updateUserLanguage(currentUser.id, langCode as any);
     }
+    setLanguageModalVisible(false); // Fermer le modal après sélection
   };
 
-  // Composants avec styles dynamiques
+  // --- Composants UI Helper ---
+
   const SectionTitle = ({ title }: { title: string }) => (
     <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold', marginTop: 20, marginBottom: 10, paddingHorizontal: 4 }}>
       {title}
@@ -108,6 +121,8 @@ const Settings = () => {
 
   const Divider = () => <View style={{ height: 1, backgroundColor: colors.border, marginLeft: 64 }} />;
 
+  // --- Rendu ---
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
@@ -134,8 +149,9 @@ const Settings = () => {
           <SettingItem
             icon="translate"
             label={t('settings.language.appLanguage')}
-            subLabel={t('settings.language.current')}
-            onPress={toggleLanguage}
+            // Affiche le label de la langue actuelle (ex: Français)
+            subLabel={AVAILABLE_LANGUAGES.find(l => l.code === locale)?.label || locale}
+            onPress={() => setLanguageModalVisible(true)} // Ouvre le modal
           />
         </SectionContainer>
 
@@ -184,7 +200,7 @@ const Settings = () => {
             icon="account"
             label={currentUser?.name || t('settings.account.profile')}
             subLabel="Gérer mon profil"
-            onPress={() => {/* TODO: Edit profile name? */ }}
+            onPress={() => {/* TODO */ }}
           />
           <Divider />
           <SettingItem
@@ -216,8 +232,122 @@ const Settings = () => {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* --- MODAL DE SÉLECTION DE LANGUE --- */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={languageModalVisible}
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setLanguageModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                {/* Barre de drag (visuelle) */}
+                <View style={styles.dragIndicator} />
+                
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  {t('settings.language.select')}
+                </Text>
+
+                {AVAILABLE_LANGUAGES.map((lang, index) => (
+                  <View key={lang.code}>
+                    <TouchableOpacity
+                      style={styles.languageOption}
+                      onPress={() => handleLanguageSelect(lang.code)}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 24, marginRight: 12 }}>{lang.flag}</Text>
+                        <Text style={{ fontSize: 16, fontWeight: '500', color: colors.text }}>
+                          {lang.label}
+                        </Text>
+                      </View>
+                      
+                      {/* Coche si sélectionné */}
+                      {locale === lang.code && (
+                        <View style={styles.checkCircle}>
+                           <Icon name="check" size={16} color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    {/* Séparateur sauf pour le dernier */}
+                    {index < AVAILABLE_LANGUAGES.length - 1 && (
+                      <View style={{ height: 1, backgroundColor: colors.border, marginLeft: 50 }} />
+                    )}
+                  </View>
+                ))}
+                
+                {/* Bouton Annuler */}
+                <TouchableOpacity 
+                  style={[styles.cancelButton, { backgroundColor: colors.background }]} 
+                  onPress={() => setLanguageModalVisible(false)}
+                >
+                  <Text style={{ color: colors.text, fontWeight: '600' }}>Annuler</Text>
+                </TouchableOpacity>
+
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
     </SafeAreaView>
   );
 };
+
+// Styles spécifiques au Modal
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Fond sombre semi-transparent
+    justifyContent: 'flex-end', // Pousse le contenu vers le bas
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  dragIndicator: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#555',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#8A3AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    marginTop: 20,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  }
+});
 
 export default Settings;
