@@ -10,9 +10,6 @@ const Privacy = () => {
   const { colors, isDark } = useTheme();
   const { currentUser, logout, refreshUsers } = useUser();
 
-  // --- ACTIONS ---
-
-  // 1. Effacer l'historique (Likes, Dislikes, Poids des genres)
   const handleClearHistory = () => {
     Alert.alert(
       "Effacer l'historique ?",
@@ -37,7 +34,6 @@ const Privacy = () => {
     );
   };
 
-  // 2. Supprimer le compte (Irréversible)
   const handleDeleteAccount = () => {
     Alert.alert(
       "Supprimer le profil ?",
@@ -121,15 +117,7 @@ const Privacy = () => {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
 
-        {/* INFO DATA LOCAL */}
-        <View style={[styles.infoBox, { backgroundColor: 'rgba(138, 58, 255, 0.1)', borderColor: 'rgba(138, 58, 255, 0.3)' }]}>
-          <Icon name="shield-check-outline" size={24} color="#8A3AFF" style={{ marginRight: 12 }} />
-          <Text style={{ color: colors.text, flex: 1, fontSize: 14, lineHeight: 20 }}>
-            Vos données sont stockées localement sur votre appareil. Nous ne partageons vos préférences avec aucun tiers.
-          </Text>
-        </View>
-
-        {/* SECTION DONNÉES */}
+        {}
         <SectionTitle title="Mes données" />
         <SectionContainer>
           <SettingItem
@@ -140,7 +128,7 @@ const Privacy = () => {
           />
         </SectionContainer>
 
-        {/* SECTION DANGER */}
+        {}
         <SectionTitle title="Zone de danger" />
         <SectionContainer>
           <SettingItem
