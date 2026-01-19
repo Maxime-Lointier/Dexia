@@ -183,14 +183,14 @@ const Settings = () => {
           <SettingItem
             icon="account"
             label={currentUser?.name || t('settings.account.profile')}
-            subLabel="Gérer mon profil"
+            subLabel= {t('settings.account.manageProfile')}
             onPress={() => {/* TODO: Edit profile name? */ }}
           />
           <Divider />
           <SettingItem
             icon="account-switch"
-            label="Changer de profil"
-            subLabel="Utiliser un autre compte"
+            label={t('settings.account.switchProfile')}
+            subLabel={t('settings.account.useOtherAccount')}
             onPress={() => router.push('/profile-selection')}
           />
           <Divider />
