@@ -226,7 +226,7 @@ const Settings = () => {
         {/* SECTION PRÉFÉRENCES */}
         <SectionTitle title={t('settings.preferences.sectionTitle')} />
         <SectionContainer>
-            <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} />
+            <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} onPress={() => router.push('/favorite-genres')}  />
             <Divider />
             <SettingSwitch 
                 icon="bell-outline" 
@@ -264,7 +264,7 @@ const Settings = () => {
         <SectionContainer>
             <SettingItem icon="help-circle-outline" label={t('settings.about.help')} onPress={() => router.push('/help')} />
             <Divider />
-            <SettingItem icon="file-document-outline" label={t('settings.about.terms')} />
+            <SettingItem icon="file-document-outline" label={t('settings.about.terms')} onPress={() => router.push('/terms')} />
             <Divider />
             <SettingItem 
                 icon="information-outline" 
