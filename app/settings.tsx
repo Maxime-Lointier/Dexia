@@ -19,7 +19,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
 import { t, setLanguage, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
-import { updateUserLanguage,updateUserName } from '../src/models/user';
+import { updateUserLanguage, updateUserName } from '../src/models/user';
 import { useUser } from '../src/context/UserContext';
 
 // Liste des langues disponibles
@@ -32,7 +32,7 @@ const Settings = () => {
   const { theme, setTheme, isDark, colors } = useTheme();
   const { currentUser, setCurrentUser, refreshUsers } = useUser();
 
-  const [notifications, setNotifications] = useState(true);
+
   const [locale, setLocale] = useState(getCurrentLanguage());
 
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
@@ -66,21 +66,21 @@ const Settings = () => {
     if (tempName.trim().length === 0) return;
 
     if (currentUser) {
-        const success = await updateUserName(currentUser.id, tempName);
-        
-        if (success) {
-            console.log("Sauvegarde BDD ok, mise à jour context...");
+      const success = await updateUserName(currentUser.id, tempName);
 
-            setCurrentUser({ ...currentUser, name: tempName });
+      if (success) {
+        console.log("Sauvegarde BDD ok, mise à jour context...");
 
-            await refreshUsers(); 
-            
-            setNameModalVisible(false);
-        } else {
-            alert("Erreur lors de la sauvegarde");
-        }
+        setCurrentUser({ ...currentUser, name: tempName });
+
+        await refreshUsers();
+
+        setNameModalVisible(false);
+      } else {
+        alert("Erreur lors de la sauvegarde");
+      }
     }
-};
+  };
 
   const SectionTitle = ({ title }: { title: string }) => (
     <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold', marginTop: 20, marginBottom: 10, paddingHorizontal: 4 }}>
@@ -157,7 +157,7 @@ const Settings = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {}
+      { }
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -174,7 +174,7 @@ const Settings = () => {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}>
 
 
-        {}
+        { }
         <SectionTitle title={t('settings.language.sectionTitle')} />
         <SectionContainer>
           <SettingItem
@@ -185,7 +185,7 @@ const Settings = () => {
           />
         </SectionContainer>
 
-        {}
+        { }
         <SectionTitle title={t('settings.theme.sectionTitle')} />
         <SectionContainer>
           <SettingRadio
@@ -210,28 +210,22 @@ const Settings = () => {
           />
         </SectionContainer>
 
-        {}
+        { }
         <SectionTitle title={t('settings.preferences.sectionTitle')} />
         <SectionContainer>
-            <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} onPress={() => router.push('/favorite-genres')}  />
-            <Divider />
-            <SettingSwitch 
-                icon="bell-outline" 
-                label={t('settings.preferences.notifications')} 
-                value={notifications}
-                onValueChange={setNotifications}
-            />
+          <SettingItem icon="view-grid-outline" label={t('settings.preferences.favoriteGenres')} onPress={() => router.push('/favorite-genres')} />
+
         </SectionContainer>
 
-        {}
+        { }
         <SectionTitle title={t('settings.account.sectionTitle')} />
         <SectionContainer>
-          {}
+          { }
           <SettingItem
             icon="account"
             label={currentUser?.name || t('settings.account.profile')}
             subLabel="Gérer mon profil"
-            onPress={openNameEditor} 
+            onPress={openNameEditor}
           />
           <Divider />
           <SettingItem
@@ -244,23 +238,23 @@ const Settings = () => {
           <SettingItem icon="lock" label={t('settings.account.privacy')} onPress={() => router.push('/privacy')} />
         </SectionContainer>
 
-        {}
+        { }
         <SectionTitle title={t('settings.about.sectionTitle')} />
         <SectionContainer>
-            <SettingItem icon="help-circle-outline" label={t('settings.about.help')} onPress={() => router.push('/help')} />
-            <Divider />
-            <SettingItem 
-                icon="information-outline" 
-                label={t('settings.about.version')} 
-                subLabel="2.2.0" 
-                showChevron={false}
-            />
+          <SettingItem icon="help-circle-outline" label={t('settings.about.help')} onPress={() => router.push('/help')} />
+          <Divider />
+          <SettingItem
+            icon="information-outline"
+            label={t('settings.about.version')}
+            subLabel="2.2.0"
+            showChevron={false}
+          />
         </SectionContainer>
 
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {}
+      { }
       <Modal
         animationType="slide"
         transparent={true}
@@ -289,7 +283,7 @@ const Settings = () => {
                       </View>
                       {locale === lang.code && (
                         <View style={styles.checkCircle}>
-                           <Icon name="check" size={16} color="#fff" />
+                          <Icon name="check" size={16} color="#fff" />
                         </View>
                       )}
                     </TouchableOpacity>
@@ -304,63 +298,63 @@ const Settings = () => {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {}
+      { }
       <Modal
         animationType="slide"
         transparent={true}
         visible={nameModalVisible}
         onRequestClose={() => setNameModalVisible(false)}
       >
-        {}
-        <KeyboardAvoidingView 
+        { }
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
           <TouchableWithoutFeedback onPress={() => setNameModalVisible(false)}>
-            <View style={{flex: 1, justifyContent: 'flex-end'}}>
-                <TouchableWithoutFeedback>
-                  <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                    <View style={styles.dragIndicator} />
-                    
-                    <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier mon profil</Text>
-                    
-                    <Text style={{color: colors.textSecondary, marginBottom: 8, fontSize: 14}}>
-                        Nom d'utilisateur
-                    </Text>
+            <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+              <TouchableWithoutFeedback>
+                <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                  <View style={styles.dragIndicator} />
 
-                    {}
-                    <TextInput 
-                        style={[styles.input, { 
-                            color: colors.text, 
-                            backgroundColor: isDark ? '#232433' : '#f3f4f6',
-                            borderColor: isDark ? '#333' : '#ddd'
-                        }]}
-                        value={tempName}
-                        onChangeText={setTempName}
-                        placeholder="Entrez votre nom"
-                        placeholderTextColor={colors.textSecondary}
-                        autoFocus={true}
-                    />
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier mon profil</Text>
 
-                    {}
-                    <View style={{flexDirection: 'row', gap: 12, marginTop: 24}}>
-                         <TouchableOpacity 
-                            style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, flex: 1 }]} 
-                            onPress={() => setNameModalVisible(false)}
-                        >
-                            <Text style={{ color: colors.text, fontWeight: '600' }}>Annuler</Text>
-                        </TouchableOpacity>
+                  <Text style={{ color: colors.textSecondary, marginBottom: 8, fontSize: 14 }}>
+                    Nom d'utilisateur
+                  </Text>
 
-                        <TouchableOpacity 
-                            style={[styles.button, { backgroundColor: '#8A3AFF', flex: 1 }]} 
-                            onPress={saveName}
-                        >
-                            <Text style={{ color: '#fff', fontWeight: '600' }}>Enregistrer</Text>
-                        </TouchableOpacity>
-                    </View>
+                  { }
+                  <TextInput
+                    style={[styles.input, {
+                      color: colors.text,
+                      backgroundColor: isDark ? '#232433' : '#f3f4f6',
+                      borderColor: isDark ? '#333' : '#ddd'
+                    }]}
+                    value={tempName}
+                    onChangeText={setTempName}
+                    placeholder="Entrez votre nom"
+                    placeholderTextColor={colors.textSecondary}
+                    autoFocus={true}
+                  />
 
+                  { }
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+                    <TouchableOpacity
+                      style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, flex: 1 }]}
+                      onPress={() => setNameModalVisible(false)}
+                    >
+                      <Text style={{ color: colors.text, fontWeight: '600' }}>Annuler</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.button, { backgroundColor: '#8A3AFF', flex: 1 }]}
+                      onPress={saveName}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: '600' }}>Enregistrer</Text>
+                    </TouchableOpacity>
                   </View>
-                </TouchableWithoutFeedback>
+
+                </View>
+              </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
@@ -373,7 +367,7 @@ const Settings = () => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', 
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -416,17 +410,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   input: {
-      height: 50,
-      borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      fontSize: 16,
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
   },
   button: {
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center'
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 });
 
