@@ -8,6 +8,7 @@ import './global.css';
 SplashScreen.preventAutoHideAsync();
 
 import { ThemeProvider } from '../src/context/ThemeContext';
+import { UserProvider } from '../src/context/UserContext';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -28,7 +29,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <Stack screenOptions={{ headerShown: false }} />
+        <UserProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </UserProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

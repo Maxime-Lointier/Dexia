@@ -3,11 +3,11 @@ import { View, Text, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 as Icon } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useUser } from '../src/context/UserContext';
 import { useTheme } from '../src/context/ThemeContext';
 import { t, getCurrentLanguage, subscribeLanguageChange } from '../src/i18n';
 import { Genre, getAllGenres, getTopRatedMovies, Movie } from '../src/models/movies';
-
-import { updateUserPreferences, getOrCreateUser, setOnboardingDone } from '../src/models/user';
+import { updateUserPreferences, setOnboardingDone } from '../src/models/user';
 
 // Associe l'ID du genre à une couleur et une icône
 const GENRE_STYLES: Record<number, { icon: string; color: string; iconColor: string }> = {
@@ -43,6 +43,7 @@ const Onboarding = () => {
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const { isDark, colors } = useTheme();
+  const { currentUser, refreshUsers } = useUser();
 
   // Charger les données au montage du composant
   useEffect(() => {
@@ -87,23 +88,17 @@ const Onboarding = () => {
 
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0F0F1E" : "#FFFFFF"} />
 
       {/* HEADER */}
       <View className="px-6 pt-2 pb-4">
         <View className="items-center mb-4">
           {/* Titre traduit */}
-          <Text
-            className="text-3xl font-bold mb-3 text-center font-hanken"
-            style={{ color: colors.text }}
-          >
+          <Text className="text-3xl font-bold mb-3 text-center font-hanken" style={{ color: colors.text }}>
             {t('onboarding.title')}
           </Text>
-          <Text
-            className="text-base text-center"
-            style={{ color: colors.textSecondary }}
-          >
+          <Text className="text-base text-center" style={{ color: colors.textSecondary }}>
             {t('onboarding.subtitle')} ({selectedGenres.length}/3)
           </Text>
         </View>
@@ -159,18 +154,17 @@ const Onboarding = () => {
           disabled={!isContinueEnabled}
           onPress={async () => {
             try {
-              console.log('Genres choisis:', selectedGenres);
-              // Obtenir ou créer le profil utilisateur unique de l'application
-              const userId = await getOrCreateUser();
-              await updateUserPreferences(userId, { genres: selectedGenres, keywords: [], actors: [] });
-
-              // 🎯 MARQUER L'ONBOARDING COMME TERMINÉ
-              await setOnboardingDone(userId, true);
-              console.log('✅ Onboarding marqué comme terminé');
-
-              router.replace('/homeScreen'); // On va vers la page d'accueil
+              if (!currentUser) return;
+              await updateUserPreferences(currentUser.id, {
+                genres: selectedGenres,
+                keywords: [],
+                actors: []
+              });
+              await setOnboardingDone(currentUser.id, true); // true = done
+              await refreshUsers(); // Update context with new onboarding status
+              router.replace('/homeScreen');
             } catch (error) {
-              console.error('Erreur lors de la sauvegarde des préférences:', error);
+              console.error(error);
             }
           }}
           className={`w-full py-4 rounded-full items-center justify-center ${isContinueEnabled ? 'bg-primary' : 'bg-gray-700'}`}

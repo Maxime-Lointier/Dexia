@@ -1,54 +1,39 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
-import { Redirect } from 'expo-router';
-import { userExists, isOnboardingDone, setOnboardingDone, CURRENT_USER_ID } from '../src/models/user';
+import { Redirect, router } from 'expo-router';
+import { useUser } from '../src/context/UserContext';
+import { useTheme } from '../src/context/ThemeContext';
 
 export default function Index() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [shouldGoToHome, setShouldGoToHome] = useState(false);
+  const { currentUser, users, isLoading } = useUser();
+  const { colors } = useTheme();
 
   useEffect(() => {
-    checkUserStatus();
-  }, []);
-
-  const checkUserStatus = async () => {
-    try {
-      console.log("🔍 Vérification du statut utilisateur...");
-
-      // --- LIGNE MAGIQUE POUR TESTER (EN FORCANT) ---
-      // Force l'onboarding à "non fait" à chaque lancement pour tes tests
-      //console.log("🛠️ DEBUG: Réinitialisation de l'onboarding pour test");
-      //await setOnboardingDone(CURRENT_USER_ID, false); 
-      // -------------------------------------------------------
-
-      const exists = await userExists();
-      const onboardingFinished = await isOnboardingDone(CURRENT_USER_ID);
-
-      console.log(`👤 Utilisateur existe ? ${exists}`);
-      console.log(`✅ Onboarding fini ? ${onboardingFinished}`);
-
-      if (exists && onboardingFinished) {
-        setShouldGoToHome(true);
+    if (!isLoading) {
+      if (currentUser) {
+        // Si user déjà chargé (auto-login), on check l'onboarding
+        if (currentUser.onboarding_done) {
+          router.replace('/homeScreen');
+        } else {
+          router.replace('/onBoarding');
+        }
       } else {
-        setShouldGoToHome(false);
+        // Pas de user actif
+        if (users.length === 0) {
+          // Premier lancement absolu
+          router.replace('/welcomeScreen');
+        } else {
+          // Des profils existent, on choisit
+          router.replace('/profile-selection');
+        }
       }
-    } catch (error) {
-      console.error("❌ Erreur checkUserStatus:", error);
-      setShouldGoToHome(false);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [currentUser, isLoading, users]);
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F0F1E' }}>
-        <ActivityIndicator size="large" color="#8A3AFF" />
-        <Text style={{ color: 'white', marginTop: 10 }}>Chargement...</Text>
-      </View>
-    );
-  }
-
-  // Redirection
-  return shouldGoToHome ? <Redirect href="/homeScreen" /> : <Redirect href="/welcomeScreen" />;
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <ActivityIndicator size="large" color="#8A3AFF" />
+      <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Démarrage...</Text>
+    </View>
+  );
 }

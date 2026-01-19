@@ -1,3 +1,5 @@
+import { Button } from "react-native";
+
 export default {
   settings: {
     title: "Settings",
@@ -26,6 +28,9 @@ export default {
       profile: "Profile",
       privacy: "Privacy",
       security: "Security",
+      manageProfile: "Manage my profile",
+      switchProfile: "Switch profile",
+      useOtherAccount: "Use another account",
     },
 
     about: {
@@ -67,6 +72,19 @@ export default {
         37: "Western",
         10770: "Tv Movie"
       }
-  },
+    },
+    
+    profile: {
+      selectionTitle:"Who's swiping ?",
+      addProfile: "Add Profile",
+    },
+
+    createProfile: {
+      title: "Create Profile",
+      subtitle: "Give a name to your space.",
+      placeholder: "Firstname",
+      button: "Continue",
+      creating: "Creating...",
+    },
 
 };

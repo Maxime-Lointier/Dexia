@@ -8,11 +8,12 @@ import React, { useState, useCallback } from 'react';
 import { Logo } from '../src/components/Logo';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
 import { useTheme } from '../src/context/ThemeContext';
+import { useUser } from '../src/context/UserContext';
 
 import { getPosterById } from '../src/utils/posterMap';
 import { Movie, getMoviesByGenresAndKeywords, getMovieGenreById, getRandomMovies, getMovieGenreIdById, getMovieById } from '../src/models/movies';
 import { getUserPreferences, CURRENT_USER_ID, setOnboardingDone } from '../src/models/user';
-import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, getLikeCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded } from '../src/models/interaction';
+import { getUserSeenMovieIds, getWatchlistMovies, getWatchlistCount, getLikeCount, isInWatchlist, toggleWatchlist, cleanupInteractionsIfNeeded, toggleLike, hasUserInteractedWithMovie } from '../src/models/interaction';
 import { getMovieCast, Cast } from '../src/models/cast';
 import { getLikedMovies } from '../src/models/interaction';
 import GenrePieChart from '../src/components/GenrePieChart';
@@ -51,6 +52,7 @@ export default function MainPage() {
   const [watchlistCount, setWatchlistCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [isSelectedMovieInWatchlist, setIsSelectedMovieInWatchlist] = useState(false);
+  const [isSelectedMovieLiked, setIsSelectedMovieLiked] = useState(false);
   const [showWatchlistModal, setShowWatchlistModal] = useState(false);
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [allLikedMovies, setAllLikedMovies] = useState<Movie[]>([]);
@@ -59,6 +61,7 @@ export default function MainPage() {
   const modalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const watchlistModalTranslateY = useSharedValue(SCREEN_HEIGHT);
   const { isDark, colors } = useTheme();
+  const { currentUser, resetApp } = useUser();
   const genreData = computeGenreDistribution(allLikedMovies);
   console.log(' genreData:', genreData); // temporaire pour test
 
@@ -94,7 +97,8 @@ export default function MainPage() {
   const loadWatchlist = async () => {
     try {
       console.log('📋 HomeScreen: Chargement watchlist...');
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
 
       // Retry mécanisme pour éviter les erreurs de DB
       let retries = 3;
@@ -125,7 +129,8 @@ export default function MainPage() {
 
   const loadStats = async () => {
     try {
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
 
       // Retry mécanisme pour éviter les erreurs de DB
       let retries = 3;
@@ -153,15 +158,18 @@ export default function MainPage() {
 
 
   const loadLikedMovies = async () => {
-    const movies = await getLikedMovies(CURRENT_USER_ID);
-    setAllLikedMovies(movies);
+    if (currentUser) {
+      const movies = await getLikedMovies(currentUser.id);
+      setAllLikedMovies(movies);
+    }
   };
 
 
   const loadRecommendations = async () => {
     setLoading(true);
     try {
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
 
       // Nettoyage automatique si nécessaire
       await cleanupInteractionsIfNeeded(userId);
@@ -216,12 +224,14 @@ export default function MainPage() {
 
   useFocusEffect(
     useCallback(() => {
-      loadRecommendations();
-      // Recharger aussi la watchlist et les stats quand on revient sur cet écran
-      loadWatchlist();
-      loadStats();
-      loadLikedMovies();
-    }, [])
+      if (currentUser) {
+        loadRecommendations();
+        // Recharger aussi la watchlist et les stats quand on revient sur cet écran
+        loadWatchlist();
+        loadStats();
+        loadLikedMovies();
+      }
+    }, [currentUser])
   );
 
   const getPosterSource = (movie: Movie): any => {
@@ -255,14 +265,17 @@ export default function MainPage() {
       const cast = await getMovieCast(movie.id);
       setSelectedMovieCast(cast);
 
-      // Vérifier si le film est dans la watchlist
-      const inWatchlist = await isInWatchlist(CURRENT_USER_ID, movie.id);
-      setIsSelectedMovieInWatchlist(inWatchlist);
+      if (currentUser) {
+        const inWatchlist = await isInWatchlist(currentUser.id, movie.id);
+        setIsSelectedMovieInWatchlist(inWatchlist);
+        const isLiked = await hasUserInteractedWithMovie(currentUser.id, movie.id, 'like');
+        setIsSelectedMovieLiked(isLiked);
+      }
     } catch (error) {
       console.error('Erreur chargement détails film:', error);
-      setSelectedMovieGenres([]);
       setSelectedMovieCast([]);
       setIsSelectedMovieInWatchlist(false);
+      setIsSelectedMovieLiked(false);
     }
 
     setShowInfoModal(true);
@@ -275,9 +288,10 @@ export default function MainPage() {
 
   const openInfoModalById = async (movieId: number) => {
     try {
+      if (!currentUser) return;
       const movie = await getMovieById(movieId);
       if (movie) {
-        const preferences = await getUserPreferences(CURRENT_USER_ID);
+        const preferences = await getUserPreferences(currentUser.id);
         const genreIds = await getMovieGenreIdById(movieId);
         const match = await calculateMatchPercentage(movie, preferences);
         await openInfoModal({ ...movie, matchPercentage: match });
@@ -312,7 +326,8 @@ export default function MainPage() {
 
   const openWatchlistModal = async () => {
     try {
-      const userId = CURRENT_USER_ID;
+      if (!currentUser) return;
+      const userId = currentUser.id;
       const movies = await getWatchlistMovies(userId);
       setAllWatchlistMovies(movies);
       setShowWatchlistModal(true);
@@ -333,7 +348,8 @@ export default function MainPage() {
   };
 
   const openLikesModal = async () => {
-    const movies = await getLikedMovies(CURRENT_USER_ID);
+    if (!currentUser) return;
+    const movies = await getLikedMovies(currentUser.id);
     setAllLikedMovies(movies);
     setShowLikesModal(true);
     likesModalTranslateY.value = withSpring(0);
@@ -350,8 +366,8 @@ export default function MainPage() {
     if (!selectedMovie) return;
 
     try {
-      const success = await toggleWatchlist(CURRENT_USER_ID, selectedMovie.id);
-      if (success) {
+      if (selectedMovie && currentUser) {
+        await toggleWatchlist(currentUser.id, selectedMovie.id);
         setIsSelectedMovieInWatchlist(!isSelectedMovieInWatchlist);
         // Recharger la watchlist et les stats pour mettre à jour l'affichage immédiatement
         await loadWatchlist();
@@ -362,20 +378,26 @@ export default function MainPage() {
     }
   };
 
-  const handleResetOnboarding = async () => {
-    console.log("🔄 Reset de l'onboarding demandé...");
+  const handleToggleLike = async () => {
+    if (!selectedMovie) return;
 
-    // Vider immédiatement l'état local
-    setWatchlistMovies([]);
-    setWatchlistCount(0);
-    setLikeCount(0);
-
-    await setOnboardingDone(CURRENT_USER_ID, false);
-    router.replace('/welcomeScreen');
+    try {
+      if (selectedMovie && currentUser) {
+        await toggleLike(currentUser.id, selectedMovie.id);
+        setIsSelectedMovieLiked(!isSelectedMovieLiked);
+        await loadStats(); // Recharger stats car le nombre de likes change
+        await loadLikedMovies(); // Recharger la liste des films aimés
+      }
+    } catch (error) {
+      console.error('Erreur toggle like:', error);
+    }
   };
 
-
-
+  const handleResetOnboarding = async () => {
+    console.log("🔄 Reset complet de l'application demandé...");
+    await resetApp();
+    router.replace('/');
+  };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
@@ -428,14 +450,7 @@ export default function MainPage() {
               <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>À voir</Text>
             </TouchableOpacity>
 
-            {/* Carte 3 : Jours actif */}
-            <View style={{ flex: 1, backgroundColor: colors.card, borderRadius: 16, padding: 16, alignItems: 'center' }}>
-              <View style={{ width: 40, height: 40, backgroundColor: 'rgba(34, 197, 94, 0.2)', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                <FontAwesome5 name="fire" size={18} color="#22C55E" />
-              </View>
-              <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold' }}>12</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, textTransform: 'uppercase', fontWeight: '500', marginTop: 4 }}>Jours actif</Text>
-            </View>
+
           </View>
         </View>
 
@@ -603,17 +618,6 @@ export default function MainPage() {
           </View>
         </View>
 
-        <View className="px-6 mb-8 mt-4 border-t border-gray-800 pt-6">
-          <Text className="text-textSecondary text-xs text-center mb-4 uppercase tracking-widest">Zone de Développement</Text>
-
-          <TouchableOpacity
-            onPress={handleResetOnboarding}
-            className="bg-red-500/10 border border-red-500/50 py-3 rounded-xl items-center flex-row justify-center gap-2"
-          >
-            <FontAwesome5 name="undo" size={14} color="#EF4444" />
-            <Text className="text-red-500 font-bold text-sm">Reset Onboarding (pour tester première connexion)</Text>
-          </TouchableOpacity>
-        </View>
 
       </ScrollView>
 
@@ -759,6 +763,22 @@ export default function MainPage() {
               <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: colors.card }}>
                 <View className="flex-row gap-3">
                   <TouchableOpacity
+                    onPress={handleToggleLike}
+                    className={`h-14 w-14 rounded-2xl items-center justify-center ${isSelectedMovieLiked
+                      ? 'bg-red-500'
+                      : 'bg-red-500/20 border border-red-500'
+                      }`}
+                    activeOpacity={0.8}
+                  >
+                    <FontAwesome
+                      name="heart"
+                      size={20}
+                      color={isSelectedMovieLiked ? "white" : "#EF4444"}
+                      solid={isSelectedMovieLiked}
+                    />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     onPress={handleToggleWatchlist}
                     className={`flex-1 py-4 rounded-2xl items-center ${isSelectedMovieInWatchlist
                       ? 'bg-orange-500'
@@ -774,14 +794,14 @@ export default function MainPage() {
                         solid={isSelectedMovieInWatchlist}
                       />
                       <Text className={`font-bold ${isSelectedMovieInWatchlist ? 'text-white' : 'text-orange-500'}`}>
-                        {isSelectedMovieInWatchlist ? 'Dans ma liste' : 'Ajouter à ma liste'}
+                        {isSelectedMovieInWatchlist ? 'Dans ma liste' : 'À voir'}
                       </Text>
                     </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={closeInfoModal}
-                    style={{ backgroundColor: colors.card, paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16 }}
+                    style={{ backgroundColor: colors.card, paddingHorizontal: 24, paddingVertical: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}
                     activeOpacity={0.8}
                   >
                     <Text style={{ color: colors.text, fontWeight: 'bold' }}>Fermer</Text>

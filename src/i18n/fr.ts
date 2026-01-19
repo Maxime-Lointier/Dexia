@@ -26,6 +26,9 @@ export default {
       profile: "Profil",
       privacy: "Confidentialité",
       security: "Sécurité",
+      manageProfile: "Gérer mon profil", 
+      switchProfile: "Changer de profil", 
+      useOtherAccount: "Utiliser un autre compte",
     },
 
     about: {
@@ -67,6 +70,18 @@ onboarding: {
     10770 : "Téléfilm",
 
   }
+},
+profile: {
+      selectionTitle:"Qui swipe ?",
+      addProfile: "Ajouter",
 },    
 
+
+createProfile: {
+      title: "Créer un profil",
+      subtitle: "Donnez un nom à votre espace.",
+      placeholder: "Prénom",
+      button: "Continuer",
+      creating: "Création...",
+},    
 };

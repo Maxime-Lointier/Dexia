@@ -43,11 +43,11 @@ export async function ensureInteractionTable(): Promise<boolean> {
   const db = await getDatabase();
   try {
     const tableExists = await db.getFirstAsync('SELECT name FROM sqlite_master WHERE type="table" AND name="user_interactions"');
-    
+
     if (tableExists) {
       const tableInfo = await db.getAllAsync('PRAGMA table_info(user_interactions)');
       const hasUserId = tableInfo.some((col: any) => col.name === 'user_id');
-      
+
       if (!hasUserId) {
         console.log('Migration: Recreation de la table user_interactions (manque user_id)');
         try {
@@ -88,19 +88,19 @@ export async function addInteraction(
   actionType: ActionType
 ): Promise<UserInteraction | null> {
   const db = await getDatabase();
-  
+
   // S'assurer que la table existe
   await ensureInteractionTable();
-  
+
   try {
     const sql = 'INSERT INTO user_interactions (user_id, movie_id, action_type) VALUES (?, ?, ?)';
     const result = await db.runAsync(sql, [userId, movieId, actionType]);
-    
+
     const interaction = await db.getFirstAsync<UserInteraction>(
       'SELECT * FROM user_interactions WHERE id = ?',
       [result.lastInsertRowId]
     );
-    
+
     return interaction || null;
   } catch (error) {
     console.error('Erreur lors de l\'ajout de l\'interaction:', error);
@@ -118,12 +118,12 @@ export async function getInteractionsByUser(userId: number, limit?: number): Pro
   const db = await getDatabase();
   let sql = 'SELECT * FROM user_interactions WHERE user_id = ? ORDER BY created_at DESC';
   const params: any[] = [userId];
-  
+
   if (limit) {
     sql += ' LIMIT ?';
     params.push(limit);
   }
-  
+
   const result = await db.getAllAsync<UserInteraction>(sql, params);
   return result;
 }
@@ -177,12 +177,12 @@ export async function hasUserInteractedWithMovie(
   const db = await getDatabase();
   let sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND movie_id = ?';
   const params: any[] = [userId, movieId];
-  
+
   if (actionType) {
     sql += ' AND action_type = ?';
     params.push(actionType);
   }
-  
+
   const result = await db.getFirstAsync<{ count: number }>(sql, params);
   return result ? result.count > 0 : false;
 }
@@ -211,11 +211,11 @@ export async function deleteInteraction(interactionId: number): Promise<boolean>
  */
 export async function toggleWatchlist(userId: number, movieId: number): Promise<boolean> {
   const db = await getDatabase();
-  
+
   try {
     // Vérifier si le film est déjà dans la watchlist
     const exists = await hasUserInteractedWithMovie(userId, movieId, 'watchlist');
-    
+
     if (exists) {
       // Supprimer de la watchlist
       const sql = 'DELETE FROM user_interactions WHERE user_id = ? AND movie_id = ? AND action_type = ?';
@@ -225,14 +225,40 @@ export async function toggleWatchlist(userId: number, movieId: number): Promise<
       const result = await addInteraction(userId, movieId, 'watchlist');
       if (!result) return false;
     }
-    
+
     // Invalider complètement le cache après modification
     delete watchlistCache[userId];
     console.log(`📋 Cache watchlist invalidé après toggle pour user ${userId}`);
-    
+
     return true;
   } catch (error) {
     console.error('Erreur lors du toggle watchlist:', error);
+    return false;
+  }
+}
+
+/**
+ * Ajoute ou retire un like pour un film
+ * @param userId - ID de l'utilisateur
+ * @param movieId - ID du film
+ * @returns Promise<boolean> - true si l'action a réussi
+ */
+export async function toggleLike(userId: number, movieId: number): Promise<boolean> {
+  const db = await getDatabase();
+
+  try {
+    const exists = await hasUserInteractedWithMovie(userId, movieId, 'like');
+
+    if (exists) {
+      const sql = 'DELETE FROM user_interactions WHERE user_id = ? AND movie_id = ? AND action_type = ?';
+      await db.runAsync(sql, [userId, movieId, 'like']);
+    } else {
+      await addInteraction(userId, movieId, 'like');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Erreur lors du toggle like:', error);
     return false;
   }
 }
@@ -273,14 +299,14 @@ export async function getWatchlistMovieIds(userId: number): Promise<number[]> {
     console.log(`📋 Résultat DB: ${result.length} entrées`);
     const movieIds = result.map(row => row.movie_id);
     console.log(`📋 IDs films watchlist: [${movieIds.join(', ')}]`);
-    
+
     // Mettre en cache les nouveaux IDs
     watchlistCache[userId] = {
       movieIds,
       movies: [], // Sera rempli par getWatchlistMovies
       lastUpdate: Date.now()
     };
-    
+
     return movieIds;
   } catch (error) {
     console.error('Erreur lors de la récupération des IDs watchlist:', error);
@@ -294,17 +320,20 @@ export async function getWatchlistMovieIds(userId: number): Promise<number[]> {
  * @returns Promise<number> - Nombre de films dans la watchlist
  */
 export async function getWatchlistCount(userId: number): Promise<number> {
-  // Si le cache existe, utiliser la longueur des IDs mis en cache
-  const cached = watchlistCache[userId];
-  if (cached && Date.now() - cached.lastUpdate < CACHE_DURATION) {
-    console.log(`📋 Count depuis cache: ${cached.movieIds.length}`);
-    return cached.movieIds.length;
-  }
+  // Si le cache existe, on l'utilise mais on vérifie quand même la cohérence si besoin
+  // Pour l'instant, on force la DB pour être sûr de la cohérence avec les films existants
 
   const db = await getDatabase();
   try {
-    const sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND action_type = ?';
-    console.log(`📋 Count depuis DB pour user ${userId}`);
+    // Utiliser un JOIN pour ne compter que les films qui existent vraiment dans la table movies
+    // Et DISTINCT pour éviter les doublons
+    const sql = `
+      SELECT COUNT(DISTINCT ui.movie_id) as count 
+      FROM user_interactions ui
+      JOIN movies m ON ui.movie_id = m.id
+      WHERE ui.user_id = ? AND ui.action_type = ?
+    `;
+    console.log(`📋 Count depuis DB (valid, distinct) pour user ${userId}`);
     const result = await db.getFirstAsync<{ count: number }>(sql, [userId, 'watchlist']);
     const count = result ? result.count : 0;
     console.log(`📋 Count DB résultat: ${count}`);
@@ -323,17 +352,24 @@ export async function getWatchlistCount(userId: number): Promise<number> {
 export async function getLikeCount(userId: number): Promise<number> {
   try {
     const db = await getDatabase();
-    
+
     // Vérifier que la base de données est bien initialisée
     if (!db) {
       console.warn('⚠️ Base de données non initialisée pour getLikeCount');
       return 0;
     }
 
-    const sql = 'SELECT COUNT(*) as count FROM user_interactions WHERE user_id = ? AND action_type = ?';
+    // Utiliser un JOIN pour ne compter que les films qui existent vraiment dans la table movies
+    // Et DISTINCT pour éviter de compter les doublons
+    const sql = `
+      SELECT COUNT(DISTINCT ui.movie_id) as count 
+      FROM user_interactions ui
+      JOIN movies m ON ui.movie_id = m.id
+      WHERE ui.user_id = ? AND ui.action_type = ?
+    `;
     const result = await db.getFirstAsync<{ count: number }>(sql, [userId, 'like']);
     const count = result ? result.count : 0;
-    console.log(`❤️ Count likes DB: ${count} pour user ${userId}`);
+    console.log(`❤️ Count likes DB (valid, distinct): ${count} pour user ${userId}`);
     return count;
   } catch (error: any) {
     console.error('Erreur lors du comptage des likes:', error);
@@ -350,10 +386,10 @@ export async function getLikeCount(userId: number): Promise<number> {
 export async function getWatchlistMovies(userId: number): Promise<any[]> {
   try {
     console.log(`📋 getWatchlistMovies appelé pour user ${userId}`);
-    
+
     const movieIds = await getWatchlistMovieIds(userId);
     console.log(`📋 IDs récupérés: [${movieIds.join(', ')}]`);
-    
+
     if (movieIds.length === 0) {
       console.log(`📋 Aucun film dans la watchlist`);
       // Vider le cache s'il n'y a pas de films
@@ -375,13 +411,13 @@ export async function getWatchlistMovies(userId: number): Promise<any[]> {
     const { getMoviesByIds } = await import('./movies');
     const movies = await getMoviesByIds(movieIds);
     console.log(`📋 Films récupérés: ${movies.length} films trouvés`);
-    
+
     // Mettre à jour le cache avec les films complets
     if (watchlistCache[userId]) {
       watchlistCache[userId].movies = movies;
       watchlistCache[userId].lastUpdate = Date.now();
     }
-    
+
     return movies;
   } catch (error) {
     console.error('Erreur lors de la récupération des films watchlist:', error);
@@ -400,10 +436,10 @@ export async function removeFromWatchlist(userId: number, movieId: number): Prom
   try {
     const sql = 'DELETE FROM user_interactions WHERE user_id = ? AND movie_id = ? AND action_type = ?';
     await db.runAsync(sql, [userId, movieId, 'watchlist']);
-    
+
     // Invalider le cache après suppression
     invalidateWatchlistCache(userId);
-    
+
     return true;
   } catch (error) {
     console.error('Erreur lors de la suppression de la watchlist:', error);
@@ -450,18 +486,18 @@ export async function getLikedMovies(userId: number): Promise<any[]> {
 export async function cleanupInteractionsIfNeeded(userId: number): Promise<void> {
   try {
     const db = await getDatabase();
-    
+
     // Vérifier le statut onboarding directement en base
     const result = await db.getFirstAsync<{ onboarding_done: number }>(
-      'SELECT onboarding_done FROM user_profile WHERE id = ?', 
+      'SELECT onboarding_done FROM user_profile WHERE id = ?',
       [userId]
     );
-    
+
     // Si l'onboarding n'est pas terminé, nettoyer les interactions
     if (!result?.onboarding_done) {
       console.log('🧹 Nettoyage automatique des interactions (onboarding non terminé)');
       await db.runAsync('DELETE FROM user_interactions WHERE user_id = ?', [userId]);
-      
+
       // Vider le cache aussi
       clearWatchlistCache(userId);
       console.log('✅ Interactions nettoyées au démarrage');
@@ -471,6 +507,70 @@ export async function cleanupInteractionsIfNeeded(userId: number): Promise<void>
   }
 }
 
+/**
+ * Nettoie les interactions orphelines (films qui n'existent plus dans la base)
+ * @returns Promise<void>
+ */
+export async function cleanupOrphanedInteractions(): Promise<void> {
+  try {
+    const db = await getDatabase();
+    console.log('🧹 Vérification des interactions orphelines...');
+
+    // Compter avant nettoyage
+    const countResult = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM user_interactions WHERE movie_id NOT IN (SELECT id FROM movies)'
+    );
+    const count = countResult ? countResult.count : 0;
+
+    if (count > 0) {
+      console.log(`🧹 Suppression de ${count} interactions orphelines...`);
+      await db.runAsync('DELETE FROM user_interactions WHERE movie_id NOT IN (SELECT id FROM movies)');
+      console.log('✅ Interactions orphelines supprimées');
+    } else {
+      console.log('✅ Aucune interaction orpheline trouvée');
+    }
+  } catch (error) {
+    console.error('Erreur lors du nettoyage des interactions orphelines:', error);
+  }
+}
+
+/**
+ * Nettoie les doublons dans les interactions (même user, même film, même action)
+ * Ne garde que l'interaction la plus récente
+ */
+export async function cleanupDuplicateInteractions(): Promise<void> {
+  try {
+    const db = await getDatabase();
+    console.log('🧹 Vérification des doublons interactions...');
+
+    // Identifier les doublons
+    // On groupe par user_id, movie_id, action_type et on compte
+    // Si count > 1, c'est qu'il y a des doublons
+
+    // Cette requête supprime tous les doublons sauf le plus récent (MAX(id))
+    const sql = `
+      DELETE FROM user_interactions 
+      WHERE id NOT IN (
+        SELECT MAX(id) 
+        FROM user_interactions 
+        GROUP BY user_id, movie_id, action_type
+      )
+    `;
+
+    // On ne peut pas savoir combien ont été supprimés facilement avec runAsync sans info retournée
+    // mais on lance le nettoyage
+    await db.runAsync(sql);
+    console.log('✅ Doublons interactions nettoyés');
+
+  } catch (error) {
+    console.error('Erreur lors du nettoyage des doublons:', error);
+  }
+}
+
 // Initialiser la table au chargement du module
 ensureInteractionTable();
+// Nettoyer les interactions orphelines au démarrage
+cleanupOrphanedInteractions();
+// Nettoyer les doublons
+cleanupDuplicateInteractions();
 
