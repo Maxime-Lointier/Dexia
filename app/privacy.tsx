@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
 import { useUser } from '../src/context/UserContext';
 import { clearUserHistory, deleteUser, getAllUsers } from '../src/models/user';
+import { t } from '../src/i18n';
 
 const Privacy = () => {
   const { colors, isDark } = useTheme();
@@ -12,20 +13,20 @@ const Privacy = () => {
 
   const handleClearHistory = () => {
     Alert.alert(
-      "Effacer l'historique ?",
-      "Cela supprimera tous vos likes, films vus et réinitialisera l'apprentissage de l'algorithme. Vos listes manuelles resteront.",
+      t('privacy.clearAlertTitle'),
+      t('privacy.clearAlertMsg'),
       [
-        { text: "Annuler", style: "cancel" },
+        {text: t('privacy.cancel'), style: "cancel" },
         {
-          text: "Effacer",
+          text: t('privacy.confirmClear'),
           style: "destructive",
           onPress: async () => {
             if (currentUser) {
               const success = await clearUserHistory(currentUser.id);
               if (success) {
-                Alert.alert("Succès", "Votre historique a été remis à zéro.");
+                Alert.alert(t('privacy.successTitle'), t('privacy.successMsg'));
               } else {
-                Alert.alert("Erreur", "Impossible d'effacer l'historique.");
+                Alert.alert(t('privacy.errorTitle'), t('privacy.errorClear'));
               }
             }
           }
@@ -36,12 +37,12 @@ const Privacy = () => {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      "Supprimer le profil ?",
-      "Attention, cette action est irréversible. Toutes vos données seront perdues définitivement.",
+      t('privacy.deleteAlertTitle'),
+      t('privacy.deleteAlertMsg'),
       [
-        { text: "Annuler", style: "cancel" },
+        { text: t('privacy.cancel'), style: "cancel" },
         {
-          text: "Supprimer",
+          text: t('privacy.confirmDelete'),
           style: "destructive",
           onPress: async () => {
             if (currentUser) {
@@ -57,7 +58,7 @@ const Privacy = () => {
                   router.replace('/profile-selection');
                 }
               } else {
-                Alert.alert("Erreur", "Impossible de supprimer le profil.");
+                Alert.alert(t('privacy.errorTitle'), t('privacy.errorDelete'));
               }
             }
           }
@@ -111,30 +112,30 @@ const Privacy = () => {
         >
           <Icon name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Confidentialité</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('privacy.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
 
         {}
-        <SectionTitle title="Mes données" />
+        <SectionTitle title={t('privacy.myData')} />
         <SectionContainer>
           <SettingItem
             icon="history"
-            label="Effacer l'historique"
-            subLabel="Réinitialiser l'algorithme de recommandations"
+            label={t('privacy.clearHistory')}
+            subLabel={t('privacy.clearHistorySub')}
             onPress={handleClearHistory}
           />
         </SectionContainer>
 
         {}
-        <SectionTitle title="Zone de danger" />
+        <SectionTitle title={t('privacy.dangerZone')} />
         <SectionContainer>
           <SettingItem
             icon="delete-outline"
-            label="Supprimer mon profil"
-            subLabel="Cette action est irréversible"
+            label={t('privacy.deleteProfile')}
+            subLabel={t('privacy.deleteProfileSub')}
             onPress={handleDeleteAccount}
             isDestructive={true}
           />

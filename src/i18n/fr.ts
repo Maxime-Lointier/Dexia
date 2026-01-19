@@ -114,4 +114,26 @@ export default {
   autoInfo: "Les genres que vous likez souvent (+5 fois) sont cochés automatiquement.",
   saveOk: "OK"
 },
+privacy: {
+  title: "Confidentialité",
+  myData: "Mes données",
+  clearHistory: "Effacer l'historique",
+  clearHistorySub: "Réinitialiser l'algorithme de recommandations",
+  dangerZone: "Zone de danger",
+  deleteProfile: "Supprimer mon profil",
+  deleteProfileSub: "Cette action est irréversible",
+  // alertes
+  clearAlertTitle: "Effacer l'historique ?",
+  clearAlertMsg: "Cela supprimera tous vos likes, films vus et réinitialisera l'apprentissage de l'algorithme.",
+  deleteAlertTitle: "Supprimer le profil ?",
+  deleteAlertMsg: "Attention, cette action est irréversible. Toutes vos données seront perdues définitivement.",
+  cancel: "Annuler",
+  confirmClear: "Effacer",
+  confirmDelete: "Supprimer",
+  successTitle: "Succès",
+  successMsg: "Votre historique a été remis à zéro.",
+  errorTitle: "Erreur",
+  errorClear: "Impossible d'effacer l'historique.",
+  errorDelete: "Impossible de supprimer le profil.",
+},
 };
