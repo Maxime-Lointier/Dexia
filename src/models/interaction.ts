@@ -567,10 +567,10 @@ export async function cleanupDuplicateInteractions(): Promise<void> {
   }
 }
 
-// Initialiser la table au chargement du module
-ensureInteractionTable();
-// Nettoyer les interactions orphelines au démarrage
-cleanupOrphanedInteractions();
-// Nettoyer les doublons
-cleanupDuplicateInteractions();
+// Initialisation séquentielle pour éviter la race condition
+(async () => {
+  await ensureInteractionTable();
+  await cleanupOrphanedInteractions();
+  await cleanupDuplicateInteractions();
+})();
 
