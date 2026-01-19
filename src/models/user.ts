@@ -827,11 +827,26 @@ export async function updateUserName(userId: number, newName: string): Promise<b
 export async function clearUserHistory(userId: number): Promise<boolean> {
   const db = await getDatabase();
   try {
+    // 1. Supprimer TOUTES les interactions (Like, Dislike, Watchlist/À voir plus tard)
     await db.runAsync('DELETE FROM user_interactions WHERE user_id = ?', [userId]);
-    console.log(`🧹 Historique nettoyé pour user ${userId}`);
+
+    // 2. Réinitialiser les poids des genres (l'algo repart à zéro)
+    await db.runAsync('UPDATE user_profile SET genre_weights = "{}" WHERE id = ?', [userId]);
+
+    // 3. IMPORTANT : Vider le cache de l'application (RAM)
+    // On utilise un import dynamique pour éviter les boucles de dépendances
+    try {
+        const { clearWatchlistCache } = await import('./interaction');
+        clearWatchlistCache(userId); 
+        console.log('🧹 Cache watchlist (RAM) vidé avec succès');
+    } catch (e) {
+        console.log('⚠️ Impossible de vider le cache (ou module introuvable)', e);
+    }
+
+    console.log(`✅ Historique complet nettoyé pour user ${userId}`);
     return true;
   } catch (error) {
-    console.error('Erreur nettoyage historique:', error);
+    console.error('❌ Erreur nettoyage historique:', error);
     return false;
   }
 }
