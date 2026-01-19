@@ -167,4 +167,15 @@ likedMovies: {
   emptySub: "Like movies from discovery\nor recommendations",
   discoverBtn: "Discover movies",
 },
+watchlist: {
+  title: "Watchlist",
+  movieSingular: "movie",
+  moviesPlural: "movies",
+  inListBadge: "In my list",
+  emptyTitle: "Your list is empty",
+  emptySub: "Add movies from discovery\nor recommendations",
+  discoverBtn: "Discover movies",
+  inList: "In my List",
+  close: "Close",
+},
   };
