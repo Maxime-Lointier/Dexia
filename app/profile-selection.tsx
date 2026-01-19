@@ -27,24 +27,20 @@ const ProfileSelection = () => {
     const handleProfileSelect = async (userId: number, isOnboardingDone: boolean) => {
         
         try {
-            // 1. Vérifier si la sécurité est activée dans les paramètres
             const isBiometricEnabled = await AsyncStorage.getItem(BIOMETRIC_KEY);
 
             if (isBiometricEnabled === 'true') {
-                // 2. Demander l'authentification (FaceID / TouchID / Code PIN)
                 const result = await LocalAuthentication.authenticateAsync({
                     promptMessage: 'Confirmez votre identité pour accéder au profil',
                     fallbackLabel: 'Utiliser le code PIN',
-                    disableDeviceFallback: false, // Permet le code PIN si FaceID échoue
+                    disableDeviceFallback: false,
                 });
 
-                // 3. Si l'authentification échoue ou est annulée, on arrête tout
                 if (!result.success) {
                     return; 
                 }
             }
 
-            // 4. Si tout est bon (ou pas de sécu), on connecte l'utilisateur
             await switchUser(userId);
             
             if (isOnboardingDone) {
@@ -55,7 +51,7 @@ const ProfileSelection = () => {
 
         } catch (error) {
             console.error("Erreur authentification :", error);
-            // En cas d'erreur technique, on laisse passer ou on affiche une alerte
+            
             Alert.alert("Erreur", "Impossible de vérifier l'identité.");
         }
     };
@@ -69,7 +65,7 @@ const ProfileSelection = () => {
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                {/* HEADER LOGO */}
+                {}
                 <View className="items-center pt-6 pb-10">
                     {}
                     <Logo width={60} height={60} /> 

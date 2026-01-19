@@ -10,9 +10,6 @@ const Privacy = () => {
   const { colors, isDark } = useTheme();
   const { currentUser, logout, refreshUsers } = useUser();
 
-  // --- ACTIONS ---
-
-  // 1. Effacer l'historique
   const handleClearHistory = () => {
     Alert.alert(
       "Effacer l'historique ?",
@@ -35,7 +32,6 @@ const Privacy = () => {
     );
   };
 
-  // 2. Supprimer le compte
   const handleDeleteAccount = () => {
     Alert.alert(
       "Supprimer le compte ?",
@@ -49,9 +45,9 @@ const Privacy = () => {
             if (currentUser) {
               const success = await deleteUser(currentUser.id);
               if (success) {
-                await refreshUsers(); // Rafraichir la liste globale
-                logout(); // Déconnecter
-                router.replace('/profile-selection'); // Retour au choix de profil
+                await refreshUsers();
+                logout();
+                router.replace('/profile-selection');
               } else {
                 Alert.alert("Erreur", "Impossible de supprimer le compte.");
               }
@@ -62,7 +58,6 @@ const Privacy = () => {
     );
   };
 
-  // --- COMPOSANTS UI (Mêmes que Settings pour la cohérence) ---
 
   const SectionTitle = ({ title }: { title: string }) => (
     <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold', marginTop: 24, marginBottom: 12, paddingHorizontal: 4 }}>
@@ -99,7 +94,7 @@ const Privacy = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {/* Header */}
+      {}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -113,7 +108,7 @@ const Privacy = () => {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         
-        {/* INFO DATA LOCAL */}
+        {}
         <View style={[styles.infoBox, { backgroundColor: 'rgba(138, 58, 255, 0.1)', borderColor: 'rgba(138, 58, 255, 0.3)' }]}>
             <Icon name="shield-check-outline" size={24} color="#8A3AFF" style={{marginRight: 12}} />
             <Text style={{color: colors.text, flex: 1, fontSize: 14, lineHeight: 20}}>
@@ -121,7 +116,7 @@ const Privacy = () => {
             </Text>
         </View>
 
-        {/* SECTION DONNÉES */}
+        {}
         <SectionTitle title="Mes données" />
         <SectionContainer>
           <SettingItem
@@ -132,7 +127,7 @@ const Privacy = () => {
           />
         </SectionContainer>
 
-        {/* SECTION DANGER */}
+        {}
         <SectionTitle title="Zone de danger" />
         <SectionContainer>
           <SettingItem

@@ -16,7 +16,6 @@ import { useTheme } from '../src/context/ThemeContext';
 import { useUser } from '../src/context/UserContext';
 import { getUserPreferences, updateUserPreferences, UserPreferences } from '../src/models/user';
 
-// Liste standard des genres TMDB (Statique pour éviter un appel API inutile)
 const ALL_GENRES = [
   { id: 28, name: "Action", icon: "fire" },
   { id: 12, name: "Aventure", icon: "compass-outline" },
@@ -46,10 +45,8 @@ const FavoriteGenres = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // On stocke tout l'objet préférences pour ne pas perdre keywords/actors
   const [fullPreferences, setFullPreferences] = useState<UserPreferences | null>(null);
   
-  // On gère les IDs sélectionnés dans un Set pour faciliter l'ajout/retrait
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
 
   useEffect(() => {
@@ -68,9 +65,9 @@ const FavoriteGenres = () => {
   const toggleGenre = (genreId: number) => {
     setSelectedGenres(prev => {
       if (prev.includes(genreId)) {
-        return prev.filter(id => id !== genreId); // Retirer
+        return prev.filter(id => id !== genreId);
       } else {
-        return [...prev, genreId]; // Ajouter
+        return [...prev, genreId];
       }
     });
   };
@@ -80,7 +77,6 @@ const FavoriteGenres = () => {
 
     setSaving(true);
     try {
-      // On reconstruit l'objet complet avec les nouveaux genres
       const updatedPreferences: UserPreferences = {
         ...fullPreferences,
         genres: selectedGenres
@@ -89,7 +85,6 @@ const FavoriteGenres = () => {
       const success = await updateUserPreferences(currentUser.id, updatedPreferences);
       
       if (success) {
-        // Optionnel : Petit retour haptique ou visuel
         router.back();
       } else {
         Alert.alert("Erreur", "Impossible de sauvegarder les préférences.");
@@ -101,13 +96,12 @@ const FavoriteGenres = () => {
     }
   };
 
-  // --- Rendu ---
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {/* Header */}
+      {}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -117,7 +111,7 @@ const FavoriteGenres = () => {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Genres préférés</Text>
         
-        {/* Bouton Sauvegarder dans le header */}
+        {}
         <TouchableOpacity 
             onPress={handleSave} 
             disabled={saving || loading}
@@ -158,7 +152,7 @@ const FavoriteGenres = () => {
                             onPress={() => toggleGenre(genre.id)}
                             activeOpacity={0.7}
                         >
-                            {/* Icône optionnelle */}
+                            {}
                             <Icon 
                                 name={genre.icon} 
                                 size={18} 
@@ -207,7 +201,7 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 10,
-      justifyContent: 'flex-start' // ou 'center'
+      justifyContent: 'flex-start'
   },
   chip: {
       flexDirection: 'row',

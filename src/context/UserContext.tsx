@@ -33,7 +33,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Charger les utilisateurs
     useEffect(() => {
         initSession();
     }, []);
@@ -41,7 +40,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const initSession = async () => {
         setIsLoading(true);
         try {
-            // Charger tous les profils
             const allUsers = await getAllUsers();
             setUsers(allUsers);
 
@@ -63,7 +61,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const switchUser = async (userId: number) => {
         setIsLoading(true);
         try {
-            // Recharger la liste
             const allUsers = await getAllUsers();
             const user = allUsers.find(u => u.id === userId);
 
@@ -95,7 +92,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         try {
             const success = await deleteUser(userId);
             if (success) {
-                // Si on supprime l'user courant, logout
                 if (currentUser?.id === userId) {
                     logout();
                 }
@@ -115,13 +111,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const resetApp = async () => {
         try {
-            // 1. Reset DB
             await resetApplicationData();
 
-            // 2. Clear Local Storage
             await AsyncStorage.removeItem(LAST_USER_KEY);
 
-            // 3. Reset State
             setCurrentUser(null);
             setUsers([]);
 

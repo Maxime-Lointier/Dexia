@@ -16,7 +16,6 @@ import { router } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../src/context/ThemeContext';
 
-// Activer LayoutAnimation sur Android
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -24,7 +23,6 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// --- Données de la FAQ ---
 const FAQ_DATA = [
   {
     question: "Comment fonctionne le swipe ?",
@@ -47,7 +45,6 @@ const FAQ_DATA = [
 const HelpSupport = () => {
   const { colors, isDark } = useTheme();
 
-  // Fonction pour envoyer un mail
   const handleContactSupport = () => {
     const subject = "Support Dexia App";
     const body = "Bonjour, j'ai besoin d'aide concernant...";
@@ -56,12 +53,11 @@ const HelpSupport = () => {
     Linking.openURL(mailtoUrl).catch((err) => console.error('Erreur lors de l\'ouverture du mail', err));
   };
 
-  // Fonction pour ouvrir un site web
+
   const openLink = (url: string) => {
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
   };
 
-  // --- Composant Accordéon pour la FAQ ---
   const FAQItem = ({ item }: { item: any }) => {
     const [expanded, setExpanded] = useState(false);
 
@@ -96,7 +92,7 @@ const HelpSupport = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {/* Header */}
+      {}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -110,7 +106,7 @@ const HelpSupport = () => {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         
-        {/* Hero Section */}
+        {}
         <View style={styles.heroSection}>
             <View style={[styles.heroIconCircle, { backgroundColor: 'rgba(138, 58, 255, 0.1)' }]}>
                 <Icon name="lifebuoy" size={48} color="#8A3AFF" />
@@ -121,7 +117,7 @@ const HelpSupport = () => {
             </Text>
         </View>
 
-        {/* Section FAQ */}
+        {}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Questions Fréquentes</Text>
         <View style={styles.faqList}>
             {FAQ_DATA.map((item, index) => (
@@ -129,7 +125,7 @@ const HelpSupport = () => {
             ))}
         </View>
 
-        {/* Section Contact */}
+        {}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Nous contacter</Text>
         <View style={[styles.contactCard, { backgroundColor: colors.card }]}>
             <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
@@ -193,7 +189,6 @@ const styles = StyleSheet.create({
       marginTop: 24,
       marginBottom: 12,
   },
-  // FAQ Styles
   faqList: {
       borderRadius: 16,
       overflow: 'hidden',
@@ -201,7 +196,6 @@ const styles = StyleSheet.create({
   faqContainer: {
       paddingHorizontal: 16,
       borderBottomWidth: 1,
-      // borderBottomColor est défini dynamiquement
   },
   faqHeader: {
       flexDirection: 'row',
@@ -218,7 +212,6 @@ const styles = StyleSheet.create({
   faqBody: {
       paddingBottom: 16,
   },
-  // Contact Styles
   contactCard: {
       borderRadius: 16,
       padding: 20,

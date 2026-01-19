@@ -11,7 +11,6 @@ export const BIOMETRIC_KEY = 'SETTINGS_BIOMETRIC_ENABLED';
 const Security = () => {
   const { colors, isDark } = useTheme();
   
-  // États
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
 
@@ -20,23 +19,19 @@ const Security = () => {
     loadSettings();
   }, []);
 
-  // 1. Vérifier si le téléphone a FaceID/TouchID
   const checkHardware = async () => {
     const compatible = await LocalAuthentication.hasHardwareAsync();
     const enrolled = await LocalAuthentication.isEnrolledAsync();
     setIsBiometricSupported(compatible && enrolled);
   };
 
-  // 2. Charger le réglage actuel
   const loadSettings = async () => {
     const bioState = await AsyncStorage.getItem(BIOMETRIC_KEY);
     setBiometricEnabled(bioState === 'true');
   };
 
-  // 3. Activer/Désactiver la biométrie
   const toggleBiometric = async (value: boolean) => {
     if (value) {
-      // Pour activer, on demande une preuve que c'est bien le proprio
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Confirmer pour activer la sécurité',
       });
@@ -48,13 +43,11 @@ const Security = () => {
         setBiometricEnabled(false);
       }
     } else {
-      // Pour désactiver
       setBiometricEnabled(false);
       await AsyncStorage.setItem(BIOMETRIC_KEY, 'false');
     }
   };
 
-  // --- UI ---
 
   const SectionTitle = ({ title }: { title: string }) => (
     <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold', marginTop: 24, marginBottom: 12, paddingHorizontal: 4 }}>
@@ -93,7 +86,7 @@ const Security = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {/* Header */}
+      {}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -107,7 +100,7 @@ const Security = () => {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         
-        {/* Info Box */}
+        {}
         <View style={[styles.infoBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.3)' }]}>
             <Icon name="lock-check-outline" size={24} color="#3b82f6" style={{marginRight: 12}} />
             <Text style={{color: colors.text, flex: 1, fontSize: 14, lineHeight: 20}}>

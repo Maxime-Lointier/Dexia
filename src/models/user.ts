@@ -1,7 +1,6 @@
 import { getDatabase } from './db';
 import { Language } from '../i18n';
 
-// ID de l'utilisateur unique de l'application
 export const CURRENT_USER_ID = 1;
 
 export interface UserPreferences {
@@ -39,7 +38,7 @@ export interface UserProfile {
 }
 
 /**
- * Récupère les préférences utilisateur (genres et mots-clés)
+ * Récupère les préférences utilisateur (genres et mots clés)
  * @param userId - ID de l'utilisateur
  * @returns Promise<UserPreferences> - Préférences de l'utilisateur
  */
@@ -117,11 +116,9 @@ export async function isOnboardingDone(userId: number): Promise<boolean> {
  */
 export async function setOnboardingDone(userId: number, done: boolean): Promise<boolean> {
   try {
-    // Si on reset l'onboarding (done = false), vider le cache immédiatement
     if (!done) {
       console.log('🧹 Reset: Nettoyage cache et marquage pour suppression DB...');
 
-      // Invalider le cache immédiatement
       try {
         const { clearWatchlistCache } = await import('./interaction');
         clearWatchlistCache(userId);
@@ -131,13 +128,11 @@ export async function setOnboardingDone(userId: number, done: boolean): Promise<
       }
     }
 
-    // Essayer l'update de l'onboarding, mais ne pas bloquer si ça échoue
     const db = await getDatabase();
     try {
       await db.runAsync('UPDATE user_profile SET onboarding_done = ? WHERE id = ?', [done ? 1 : 0, userId]);
       console.log('✅ Onboarding status mis à jour');
 
-      // Si l'update fonctionne ET qu'on fait un reset, essayer de nettoyer la DB
       if (!done) {
         try {
           await db.runAsync('DELETE FROM user_interactions WHERE user_id = ?', [userId]);

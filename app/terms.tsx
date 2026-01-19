@@ -15,7 +15,6 @@ import { useTheme } from '../src/context/ThemeContext';
 const Terms = () => {
   const { colors, isDark } = useTheme();
 
-  // Composant helper pour une section de texte
   const TermSection = ({ number, title, content }: { number: string, title: string, content: string }) => (
     <View style={{ marginBottom: 24 }}>
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -32,7 +31,7 @@ const Terms = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {/* Header */}
+      {}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -46,7 +45,7 @@ const Terms = () => {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 10 }}>
         
-        {/* Intro */}
+        {}
         <Text style={{ color: colors.textSecondary, marginBottom: 20, fontStyle: 'italic' }}>
             Dernière mise à jour : 19 Janvier 2026
         </Text>
@@ -57,7 +56,7 @@ const Terms = () => {
 
         <View style={styles.divider} />
 
-        {/* Contenu Juridique (Simplifié) */}
+        {}
         <TermSection 
             number="1"
             title="Utilisation du service"
@@ -88,7 +87,7 @@ const Terms = () => {
             content="Nous nous réservons le droit de modifier ces conditions à tout moment. Les mises à jour seront signalées dans les notes de version de l'application."
         />
 
-        {/* Footer TMDB */}
+        {}
         <View style={[styles.footerBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Icon name="database" size={24} color={colors.textSecondary} style={{ marginBottom: 8 }} />
             <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 12 }}>
